@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CyberVerse is an interactive cybersecurity learning simulator.">
+  <title>CyberVerse | Cybersecurity Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">⬡</span> Cyber<span>Verse</span></a>
+    <nav><a href="#dashboard">Dashboard</a><a href="#labs">Security Labs</a><a href="#academy">Academy</a></nav>
+    <div class="top-user"><span class="online-dot"></span> LOCAL SIMULATOR <span class="avatar">P</span></div>
+  </header>
+
+  <main class="container">
+    <section class="hero panel">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="pulse"></span> CYBERSECURITY TRAINING ENVIRONMENT</p>
+        <h1>Think like a hacker.<br><span>Stay one step ahead.</span></h1>
+        <p class="hero-description">Practice spotting suspicious messages, strengthen your password habits, and build security awareness in a safe interactive lab.</p>
+        <div class="hero-actions"><a class="button primary" href="#labs">Enter the lab <span>↗</span></a><button class="button secondary" id="demoButton">Run demo scan</button></div>
+        <div class="hero-stats"><div><strong id="heroXP">0 XP</strong><small>Experience earned</small></div><div><strong id="heroScans">0</strong><small>Labs completed</small></div><div><strong>3</strong><small>Training modules</small></div></div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
+        <div class="shield"><span>⌑</span></div>
+        <div class="float-card card-left"><span class="tiny-label">THREAT STATUS</span><strong><i class="green-dot"></i> SIMULATED / SAFE</strong></div>
+        <div class="float-card card-right"><span class="tiny-label">SYSTEM INTEGRITY</span><strong class="cyan">98.4%</strong><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="art-caption">LEARN <b>•</b> DETECT <b>•</b> DEFEND</div>
+      </div>
+    </section>
+
+    <section class="section-heading" id="dashboard"><div><p class="eyebrow">YOUR CONTROL CENTER</p><h2>Security dashboard</h2></div><span class="live-pill"><i></i> ALL SYSTEMS READY</span></section>
+    <section class="stats-grid">
+      <article class="stat-card panel"><div class="stat-icon purple">✦</div><div><p>Total XP</p><strong id="totalXP">0</strong><small>Keep learning to level up</small></div><span class="stat-symbol">↗</span></article>
+      <article class="stat-card panel"><div class="stat-icon cyan">⌁</div><div><p>Current level</p><strong id="level">1</strong><small id="nextLevel">100 XP to next level</small></div><span class="stat-symbol">⌘</span></article>
+      <article class="stat-card panel"><div class="stat-icon green">✓</div><div><p>Labs completed</p><strong id="completed">0</strong><small>Practice makes progress</small></div><span class="stat-symbol">◎</span></article>
+      <article class="stat-card panel"><div class="stat-icon orange">♜</div><div><p>Badges unlocked</p><strong id="badges">0</strong><small id="badgeHint">Your first badge awaits</small></div><span class="stat-symbol">◇</span></article>
+    </section>
+
+    <section class="section-heading" id="labs"><div><p class="eyebrow">HANDS-ON PRACTICE</p><h2>Choose your security lab</h2></div><p class="section-note">Safe, local, educational simulations</p></section>
+    <section class="lab-grid">
+      <article class="lab-card panel">
+        <div class="lab-top"><span class="lab-icon pink">✉</span><span class="tag">LAB 01</span></div>
+        <h3>Phishing message scanner</h3><p>Analyze a message for suspicious language, pressure tactics, and common phishing signals.</p>
+        <label for="messageInput">Paste a suspicious message</label>
+        <textarea id="messageInput" rows="5" maxlength="3000" placeholder="Example: Your account will be locked! Verify your password immediately..."></textarea>
+        <div class="field-meta"><span>Text is analyzed in your browser</span><span id="charCount">0 / 3000</span></div>
+        <button class="button primary full" id="scanButton">Analyze message <span>→</span></button>
+        <div class="result-box hidden" id="messageResult" aria-live="polite"></div>
+      </article>
+
+      <article class="lab-card panel">
+        <div class="lab-top"><span class="lab-icon cyan">⌑</span><span class="tag">LAB 02</span></div>
+        <h3>Password strength lab</h3><p>Check password habits and get suggestions. Your input is not sent to a server or stored.</p>
+        <label for="passwordInput">Try a sample password</label>
+        <div class="password-field"><input id="passwordInput" type="password" autocomplete="off" placeholder="Enter a test password"><button id="togglePassword" aria-label="Show or hide password">◉</button></div>
+        <div class="strength-track"><span id="strengthBar"></span></div>
+        <div class="strength-label"><span>Strength estimate</span><strong id="strengthText">Not checked</strong></div>
+        <ul class="check-list" id="passwordTips"><li>Enter a password to see tips.</li></ul>
+        <p class="notice">Tip: use a made-up example, not your real password.</p>
+      </article>
+
+      <article class="lab-card panel terminal-card">
+        <div class="lab-top"><span class="lab-icon green">⌘</span><span class="tag">LAB 03</span></div>
+        <h3>Cyber terminal</h3><p>Try safe demo commands to explore the simulator.</p>
+        <div class="terminal-window"><div class="terminal-head"><span></span><span></span><span></span><b>cyberverse — local shell</b></div><div class="terminal-output" id="terminalOutput"><p>CyberVerse training terminal ready.</p><p>Type <b>help</b> to see available commands.</p></div><form id="terminalForm" class="terminal-form"><label for="terminalInput">guest@cyberverse:~$</label><input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="type help..."></form></div>
+        <div class="command-chips"><button data-command="help">help</button><button data-command="status">status</button><button data-command="scan demo">scan demo</button><button data-command="clear">clear</button></div>
+      </article>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="panel academy-card" id="academy">
+        <div class="section-heading compact"><div><p class="eyebrow">KNOWLEDGE CHECK</p><h2>Cyber Academy</h2></div><span class="tag">QUIZ</span></div>
+        <p class="quiz-question" id="quizQuestion">What should you do if an unexpected email asks you to verify your password using a link?</p>
+        <div class="quiz-options" id="quizOptions">
+          <button data-answer="0">Click quickly before the account closes</button>
+          <button data-answer="1">Avoid the link and verify through the official website or app</button>
+          <button data-answer="2">Forward it to all your friends</button>
+        </div>
+        <div id="quizFeedback" class="quiz-feedback" aria-live="polite"></div>
+        <button id="nextQuestion" class="button secondary hidden">Next question →</button>
+      </article>
+      <article class="panel progress-card">
+        <div class="section-heading compact"><div><p class="eyebrow">YOUR JOURNEY</p><h2>Achievements</h2></div><span class="lab-icon orange">♜</span></div>
+        <div class="achievement" id="badgeFirst"><span class="achievement-icon">✦</span><div><strong>First Steps</strong><p>Complete your first lab</p></div><span class="achievement-state">LOCKED</span></div>
+        <div class="achievement" id="badgeAnalyst"><span class="achievement-icon">⌕</span><div><strong>Threat Analyst</strong><p>Analyze 3 messages</p></div><span class="achievement-state">LOCKED</span></div>
+        <div class="achievement" id="badgeScholar"><span class="achievement-icon">◈</span><div><strong>Cyber Scholar</strong><p>Answer a quiz correctly</p></div><span class="achievement-state">LOCKED</span></div>
+        <div class="progress-footer"><span>Progress to next level</span><strong id="progressLabel">0 / 100 XP</strong></div><div class="progress-track"><span id="progressBar"></span></div>
+      </article>
+    </section>
+    <footer><a class="brand small-brand" href="#"><span class="brand-mark">⬡</span> Cyber<span>Verse</span></a><p>Learn safely. Think critically. Stay secure.</p><span>Educational simulator · Not a real antivirus</span></footer>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="script.js"></script>
+</body>
+</html>
