@@ -95,7 +95,94 @@
       </article>
     </section>
     <footer><a class="brand small-brand" href="#"><span class="brand-mark">⬡</span> Cyber<span>Verse</span></a><p>Learn safely. Think critically. Stay secure.</p><span>Educational simulator · Not a real antivirus</span></footer>
-  </main>
+  
+<!-- CYBERVERSE: THREAT DASHBOARD -->
+<section class="threat-dashboard" id="threat-dashboard">
+  <div class="dashboard-heading">
+    <div>
+      <p class="eyebrow">CYBER INTELLIGENCE CENTER</p>
+      <h2>Threat <span>Radar</span></h2>
+      <p>Simulated threat activity for your cyber lab.</p>
+    </div>
+    <div class="system-status">
+      <span class="status-dot"></span>
+      SIMULATION ACTIVE
+    </div>
+  </div>
+
+  <div class="threat-stats">
+    <div class="threat-card">
+      <span>Threats Detected</span>
+      <strong id="threat-count">0248</strong>
+      <small>Demo counter</small>
+    </div>
+    <div class="threat-card">
+      <span>System Health</span>
+      <strong>98.6%</strong>
+      <small>Simulated status</small>
+    </div>
+    <div class="threat-card">
+      <span>Network Status</span>
+      <strong class="safe-text">SECURE</strong>
+      <small>Demo environment</small>
+    </div>
+  </div>
+
+  <div class="radar-panel">
+    <div class="radar-info">
+      <h3>Global Threat Radar</h3>
+      <p>Animated visual simulation — not real network traffic.</p>
+    </div>
+
+    <div class="radar-map" id="radar-map">
+      <div class="radar-grid"></div>
+      <div class="radar-sweep"></div>
+      <span class="radar-point point-one"></span>
+      <span class="radar-point point-two"></span>
+      <span class="radar-point point-three"></span>
+      <span class="radar-point point-four"></span>
+      <span class="radar-center">CV</span>
+    </div>
+
+    <button id="radar-scan-btn" type="button">⟳ Run Radar Scan</button>
+    <p id="radar-message" aria-live="polite">Radar ready. Start a demo scan.</p>
+  </div>
+
+  
+<!-- LIVE ACTIVITY FEED -->
+<div class="activity-panel">
+  <div class="activity-heading">
+    <div>
+      <h3>Live Activity Feed</h3>
+      <p>Recent events from the CyberVerse demo.</p>
+    </div>
+    <span class="activity-label">DEMO LOGS</span>
+  </div>
+
+  <div id="activity-feed" class="activity-feed" aria-live="polite">
+    <div class="activity-item">
+      <span class="activity-icon">🛡️</span>
+      <div>
+        <strong>Security dashboard initialized</strong>
+        <p>CyberVerse demo is ready.</p>
+      </div>
+      <span class="activity-time">READY</span>
+    </div>
+
+    <div class="activity-item">
+      <span class="activity-icon">📡</span>
+      <div>
+        <strong>Radar system online</strong>
+        <p>Waiting for a simulated scan.</p>
+      </div>
+      <span class="activity-time">READY</span>
+    </div>
+  </div>
+</div>
+
+</section>
+
+</main>
   <div class="toast" id="toast" role="status"></div>
   <script src="script.js"></script>
 </body>

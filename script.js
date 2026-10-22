@@ -167,3 +167,78 @@ function renderQuiz() {
 $("#nextQuestion").addEventListener("click", () => { state.quizIndex = (state.quizIndex + 1) % quiz.length; renderQuiz(); });
 renderStats();
 renderQuiz();
+
+/* ===== CYBERVERSE RADAR SCAN ===== */
+
+const radarScanBtn = document.getElementById("radar-scan-btn");
+const radarMessage = document.getElementById("radar-message");
+const threatCount = document.getElementById("threat-count");
+const radarMap = document.getElementById("radar-map");
+
+const activityFeed = document.getElementById("activity-feed");
+
+
+if (radarScanBtn && radarMessage && threatCount && radarMap) {
+  radarScanBtn.addEventListener("click", function () {
+    radarScanBtn.disabled = true;
+    radarScanBtn.textContent = "⟳ Scanning...";
+    radarMessage.textContent = "Running simulated radar scan...";
+
+    radarMap.style.borderColor = "#00ffe1";
+
+    setTimeout(function () {
+      const demoThreats = Math.floor(Math.random() * 20) + 1;
+      const currentCount = Number(threatCount.textContent) || 248;
+
+      threatCount.textContent = String(
+        currentCount + demoThreats
+      ).padStart(4, "0");
+
+      radarMessage.textContent =
+        "Demo scan complete! " +
+        demoThreats +
+        " simulated threat signals detected.";
+
+        
+if (activityFeed) {
+  const item = document.createElement("div");
+  item.className = "activity-item";
+
+  const icon = document.createElement("span");
+  icon.className = "activity-icon";
+  icon.textContent = "📡";
+
+  const details = document.createElement("div");
+
+  const title = document.createElement("strong");
+  title.textContent = "Radar scan completed";
+
+  const description = document.createElement("p");
+  description.textContent =
+    demoThreats + " simulated signals detected.";
+
+  const time = document.createElement("span");
+  time.className = "activity-time";
+  time.textContent = "JUST NOW";
+
+  details.append(title, description);
+  item.append(icon, details, time);
+  activityFeed.prepend(item);
+
+  while (activityFeed.children.length > 5) {
+    activityFeed.lastElementChild.remove();
+  }
+}
+
+      radarScanBtn.textContent = "⟳ Run Radar Scan";
+      radarScanBtn.disabled = false;
+
+      radarMap.style.boxShadow =
+        "0 0 22px rgba(0, 255, 225, 0.2)";
+
+      setTimeout(function () {
+        radarMap.style.boxShadow = "none";
+      }, 1200);
+    }, 1500);
+  });
+}
