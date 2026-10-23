@@ -242,3 +242,44 @@ if (activityFeed) {
     }, 1500);
   });
 }
+
+
+/* ===== SECURITY SCORE METER ===== */
+
+const scoreCheckBtn = document.getElementById("score-check-btn");
+const securityScore = document.getElementById("security-score");
+const scoreMeter = document.getElementById("score-meter");
+const scoreStatus = document.getElementById("score-status");
+
+if (scoreCheckBtn && securityScore && scoreMeter && scoreStatus) {
+  scoreCheckBtn.addEventListener("click", function () {
+    scoreCheckBtn.disabled = true;
+    scoreCheckBtn.textContent = "Calculating...";
+
+    // Educational demo score, not a real security assessment.
+    const newScore = Math.floor(Math.random() * 31) + 70;
+
+    securityScore.textContent = newScore;
+
+    const degrees = newScore * 3.6;
+    scoreMeter.style.background =
+      `conic-gradient(#00ffe1 0deg ${degrees}deg, #203449 ${degrees}deg 360deg)`;
+
+    if (newScore >= 90) {
+      scoreStatus.textContent = "Demo status: Excellent";
+      scoreStatus.style.color = "#65ff9a";
+    } else if (newScore >= 80) {
+      scoreStatus.textContent = "Demo status: Good";
+      scoreStatus.style.color = "#00ffe1";
+    } else {
+      scoreStatus.textContent = "Demo status: Needs improvement";
+      scoreStatus.style.color = "#ffbf69";
+    }
+
+    setTimeout(function () {
+      scoreCheckBtn.disabled = false;
+      scoreCheckBtn.textContent = "Recalculate Score ↻";
+    }, 700);
+  });
+}
+
