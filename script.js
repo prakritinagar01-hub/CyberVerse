@@ -64,19 +64,72 @@ function analyseMessage(text) {
   return { score, risk, warnings };
 }
 $("#messageInput").addEventListener("input", e => $("#charCount").textContent = `${e.target.value.length} / 3000`);
-$("#scanButton").addEventListener("click", () => {
+
+$("#scanButton").addEventListener("click", async () => {
   const message = $("#messageInput").value.trim();
-  if (!message) { toast("Paste a message first to run the analysis."); $("#messageInput").focus(); return; }
-  const result = analyseMessage(message);
-  state.messages += 1;
-  const box = $("#messageResult");
-  box.classList.remove("hidden");
-  box.innerHTML = `<h4>Risk estimate: <span class="risk-${result.risk.toLowerCase()}">${result.risk.toUpperCase()}</span> · ${result.score}/100</h4>
-    <p>${result.score >= 50 ? "Several warning signs found. Do not click links or share sensitive information until independently verified." : result.score >= 25 ? "Some warning signs found. Verify the sender and destination through a trusted channel." : "Few common warning signs detected, but this does not prove the message is safe."}</p>
-    ${result.warnings.length ? `<ul>${result.warnings.map(w => `<li>${w}</li>`).join("")}</ul>` : "<p>No common keyword signals found by this simple demo.</p>"}
-    <p style="margin-top:8px;color:#7485a9;font-size:.67rem">Heuristic demo only. It cannot verify senders, links, or attachments.</p>`;
-  awardXP(20, "Message scan");
+
+  if (!message) {
+    toast("Paste a message first to run the analysis.");
+    $("#messageInput").focus();
+    return;
+  }
+
+  const button = $("#scanButton");
+  button.disabled = true;
+  button.textContent = "Analyzing...";
+
+  try {
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: message })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Analysis failed.");
+    }
+
+    state.messages += 1;
+
+    const box = $("#messageResult");
+    box.classList.remove("hidden");
+
+    box.innerHTML = `
+      <h4>
+        Risk estimate:
+        <span class="risk-${result.risk.toLowerCase()}">
+          ${result.risk.toUpperCase()}
+        </span>
+        · ${result.score}/100
+      </h4>
+
+      <p>${result.advice}</p>
+
+      <ul>
+        ${result.warnings.map(warning =>
+          `<li>${warning}</li>`
+        ).join("")}
+      </ul>
+
+      <p style="margin-top:8px;color:#7485a9;font-size:.67rem">
+        Educational keyword-based demo. A low score does not guarantee safety.
+      </p>
+    `;
+
+    awardXP(20, "Message scan");
+
+  } catch (error) {
+    toast(error.message || "Could not connect to the server.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Scan Message";
+  }
 });
+
 $("#demoButton").addEventListener("click", () => {
   $("#messageInput").value = "URGENT: Your account will be suspended. Verify your account immediately and enter your password using this link.";
   $("#charCount").textContent = `${$("#messageInput").value.length} / 3000`;
