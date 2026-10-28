@@ -116,12 +116,12 @@ $("#scanButton").addEventListener("click", async () => {
       </ul>
 
       <p style="margin-top:8px;color:#7485a9;font-size:.67rem">
-        Educational keyword-based demo. A low score does not guarantee safety.
+       ${result.analysis_method || "Local analysis"} · A low score does not guarantee safety.
       </p>
     `;
 
     awardXP(20, "Message scan");
-
+         logMessageScan(result);
   } catch (error) {
     toast(error.message || "Could not connect to the server.");
   } finally {
@@ -229,6 +229,45 @@ const threatCount = document.getElementById("threat-count");
 const radarMap = document.getElementById("radar-map");
 
 const activityFeed = document.getElementById("activity-feed");
+
+/* ===== MESSAGE SCAN ACTIVITY ===== */
+
+function logMessageScan(result) {
+  if (!activityFeed) return;
+
+  const risk = String(result.risk || "Low").toLowerCase();
+
+  const item = document.createElement("div");
+  item.className = "activity-item";
+
+  const icon = document.createElement("span");
+  icon.className = "activity-icon";
+  icon.textContent =
+    risk === "high" ? "🚨" :
+    risk === "medium" ? "⚠️" : "🛡️";
+
+  const details = document.createElement("div");
+
+  const title = document.createElement("strong");
+  title.textContent = `${risk.toUpperCase()} risk message analyzed`;
+
+  const description = document.createElement("p");
+  description.textContent =
+    `Risk score: ${result.score}/100 · ${result.analysis_method || "Local analysis"}`;
+
+  const time = document.createElement("span");
+  time.className = "activity-time";
+  time.textContent = "JUST NOW";
+
+  details.append(title, description);
+  item.append(icon, details, time);
+
+  activityFeed.prepend(item);
+
+  while (activityFeed.children.length > 5) {
+    activityFeed.lastElementChild.remove();
+  }
+}
 
 
 if (radarScanBtn && radarMessage && threatCount && radarMap) {
