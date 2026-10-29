@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, send_from_directory
 import re
 import requests
@@ -110,15 +109,14 @@ Base the score on evidence in the message. Do not assume every message is phishi
         "analysis_method": "Local AI (Ollama)"
     }
 
-
 @app.route("/")
 def home():
-    return send_from_directory(".", "index.html")
+    return send_from_directory("templates", "index.html")
 
 
-@app.route("/<path:filename>")
+@app.route("/static/<path:filename>")
 def static_files(filename):
-    return send_from_directory(".", filename)
+    return send_from_directory("static", filename)
 
 
 @app.route("/api/analyze", methods=["POST"])
