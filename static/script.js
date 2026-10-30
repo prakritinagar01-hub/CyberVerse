@@ -98,27 +98,36 @@ $("#scanButton").addEventListener("click", async () => {
     const box = $("#messageResult");
     box.classList.remove("hidden");
 
-    box.innerHTML = `
-      <h4>
-        Risk estimate:
-        <span class="risk-${result.risk.toLowerCase()}">
-          ${result.risk.toUpperCase()}
-        </span>
-        · ${result.score}/100
-      </h4>
+    
+      const heading = document.createElement("h4");
 
-      <p>${result.advice}</p>
 
-      <ul>
-        ${result.warnings.map(warning =>
-          `<li>${warning}</li>`
-        ).join("")}
-      </ul>
+const riskLabel = document.createElement("span");
+riskLabel.className = `risk-${result.risk.toLowerCase()}`;
+riskLabel.textContent = result.risk.toUpperCase();
 
-      <p style="margin-top:8px;color:#7485a9;font-size:.67rem">
-       ${result.analysis_method || "Local analysis"} · A low score does not guarantee safety.
-      </p>
-    `;
+heading.textContent = "Risk estimate: ";
+heading.append(riskLabel, ` · ${result.score}/100`);
+
+const advice = document.createElement("p");
+advice.textContent = result.advice;
+
+const warningList = document.createElement("ul");
+
+(result.warnings || []).forEach(warning => {
+    const li = document.createElement("li");
+    li.textContent = warning;
+    warningList.appendChild(li);
+});
+
+const method = document.createElement("p");
+method.style.marginTop = "8px";
+method.style.color = "#7485a9";
+method.style.fontSize = ".67rem";
+method.textContent =
+    `${result.analysis_method || "Local analysis"} · A low score does not guarantee safety.`;
+
+box.replaceChildren(heading, advice, warningList, method);
 
     awardXP(20, "Message scan");
          logMessageScan(result);
