@@ -4,6 +4,9 @@ import requests
 import json
 import sqlite3
 from datetime import datetime
+import csv
+from io import StringIO
+from flask import make_response
 
 app = Flask(__name__)
 def init_db():
@@ -189,7 +192,6 @@ def analyze():
         ai_result = analyse_with_ai(message)
         rule_result = analyse_message(message)
 
-        # Combine both scores
         final_score = max(
             ai_result["score"],
             rule_result["score"]
@@ -202,7 +204,6 @@ def analyze():
         else:
             final_risk = "Low"
 
-        # Combine warnings
         combined_warnings = list(dict.fromkeys(
             ai_result["warnings"] + rule_result["warnings"]
         ))
@@ -214,16 +215,172 @@ def analyze():
             "advice": ai_result["advice"],
             "analysis_method": "Hybrid AI + Rule-Based"
         }
-        
-        save_scan(message, result)
-        return jsonify(result)
 
     except (requests.RequestException, ValueError, KeyError, TypeError):
         result = analyse_message(message)
         result["analysis_method"] = "Rule-based fallback"
-        return jsonify(result)
+
+    save_scan(message, result)
+
+    return jsonify(result)
 
 
+@app.route("/api/history", methods=["GET"])
+def get_history():
+    conn = sqlite3.connect("cyberverse.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM scan_history
+        ORDER BY id DESC
+        LIMIT 50
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    history = []
+
+    for row in rows:
+        history.append({
+            "id": row["id"],
+            "message": row["message"],
+            "score": row["score"],
+            "risk": row["risk"],
+            "warnings": json.loads(row["warnings"]),
+            "advice": row["advice"],
+            "scanned_at": row["scanned_at"]
+        })
+
+    return jsonify(history)
+@app.route("/api/history", methods=["DELETE"])
+def delete_history():
+    conn = sqlite3.connect("cyberverse.db")
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM scan_history")
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Scan history deleted successfully"})
+@app.route("/api/export", methods=["GET"])
+def export_history():
+    conn = sqlite3.connect("cyberverse.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, message, score, risk, warnings, advice, scanned_at
+        FROM scan_history
+        ORDER BY id DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    output = StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "ID", "Message", "Score", "Risk",
+        "Warnings", "Advice", "Scanned At"
+    ])
+
+    for row in rows:
+        writer.writerow(row)
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=cyberverse_scan_report.csv"
+    response.headers["Content-Type"] = "text/csv"
+
+    return response
+
+@app.route("/api/history/<int:scan_id>", methods=["GET"])
+def get_scan_details(scan_id):
+    conn = sqlite3.connect("cyberverse.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM scan_history WHERE id = ?",
+        (scan_id,)
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return jsonify({"error": "Scan not found"}), 404
+
+    return jsonify({
+        "id": row["id"],
+        "message": row["message"],
+        "score": row["score"],
+        "risk": row["risk"],
+        "warnings": json.loads(row["warnings"]),
+        "advice": row["advice"],
+        "scanned_at": row["scanned_at"]
+    })
+
+from urllib.parse import urlparse
+
+@app.route("/api/scan-url", methods=["POST"])
+def scan_url():
+    data = request.get_json(silent=True) or {}
+    url = data.get("url", "").strip()
+
+    if not url:
+        return jsonify({"error": "Please enter a URL."}), 400
+
+    if len(url) > 2048:
+        return jsonify({"error": "URL is too long."}), 400
+
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    parsed = urlparse(url)
+
+    if not parsed.hostname:
+        return jsonify({"error": "Invalid URL."}), 400
+
+    score = 0
+    warnings = []
+
+    if parsed.scheme != "https":
+        score += 20
+        warnings.append("Website does not use HTTPS.")
+
+    if parsed.hostname.startswith("xn--") or "xn--" in parsed.hostname:
+        score += 25
+        warnings.append("Domain contains encoded characters.")
+
+    if "@" in parsed.netloc:
+        score += 25
+        warnings.append("URL contains an unusual @ symbol.")
+
+    if parsed.port and parsed.port not in (80, 443):
+        score += 15
+        warnings.append("URL uses an unusual port.")
+
+    if len(parsed.hostname) > 40:
+        score += 10
+        warnings.append("Domain name is unusually long.")
+
+    if score >= 40:
+        risk = "High"
+    elif score >= 20:
+        risk = "Medium"
+    else:
+        risk = "Low"
+
+    return jsonify({
+        "url": url,
+        "score": min(score, 100),
+        "risk": risk,
+        "warnings": warnings,
+        "advice": "Avoid entering personal information on suspicious websites."
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

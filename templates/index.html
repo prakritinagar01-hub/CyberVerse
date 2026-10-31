@@ -45,7 +45,32 @@
 
     <section class="section-heading" id="labs"><div><p class="eyebrow">HANDS-ON PRACTICE</p><h2>Choose your security lab</h2></div><p class="section-note">Safe, local, educational simulations</p></section>
     <section class="lab-grid">
+            <!-- LAB 02: URL SECURITY SCANNER -->
       <article class="lab-card panel">
+        <div class="lab-top">
+          <span class="lab-icon cyan">🌐</span>
+          <span class="tag">LAB 02</span>
+        </div>
+
+        <h3>URL Security Scanner</h3>
+        <p>Check suspicious URLs for common security warning signs.</p>
+
+        <label for="urlInput">Enter a website URL</label>
+
+        <input
+          type="text"
+          id="urlInput"
+          placeholder="https://example.com"
+          autocomplete="off"
+        >
+
+        <button class="button primary full" id="urlBtn">
+          Scan URL →
+        </button>
+
+        <div class="result-box hidden" id="urlResult" aria-live="polite"></div>
+      </article>
+      <article class="lab-card panel"></article>
         <div class="lab-top"><span class="lab-icon pink">✉</span><span class="tag">LAB 01</span></div>
         <h3>Phishing message scanner</h3><p>Analyze a message for suspicious language, pressure tactics, and common phishing signals.</p>
         <label for="messageInput">Paste a suspicious message</label>
@@ -209,8 +234,85 @@
 
 </section>
 
+
+<!-- SCAN HISTORY -->
+<section class="scan-history-section" id="scan-history">
+  <div class="dashboard-heading">
+    <div>
+      <p class="eyebrow">SECURITY RECORDS</p>
+      <h2>Scan <span>History</span></h2>
+      <p>Your recently analyzed messages and their risk levels.</p>
+    </div>
+    <button class="button secondary" id="refreshHistory">
+      ↻ Refresh History
+    </button>
+    <button class="button secondary" id="exportHistory">
+    📥 Export Report
+</button>
+    <button class="button secondary" id="deleteHistory">
+    🗑 Delete History
+</button>
+  </div>
+
+  <div class="history-stats">
+    <div class="threat-card">
+      <span>Total Scans</span>
+      <strong id="historyTotal">0</strong>
+    </div>
+    <div class="threat-card">
+      <span>High Risk</span>
+      <strong id="historyHigh">0</strong>
+    </div>
+    <div class="threat-card">
+      <span>Medium Risk</span>
+      <strong id="historyMedium">0</strong>
+    </div>
+    <div class="threat-card">
+      <span>Low Risk</span>
+      <strong id="historyLow">0</strong>
+    </div>
+  </div>
+
+  <!-- SCAN ANALYTICS -->
+<section class="analytics-section">
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">DATA INSIGHTS</p>
+            <h2>Scan <span>Analytics</span></h2>
+            <p>Visual overview of your security scans.</p>
+        </div>
+    </div>
+
+    <div class="analytics-grid">
+        <div class="analytics-card">
+            <h3>Risk Distribution</h3>
+            <canvas id="riskChart"></canvas>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Scan Activity</h3>
+            <canvas id="activityChart"></canvas>
+        </div>
+    </div>
+</section>
+  <div id="historyList" class="history-list">
+    <p>Loading scan history...</p>
+  </div>
+</section>
+<!-- SCAN DETAILS MODAL -->
+<div id="scanModal" class="scan-modal">
+    <div class="scan-modal-content">
+        <button id="closeScanModal" class="modal-close">×</button>
+
+        <p class="eyebrow">SECURITY REPORT</p>
+        <h2>Scan <span>Details</span></h2>
+
+        <div id="modalScanDetails"></div>
+    </div>
+</div>
+
 </main>
-  <div class="toast" id="toast" role="status"></div>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </body>
 </html>

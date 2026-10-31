@@ -1466,3 +1466,151 @@ footer > span {
   }
 }
 
+/* SCAN HISTORY SECTION */
+
+.scan-history-section {
+    margin-top: 45px;
+    padding: 28px;
+    border: 1px solid rgba(105, 125, 210, 0.2);
+    border-radius: 20px;
+    background: rgba(15, 23, 48, 0.75);
+}
+
+.scan-history-section .dashboard-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.scan-history-section h2 span {
+    color: #42d9f5;
+}
+
+.history-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.history-list {
+    display: grid;
+    gap: 14px;
+}
+
+.history-card {
+    padding: 18px;
+    border: 1px solid rgba(105, 125, 210, 0.2);
+    border-radius: 14px;
+    background: rgba(25, 35, 68, 0.65);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.history-card:hover {
+    transform: translateY(-3px);
+    border-color: #42d9f5;
+}
+
+.history-card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.history-card p {
+    color: #c5cde2;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    margin-bottom: 10px;
+}
+
+.history-card small {
+    color: #8290b0;
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+}
+
+.risk-high {
+    color: #ff6b81;
+}
+
+.risk-medium {
+    color: #ffc56b;
+}
+
+.risk-low {
+    color: #55e6a5;
+}
+
+@media (max-width: 700px) {
+    .history-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .scan-history-section .dashboard-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+/* SCAN DETAILS MODAL */
+
+.scan-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(3, 7, 20, 0.82);
+    backdrop-filter: blur(10px);
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.scan-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 35px;
+    border: 1px solid rgba(66, 217, 245, 0.3);
+    border-radius: 22px;
+    background: linear-gradient(145deg, #111a35, #080e20);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.5);
+}
+
+.scan-modal-content h2 {
+    margin-bottom: 25px;
+}
+
+.scan-modal-content h2 span {
+    color: #42d9f5;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 18px;
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+#modalScanDetails {
+    color: #c5cde2;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    .scan-modal-content {
+        padding: 25px 18px;
+    }
+}
+
