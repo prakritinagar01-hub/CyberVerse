@@ -49,7 +49,7 @@
       <article class="lab-card panel">
         <div class="lab-top">
           <span class="lab-icon cyan">🌐</span>
-          <span class="tag">LAB 02</span>
+          <span class="tag">LAB 01</span>
         </div>
 
         <h3>URL Security Scanner</h3>
@@ -70,8 +70,8 @@
 
         <div class="result-box hidden" id="urlResult" aria-live="polite"></div>
       </article>
-      <article class="lab-card panel"></article>
-        <div class="lab-top"><span class="lab-icon pink">✉</span><span class="tag">LAB 01</span></div>
+      <article class="lab-card panel">
+        <div class="lab-top"><span class="lab-icon pink">✉</span><span class="tag">LAB 02</span></div>
         <h3>Phishing message scanner</h3><p>Analyze a message for suspicious language, pressure tactics, and common phishing signals.</p>
         <label for="messageInput">Paste a suspicious message</label>
         <textarea id="messageInput" rows="5" maxlength="3000" placeholder="Example: Your account will be locked! Verify your password immediately..."></textarea>
@@ -81,7 +81,7 @@
       </article>
 
       <article class="lab-card panel">
-        <div class="lab-top"><span class="lab-icon cyan">⌑</span><span class="tag">LAB 02</span></div>
+        <div class="lab-top"><span class="lab-icon cyan">⌑</span><span class="tag">LAB 03</span></div>
         <h3>Password strength lab</h3><p>Check password habits and get suggestions. Your input is not sent to a server or stored.</p>
         <label for="passwordInput">Try a sample password</label>
         <div class="password-field"><input id="passwordInput" type="password" autocomplete="off" placeholder="Enter a test password"><button id="togglePassword" aria-label="Show or hide password">◉</button></div>
@@ -92,7 +92,7 @@
       </article>
 
       <article class="lab-card panel terminal-card">
-        <div class="lab-top"><span class="lab-icon green">⌘</span><span class="tag">LAB 03</span></div>
+        <div class="lab-top"><span class="lab-icon green">⌘</span><span class="tag">LAB 04</span></div>
         <h3>Cyber terminal</h3><p>Try safe demo commands to explore the simulator.</p>
         <div class="terminal-window"><div class="terminal-head"><span></span><span></span><span></span><b>cyberverse — local shell</b></div><div class="terminal-output" id="terminalOutput"><p>CyberVerse training terminal ready.</p><p>Type <b>help</b> to see available commands.</p></div><form id="terminalForm" class="terminal-form"><label for="terminalInput">guest@cyberverse:~$</label><input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="type help..."></form></div>
         <div class="command-chips"><button data-command="help">help</button><button data-command="status">status</button><button data-command="scan demo">scan demo</button><button data-command="clear">clear</button></div>
@@ -298,6 +298,53 @@
   <div id="historyList" class="history-list">
     <p>Loading scan history...</p>
   </div>
+</section>
+
+<!-- URL SCAN HISTORY -->
+<section class="scan-history-section" id="url-scan-history">
+
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">URL SECURITY RECORDS</p>
+            <h2>URL Scan <span>History</span></h2>
+            <p>Your recently analyzed website URLs.</p>
+        </div>
+
+        <button class="button secondary" id="refreshUrlHistory">
+            ↻ Refresh URLs
+        </button>
+
+        <button class="button secondary" id="deleteUrlHistory">
+            🗑 Delete URL History
+        </button>
+    </div>
+
+    <div class="history-stats">
+        <div class="threat-card">
+            <span>Total URL Scans</span>
+            <strong id="urlHistoryTotal">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>High Risk</span>
+            <strong id="urlHistoryHigh">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>Medium Risk</span>
+            <strong id="urlHistoryMedium">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>Low Risk</span>
+            <strong id="urlHistoryLow">0</strong>
+        </div>
+    </div>
+
+    <div id="urlHistoryList" class="history-list">
+        <p>Loading URL history...</p>
+    </div>
+
 </section>
 <!-- SCAN DETAILS MODAL -->
 <div id="scanModal" class="scan-modal">

@@ -24,7 +24,17 @@ def init_db():
             scanned_at TEXT
         )
     """)
-
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS url_scan_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            score INTEGER,
+            risk TEXT,
+            warnings TEXT,
+            advice TEXT,
+            scanned_at TEXT
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -49,6 +59,27 @@ def save_scan(message, result):
 
     conn.commit()
     conn.close()
+
+def save_url_scan(url, result):
+    conn = sqlite3.connect("cyberverse.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO url_scan_history
+        (url, score, risk, warnings, advice, scanned_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        url,
+        result["score"],
+        result["risk"],
+        json.dumps(result["warnings"]),
+        result["advice"],
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conn.commit()
+    conn.close()
+
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "qwen2.5:1.5b"
@@ -374,13 +405,99 @@ def scan_url():
     else:
         risk = "Low"
 
-    return jsonify({
+    result = {
         "url": url,
         "score": min(score, 100),
         "risk": risk,
         "warnings": warnings,
         "advice": "Avoid entering personal information on suspicious websites."
+    }
+
+    save_url_scan(url, result)
+
+    return jsonify(result)
+
+@app.route("/api/url-history", methods=["GET"])
+def get_url_history():
+    conn = sqlite3.connect("cyberverse.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM url_scan_history
+        ORDER BY id DESC
+        LIMIT 50
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    history = []
+
+    for row in rows:
+        history.append({
+            "id": row["id"],
+            "url": row["url"],
+            "score": row["score"],
+            "risk": row["risk"],
+            "warnings": json.loads(row["warnings"]),
+            "advice": row["advice"],
+            "scanned_at": row["scanned_at"]
+        })
+
+    return jsonify(history)
+
+@app.route("/api/url-history", methods=["DELETE"])
+def delete_url_history():
+    conn = sqlite3.connect("cyberverse.db")
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM url_scan_history")
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "message": "URL scan history deleted successfully"
     })
+
+@app.route("/api/recent-activity", methods=["GET"])
+def get_recent_activity():
+    conn = sqlite3.connect("cyberverse.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, 'Message Scan' AS scan_type,
+               message AS target, score, risk, scanned_at
+        FROM scan_history
+
+        UNION ALL
+
+        SELECT id, 'URL Scan' AS scan_type,
+               url AS target, score, risk, scanned_at
+        FROM url_scan_history
+
+        ORDER BY scanned_at DESC
+        LIMIT 10
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    activities = []
+
+    for row in rows:
+        activities.append({
+            "id": row["id"],
+            "type": row["scan_type"],
+            "target": row["target"],
+            "score": row["score"],
+            "risk": row["risk"],
+            "scanned_at": row["scanned_at"]
+        })
+
+    return jsonify(activities)
 
 if __name__ == "__main__":
     app.run(debug=True)

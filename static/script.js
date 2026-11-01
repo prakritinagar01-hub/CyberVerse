@@ -311,6 +311,7 @@ if (scanButton && messageInput && messageResult) {
                 warningList,
                 method
             );
+            
 
             awardXP(20, "Message scan");
             logMessageScan(result);
@@ -1046,38 +1047,125 @@ function renderAnalytics(history) {
         return;
     }
 
-    // Risk distribution
-    const high = history.filter(item => item.risk === "High").length;
-    const medium = history.filter(item => item.risk === "Medium").length;
-    const low = history.filter(item => item.risk === "Low").length;
+    // ==========================================
+// PREMIUM RISK DISTRIBUTION CHART
+// ==========================================
 
-    if (riskChartInstance) {
-        riskChartInstance.destroy();
+const high = history.filter(item => item.risk === "High").length;
+const medium = history.filter(item => item.risk === "Medium").length;
+const low = history.filter(item => item.risk === "Low").length;
+
+const total = high + medium + low;
+
+if (riskChartInstance) {
+    riskChartInstance.destroy();
+}
+
+const centerTextPlugin = {
+    id: "riskCenterText",
+
+    afterDraw(chart) {
+        const { ctx, chartArea } = chart;
+
+        if (!chartArea) return;
+
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.font = "bold 30px Inter";
+        ctx.fillStyle = "#edf2ff";
+
+        ctx.fillText(total, centerX, centerY - 9);
+
+        ctx.font = "11px Inter";
+        ctx.fillStyle = "#8d9ab9";
+
+        ctx.fillText("TOTAL SCANS", centerX, centerY + 17);
+
+        ctx.restore();
     }
+};
 
-    riskChartInstance = new Chart(riskCanvas, {
-        type: "doughnut",
-        data: {
-            labels: ["High Risk", "Medium Risk", "Low Risk"],
-            datasets: [{
-                data: [high, medium, low],
-                backgroundColor: ["#ff4d6d", "#ffb84d", "#36d399"],
-                borderWidth: 0
-            }]
+riskChartInstance = new Chart(riskCanvas, {
+    type: "doughnut",
+
+    data: {
+        labels: ["High Risk", "Medium Risk", "Low Risk"],
+
+        datasets: [{
+            data: total > 0 ? [high, medium, low] : [1],
+
+            backgroundColor: total > 0
+                ? ["#ff5470", "#ffbd59", "#43e6a0"]
+                : ["#293653"],
+
+            borderColor: "#0b122a",
+            borderWidth: 5,
+            borderRadius: 8,
+            hoverOffset: 12,
+            spacing: 4
+        }]
+    },
+
+    plugins: [centerTextPlugin],
+
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: "76%",
+
+        animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 1000
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: "bottom",
-                    labels: {
-                        color: "#ffffff",
-                        padding: 20
+
+        plugins: {
+            legend: {
+                position: "bottom",
+
+                labels: {
+                    color: "#cbd5ed",
+                    padding: 22,
+                    usePointStyle: true,
+                    pointStyle: "circle",
+                    boxWidth: 9,
+                    boxHeight: 9,
+                    font: {
+                        family: "Inter",
+                        size: 11,
+                        weight: "500"
+                    }
+                }
+            },
+
+            tooltip: {
+                enabled: total > 0,
+
+                backgroundColor: "#111a35",
+                titleColor: "#4de5ff",
+                bodyColor: "#edf2ff",
+                borderColor: "rgba(77,229,255,0.3)",
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 10,
+
+                callbacks: {
+                    label(context) {
+                        const value = context.raw;
+                        const percentage = ((value / total) * 100).toFixed(1);
+
+                        return ` ${value} scans (${percentage}%)`;
                     }
                 }
             }
         }
-    });
+    }
+});
 
     // Scan activity (last 7 days)
     const days = [];
@@ -1157,7 +1245,9 @@ function renderAnalytics(history) {
 renderStats();
 renderQuiz();
 loadScanHistory();
-
+loadUrlHistory();
+loadRecentActivity();
+setInterval(loadRecentActivity, 10000);
 // =====================================
 // URL SECURITY SCANNER
 // =====================================
@@ -1232,6 +1322,7 @@ if (urlBtn && urlInput && urlResult) {
                 warningList,
                 advice
             );
+            loadUrlHistory();
 
         } catch (error) {
             urlResult.textContent = error.message;
@@ -1240,4 +1331,266 @@ if (urlBtn && urlInput && urlResult) {
             urlBtn.textContent = "Scan URL →";
         }
     });
+}
+// ==========================================
+// URL SCAN HISTORY
+// ==========================================
+
+async function loadUrlHistory() {
+    const historyList = $("#urlHistoryList");
+
+    if (!historyList) return;
+
+    try {
+        historyList.textContent = "Loading URL history...";
+
+        const response = await fetch("/api/url-history");
+
+        if (!response.ok) {
+            throw new Error("Unable to load URL history.");
+        }
+
+        const history = await response.json();
+
+        // Update statistics
+        $("#urlHistoryTotal").textContent = history.length;
+        $("#urlHistoryHigh").textContent =
+            history.filter(item => item.risk === "High").length;
+
+        $("#urlHistoryMedium").textContent =
+            history.filter(item => item.risk === "Medium").length;
+
+        $("#urlHistoryLow").textContent =
+            history.filter(item => item.risk === "Low").length;
+
+        historyList.replaceChildren();
+
+        if (history.length === 0) {
+            historyList.textContent = "No URL scans found yet.";
+            return;
+        }
+
+        history.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "history-card";
+
+            const heading = document.createElement("div");
+            heading.className = "history-card-heading";
+
+            const risk = document.createElement("span");
+            risk.className = `risk-${String(item.risk).toLowerCase()}`;
+            risk.textContent = item.risk;
+
+            const score = document.createElement("strong");
+            score.textContent = `${item.score}/100`;
+
+            heading.append(risk, score);
+
+            const url = document.createElement("p");
+            url.textContent = item.url;
+
+            const date = document.createElement("small");
+            date.textContent = item.scanned_at;
+
+            const warnings = document.createElement("p");
+            warnings.textContent =
+                (item.warnings || []).join(" • ") || "No warnings detected.";
+
+            card.append(heading, url, date, warnings);
+            historyList.appendChild(card);
+        });
+
+    } catch (error) {
+        historyList.textContent = "Could not load URL history.";
+        console.error(error);
+    }
+}
+
+
+// Refresh URL history
+const refreshUrlHistory = $("#refreshUrlHistory");
+
+if (refreshUrlHistory) {
+    refreshUrlHistory.addEventListener("click", loadUrlHistory);
+}
+
+
+// Delete URL history
+const deleteUrlHistory = $("#deleteUrlHistory");
+
+if (deleteUrlHistory) {
+    deleteUrlHistory.addEventListener("click", async () => {
+
+        if (!confirm("Delete all URL scan history?")) return;
+
+        try {
+            const response = await fetch("/api/url-history", {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                throw new Error("Delete failed.");
+            }
+
+            toast("URL history deleted successfully!");
+            loadUrlHistory();
+
+        } catch (error) {
+            toast("Could not delete URL history.");
+            console.error(error);
+        }
+    });
+}
+
+// ===================================
+// CYBERVERSE - LIVE ACTIVITY FEED
+// ===================================
+
+async function loadRecentActivity() {
+    const feed = document.getElementById("activity-feed");
+
+    if (!feed) return;
+
+    try {
+        const response = await fetch("/api/recent-activity");
+
+        if (!response.ok) {
+            throw new Error("Unable to load activities");
+        }
+
+        const activities = await response.json();
+        // Ignore old alerts during the first page load
+if (!activityInitialized) {
+    activities.forEach(item => {
+        if (item.risk.toLowerCase() === "high") {
+            notifiedThreats.add(item.type + "-" + item.id);
+        }
+    });
+
+    activityInitialized = true;
+}
+
+        feed.innerHTML = "";
+
+        if (activities.length === 0) {
+            feed.innerHTML = `
+                <p class="empty-history">
+                    No recent activity. Start your first security scan!
+                </p>
+            `;
+            return;
+        }
+
+        activities.forEach(item => {
+    showThreatNotification(item);
+
+    const risk = item.risk.toLowerCase();
+
+
+            const icon = risk === "high" ? "🚨"
+                : risk === "medium" ? "⚠️" : "🛡️";
+
+            const activity = document.createElement("div");
+            activity.className = "activity-item";
+
+            const details = document.createElement("div");
+            const title = document.createElement("strong");
+            const target = document.createElement("p");
+            const time = document.createElement("span");
+
+            title.textContent = `${item.type} — ${item.risk} Risk`;
+            target.textContent = `${item.target} | Score: ${item.score}/100`;
+            time.textContent = item.scanned_at;
+
+            const iconElement = document.createElement("span");
+            iconElement.className = "activity-icon";
+            iconElement.textContent = icon;
+
+            time.className = `activity-time risk-${risk}`;
+
+            details.append(title, target);
+            activity.append(iconElement, details, time);
+
+            feed.appendChild(activity);
+        });
+
+    } catch (error) {
+        console.error("Activity Feed Error:", error);
+        feed.textContent = "Unable to load recent activities.";
+    }
+}
+
+// ===================================
+// CYBERVERSE - HIGH RISK NOTIFICATIONS
+// ===================================
+
+const notifiedThreats = new Set();
+let activityInitialized = false;
+
+function showThreatNotification(item) {
+    if (item.risk.toLowerCase() !== "high") return;
+
+    const threatId = item.type + "-" + item.id;
+
+    // Prevent duplicate notifications
+    if (notifiedThreats.has(threatId)) return;
+
+    notifiedThreats.add(threatId);
+
+    const notification = document.createElement("div");
+    notification.className = "threat-notification";
+
+    notification.innerHTML = `
+    <span>🚨</span>
+    <div>
+        <strong>HIGH RISK DETECTED!</strong>
+        <p>${item.type} requires your attention.</p>
+        <button class="view-details-btn">View Details</button>
+    </div>
+    <button class="notification-close">×</button>
+`;
+notification.querySelector(".view-details-btn").onclick = () => {
+    const modal = $("#scanModal");
+    const modalDetails = $("#modalScanDetails");
+
+    if (!modal || !modalDetails) {
+        toast("Details modal not found.");
+        return;
+    }
+
+    modalDetails.replaceChildren();
+
+    const details = [
+        ["Scan Type", item.type],
+        ["Target", item.target],
+        ["Risk Level", item.risk],
+        ["Risk Score", `${item.score}/100`],
+        ["Scanned At", item.scanned_at]
+    ];
+
+    details.forEach(([label, value]) => {
+        const section = document.createElement("div");
+        const heading = document.createElement("h3");
+        const content = document.createElement("p");
+
+        heading.textContent = label;
+        content.textContent = value ?? "Not available";
+
+        section.append(heading, content);
+        modalDetails.appendChild(section);
+    });
+
+    modal.style.display = "flex";
+    notification.remove();
+};
+
+notification.querySelector(".notification-close").onclick = () => {
+    notification.remove();
+};
+
+    document.body.appendChild(notification);
+
+    
+
+    setTimeout(() => notification.remove(), 6000);
 }
