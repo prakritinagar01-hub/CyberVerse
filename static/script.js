@@ -1168,72 +1168,105 @@ riskChartInstance = new Chart(riskCanvas, {
 });
 
     // Scan activity (last 7 days)
-    const days = [];
+   // ==========================================
+// RISK TREND - LAST 7 DAYS
+// ==========================================
 
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
+const days = [];
 
-        days.push({
-            label: date.toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "short"
-            }),
-            date: date.toLocaleDateString("en-CA"),
-            count: 0
-        });
-    }
+for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
 
-    history.forEach(item => {
-        const scanDate = item.scanned_at?.split(" ")[0];
-
-        const day = days.find(d => d.date === scanDate);
-
-        if (day) {
-            day.count++;
-        }
+    days.push({
+        label: date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short"
+        }),
+        date: date.toLocaleDateString("en-CA"),
+        high: 0,
+        medium: 0,
+        low: 0
     });
+}
 
-    if (activityChartInstance) {
-        activityChartInstance.destroy();
-    }
+history.forEach(item => {
+    const scanDate = item.scanned_at?.split(" ")[0];
+    const day = days.find(d => d.date === scanDate);
 
-    activityChartInstance = new Chart(activityCanvas, {
-        type: "bar",
-        data: {
-            labels: days.map(day => day.label),
-            datasets: [{
-                label: "Scans",
-                data: days.map(day => day.count),
-                backgroundColor: "#8b5cf6",
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: "#ffffff"
-                    }
-                }
+    if (!day) return;
+
+    if (item.risk === "High") day.high++;
+    else if (item.risk === "Medium") day.medium++;
+    else if (item.risk === "Low") day.low++;
+});
+
+if (activityChartInstance) {
+    activityChartInstance.destroy();
+}
+
+activityChartInstance = new Chart(activityCanvas, {
+    type: "line",
+    data: {
+        labels: days.map(day => day.label),
+        datasets: [
+            {
+                label: "High Risk",
+                data: days.map(day => day.high),
+                borderColor: "#ff5470",
+                backgroundColor: "rgba(255,84,112,0.12)",
+                tension: 0.4,
+                fill: false
             },
-            scales: {
-                x: {
-                    ticks: { color: "#ffffff" },
-                    grid: { display: false }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: "#ffffff",
-                        precision: 0
-                    }
+            {
+                label: "Medium Risk",
+                data: days.map(day => day.medium),
+                borderColor: "#ffbd59",
+                backgroundColor: "rgba(255,189,89,0.12)",
+                tension: 0.4,
+                fill: false
+            },
+            {
+                label: "Low Risk",
+                data: days.map(day => day.low),
+                borderColor: "#43e6a0",
+                backgroundColor: "rgba(67,230,160,0.12)",
+                tension: 0.4,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: {
+            intersect: false,
+            mode: "index"
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: "#ffffff"
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: "#ffffff" },
+                grid: { display: false }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: "#ffffff",
+                    precision: 0
                 }
             }
         }
-    });
+    }
+});
+
 }
+
 
 
 
