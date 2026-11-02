@@ -2147,3 +2147,40 @@ footer > span {
 .ai-explanation strong {
     color: #c4b5fd;
 }
+
+/* AI PERFORMANCE METRICS */
+.ai-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.ai-metrics-grid .analytics-card {
+    padding: 22px;
+    border: 1px solid rgba(77, 229, 255, 0.18);
+    border-radius: 16px;
+    background: rgba(15, 25, 50, 0.75);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.ai-metrics-grid .analytics-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(77, 229, 255, 0.6);
+}
+
+.ai-metrics-grid .analytics-card p {
+    color: #aab8d4;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.ai-metrics-grid .analytics-card h2 {
+    color: #4de5ff;
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.ai-metrics-grid .analytics-card small {
+    color: #8796b5;
+}

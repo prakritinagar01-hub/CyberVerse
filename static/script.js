@@ -1080,6 +1080,32 @@ async function loadAnalytics() {
 function renderAnalytics(history) {
 
     const riskCanvas = document.getElementById("riskChart");
+    // AI PERFORMANCE METRICS
+const aiScanCount = document.getElementById("aiScanCount");
+const avgConfidence = document.getElementById("avgConfidence");
+
+// AI-powered scans (confidence > 0)
+const aiScans = history.filter(
+    item => Number(item.confidence) > 0
+);
+
+if (aiScanCount) {
+    aiScanCount.textContent = aiScans.length;
+}
+
+// Average AI confidence
+const confidenceTotal = aiScans.reduce(
+    (sum, item) => sum + Number(item.confidence),
+    0
+);
+
+const average = aiScans.length
+    ? Math.round(confidenceTotal / aiScans.length)
+    : 0;
+
+if (avgConfidence) {
+    avgConfidence.textContent = `${average}%`;
+}
     const activityCanvas = document.getElementById("activityChart");
 
     if (!riskCanvas || !activityCanvas || typeof Chart === "undefined") {
