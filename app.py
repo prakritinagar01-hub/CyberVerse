@@ -145,14 +145,16 @@ Identify phishing, scams, suspicious links, urgency,
 requests for OTP/password, impersonation, and other risks.
 
 Return ONLY valid JSON in this exact structure:
-{{
+{
   "score": 0,
   "risk": "Low",
+  "confidence": 0,
+  "explanation": "Explain why this message received this risk assessment.",
   "warnings": [
     "Specific suspicious behaviour found in the message"
   ],
   "advice": "Give 2-3 specific and practical safety actions based on this message."
-}}
+}
 
 Rules:
 - Score must be an integer from 0 to 100.
@@ -162,6 +164,8 @@ Rules:
 - Never advise the user to click suspicious links.
 - Never ask the user to share OTPs, passwords, PINs or CVV.
 - Keep advice clear and simple.
+- Confidence must be an integer from 0 to 100.
+- Explanation must briefly describe the evidence behind the risk assessment.
 """
 
 
@@ -181,26 +185,46 @@ Rules:
     result = json.loads(raw)
 
     score = max(0, min(100, int(result["score"])))
+    confidence = max(0, min(100, int(result.get("confidence", 0))))
+    explanation = str(result.get("explanation", "No explanation provided."))
     risk = str(result["risk"]).title()
 
     if risk not in ("Low", "Medium", "High"):
         risk = "High" if score >= 50 else "Medium" if score >= 25 else "Low"
 
     warnings = result.get("warnings", [])
+
     if not isinstance(warnings, list):
         warnings = [str(warnings)]
+
+    warnings = [
+        str(item).strip()
+        for item in warnings
+        if str(item).strip()
+    ]
+
+    if not warnings:
+        warnings = ["No specific suspicious behaviour was identified by AI."]
+
+    if score >= 50:
+        risk = "High"
+    elif score >= 25:
+        risk = "Medium"
+    else:
+        risk = "Low"
 
     return {
         "score": score,
         "risk": risk,
-        "warnings": [str(item) for item in warnings],
+        "warnings": warnings,
+        "confidence": confidence,
+        "explanation": explanation,
         "advice": str(result.get(
             "advice",
             "Verify the sender before clicking links or sharing information."
         )),
         "analysis_method": "Local AI (Ollama)"
     }
-
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -240,12 +264,14 @@ def analyze():
         ))
 
         result = {
-            "score": final_score,
-            "risk": final_risk,
-            "warnings": combined_warnings,
-            "advice": ai_result["advice"],
-            "analysis_method": "Hybrid AI + Rule-Based"
-        }
+    "score": final_score,
+    "risk": final_risk,
+    "confidence": ai_result["confidence"],
+    "explanation": ai_result["explanation"],
+    "warnings": combined_warnings,
+    "advice": ai_result["advice"],
+    "analysis_method": "Hybrid AI + Rule-Based"
+}
 
     except (requests.RequestException, ValueError, KeyError, TypeError):
         result = analyse_message(message)
