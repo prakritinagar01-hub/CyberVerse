@@ -35,6 +35,19 @@ def init_db():
             scanned_at TEXT
         )
     """)
+    # Add AI fields to existing scan history database
+    cursor.execute("PRAGMA table_info(scan_history)")
+    columns = [column[1] for column in cursor.fetchall()]
+ 
+    if "confidence" not in columns:
+     cursor.execute(
+        "ALTER TABLE scan_history ADD COLUMN confidence INTEGER"
+    )
+
+    if "explanation" not in columns:
+     cursor.execute(
+        "ALTER TABLE scan_history ADD COLUMN explanation TEXT"
+    )
     conn.commit()
     conn.close()
 

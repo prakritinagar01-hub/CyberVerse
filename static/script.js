@@ -287,6 +287,41 @@ if (scanButton && messageInput && messageResult) {
             heading.append(riskLabel, ` · ${result.score}/100`);
 
             const advice = document.createElement("p");
+            // AI Confidence Meter
+const confidence = Math.max(
+    0,
+    Math.min(100, Number(result.confidence) || 0)
+);
+
+const confidenceSection = document.createElement("div");
+confidenceSection.className = "confidence-section";
+
+const confidenceLabel = document.createElement("p");
+confidenceLabel.textContent = `AI Confidence Estimate: ${confidence}%`;
+
+const confidenceTrack = document.createElement("div");
+confidenceTrack.className = "confidence-track";
+
+const confidenceBar = document.createElement("div");
+confidenceBar.className = "confidence-bar";
+confidenceBar.style.width = `${confidence}%`;
+
+confidenceTrack.appendChild(confidenceBar);
+confidenceSection.append(confidenceLabel, confidenceTrack);
+
+
+// AI Explanation
+const explanation = document.createElement("p");
+explanation.className = "ai-explanation";
+
+const explanationTitle = document.createElement("strong");
+explanationTitle.textContent = "AI Explanation: ";
+
+const explanationText = document.createElement("span");
+explanationText.textContent =
+    result.explanation || "No explanation available.";
+
+explanation.append(explanationTitle, explanationText);
             advice.textContent = result.advice || "Stay alert.";
 
             const warningList = document.createElement("ul");
@@ -306,11 +341,13 @@ if (scanButton && messageInput && messageResult) {
                 `${result.analysis_method || "Local analysis"} · A low score does not guarantee safety.`;
 
             messageResult.replaceChildren(
-                heading,
-                advice,
-                warningList,
-                method
-            );
+    heading,
+    confidenceSection,
+    explanation,
+    advice,
+    warningList,
+    method
+);
             
 
             awardXP(20, "Message scan");
