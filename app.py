@@ -59,14 +59,20 @@ def save_scan(message, result):
 
     cursor.execute("""
         INSERT INTO scan_history
-        (message, score, risk, warnings, advice, scanned_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (message, score, risk, warnings, advice,
+         confidence, explanation, scanned_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         message,
         result["score"],
         result["risk"],
         json.dumps(result["warnings"]),
         result["advice"],
+        result.get("confidence", 0),
+        result.get(
+            "explanation",
+            "AI explanation unavailable (rule-based fallback)."
+        ),
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
 
@@ -318,8 +324,10 @@ def get_history():
             "message": row["message"],
             "score": row["score"],
             "risk": row["risk"],
-            "warnings": json.loads(row["warnings"]),
+            "warnings": json.loads(row["warnings"] or "[]"),
             "advice": row["advice"],
+            "confidence": row["confidence"] or 0,
+            "explanation": row["explanation"] or "Not available",
             "scanned_at": row["scanned_at"]
         })
 
@@ -341,7 +349,8 @@ def export_history():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, message, score, risk, warnings, advice, scanned_at
+       SELECT id, message, score, risk, warnings,
+       advice, confidence, explanation, scanned_at
         FROM scan_history
         ORDER BY id DESC
     """)
@@ -353,9 +362,10 @@ def export_history():
     writer = csv.writer(output)
 
     writer.writerow([
-        "ID", "Message", "Score", "Risk",
-        "Warnings", "Advice", "Scanned At"
-    ])
+    "ID", "Message", "Score", "Risk",
+    "Warnings", "Advice", "AI Confidence",
+    "AI Explanation", "Scanned At"
+])
 
     for row in rows:
         writer.writerow(row)
@@ -383,13 +393,15 @@ def get_scan_details(scan_id):
     if row is None:
         return jsonify({"error": "Scan not found"}), 404
 
-    return jsonify({
+        return jsonify({
         "id": row["id"],
         "message": row["message"],
         "score": row["score"],
         "risk": row["risk"],
-        "warnings": json.loads(row["warnings"]),
+        "warnings": json.loads(row["warnings"] or "[]"),
         "advice": row["advice"],
+        "confidence": row["confidence"] or 0,
+        "explanation": row["explanation"] or "Not available",
         "scanned_at": row["scanned_at"]
     })
 

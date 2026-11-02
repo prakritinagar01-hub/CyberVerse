@@ -951,6 +951,8 @@ async function loadScanHistory() {
                     );
 
                     addDetail("Safety Advice", details.advice);
+                    addDetail("AI Confidence", `${details.confidence ?? "Not available"}%`);
+                    addDetail("AI Explanation", details.explanation || "Not available");
                     addDetail("Scanned At", details.scanned_at);
 
                     modal.style.display = "flex";
