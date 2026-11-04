@@ -40,14 +40,14 @@ def init_db():
     columns = [column[1] for column in cursor.fetchall()]
  
     if "confidence" not in columns:
-     cursor.execute(
-        "ALTER TABLE scan_history ADD COLUMN confidence INTEGER"
-    )
+        cursor.execute(
+            "ALTER TABLE scan_history ADD COLUMN confidence INTEGER"
+        )
 
     if "explanation" not in columns:
-     cursor.execute(
-        "ALTER TABLE scan_history ADD COLUMN explanation TEXT"
-    )
+        cursor.execute(
+            "ALTER TABLE scan_history ADD COLUMN explanation TEXT"
+        )
     conn.commit()
     conn.close()
 
@@ -113,9 +113,13 @@ def analyse_message(message):
         score += 20
         warnings.append("Urgent or threatening language detected.")
 
-    if re.search(r"\b(password|otp|pin|cvv)\b", text):
+    if re.search(
+        r"\b(share|send|tell|give|provide|enter|submit|reveal)\b.{0,40}\b(otp|password|pin|cvv)\b"
+        r"|\b(otp|password|pin|cvv)\b.{0,40}\b(share|send|tell|give|provide|enter|submit|reveal)\b",
+        text
+    ):
         score += 25
-        warnings.append("Sensitive information may be requested.")
+        warnings.append("Message appears to request sensitive information.")
 
     if re.search(r"\b(click here|verify account|login now|reset password)\b", text):
         score += 25
@@ -164,7 +168,7 @@ Identify phishing, scams, suspicious links, urgency,
 requests for OTP/password, impersonation, and other risks.
 
 Return ONLY valid JSON in this exact structure:
-{
+{{
   "score": 0,
   "risk": "Low",
   "confidence": 0,
@@ -173,7 +177,7 @@ Return ONLY valid JSON in this exact structure:
     "Specific suspicious behaviour found in the message"
   ],
   "advice": "Give 2-3 specific and practical safety actions based on this message."
-}
+}}
 
 Rules:
 - Score must be an integer from 0 to 100.
@@ -204,7 +208,7 @@ Rules:
     result = json.loads(raw)
 
     score = max(0, min(100, int(result["score"])))
-    confidence = max(0, min(100, int(result.get("confidence", 0))))
+    confidence = 50
     explanation = str(result.get("explanation", "No explanation provided."))
     risk = str(result["risk"]).title()
 
@@ -258,18 +262,14 @@ def analyze():
 
     if not isinstance(message, str) or not message.strip():
         return jsonify({"error": "Please enter a message to analyze."}), 400
-
     if len(message) > 5000:
         return jsonify({"error": "Message must be 5000 characters or fewer."}), 400
-
+    
     try:
         ai_result = analyse_with_ai(message)
         rule_result = analyse_message(message)
 
-        final_score = max(
-            ai_result["score"],
-            rule_result["score"]
-        )
+        final_score = max(ai_result["score"], rule_result["score"])
 
         if final_score >= 50:
             final_risk = "High"
@@ -277,29 +277,58 @@ def analyze():
             final_risk = "Medium"
         else:
             final_risk = "Low"
-
         combined_warnings = list(dict.fromkeys(
             ai_result["warnings"] + rule_result["warnings"]
         ))
 
-        result = {
-    "score": final_score,
-    "risk": final_risk,
-    "confidence": ai_result["confidence"],
-    "explanation": ai_result["explanation"],
-    "warnings": combined_warnings,
-    "advice": ai_result["advice"],
-    "analysis_method": "Hybrid AI + Rule-Based"
-}
+        if "Message appears to request sensitive information." in rule_result["warnings"]:
+            combined_warnings = [
+                warning for warning in combined_warnings
+                if warning != "No specific suspicious behaviour was identified by AI."
+            ]
 
-    except (requests.RequestException, ValueError, KeyError, TypeError):
+        # Estimate consistency based on AI and rule-based agreement
+        if ai_result["risk"] == rule_result["risk"]:
+            confidence = 80
+        else:
+            confidence = 60
+
+        # Keep AI explanation consistent with rule-based warnings
+        explanation = ai_result["explanation"]
+        advice = ai_result["advice"]
+
+        if "Message appears to request sensitive information." in rule_result["warnings"]:
+            explanation = (
+                "This message appears to request sensitive information "
+                "such as an OTP, password, PIN or CVV. Sharing these details "
+                "can compromise your account."
+            )
+            advice = (
+                "Do not share your OTP, password, PIN or CVV. "
+                "Verify the request directly with the official service."
+            )
+
+        result = {
+            "score": final_score,
+            "risk": final_risk,
+            "confidence": confidence,
+            "explanation": explanation,
+            "warnings": combined_warnings,
+            "advice": advice,
+            "analysis_method": "Hybrid AI + Rule-Based"
+        }
+
+
+         
+    except (requests.RequestException, ValueError, KeyError, TypeError) as e:
+        print("AI ANALYSIS ERROR:", repr(e))
         result = analyse_message(message)
+        result["confidence"] = 0
+        result["explanation"] = "AI analysis failed. Rule-based fallback is active."
         result["analysis_method"] = "Rule-based fallback"
 
     save_scan(message, result)
-
     return jsonify(result)
-
 
 @app.route("/api/history", methods=["GET"])
 def get_history():
@@ -393,7 +422,7 @@ def get_scan_details(scan_id):
     if row is None:
         return jsonify({"error": "Scan not found"}), 404
 
-        return jsonify({
+    return jsonify({
         "id": row["id"],
         "message": row["message"],
         "score": row["score"],

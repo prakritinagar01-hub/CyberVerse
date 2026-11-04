@@ -1,4 +1,11 @@
 
+"use strict";
+
+// ==========================================
+// CYBERVERSE - MAIN JAVASCRIPT
+// PART 1 OF 3
+// ==========================================
+
 const $ = (selector) => document.querySelector(selector);
 
 // ==========================================
@@ -59,7 +66,8 @@ const quiz = [
 const saved = (() => {
     try {
         return JSON.parse(localStorage.getItem("cyberverse-progress")) || {};
-    } catch {
+    } catch (error) {
+        console.error("Progress loading error:", error);
         return {};
     }
 })();
@@ -68,7 +76,6 @@ state.xp = Number(saved.xp) || 0;
 state.completed = Number(saved.completed) || 0;
 state.messages = Number(saved.messages) || 0;
 state.quizCorrect = Boolean(saved.quizCorrect);
-
 
 // ==========================================
 // 2. PROGRESS AND XP
@@ -85,7 +92,11 @@ function persist() {
 
 function toast(message) {
     const el = $("#toast");
-    if (!el) return;
+
+    if (!el) {
+        console.log(message);
+        return;
+    }
 
     el.textContent = message;
     el.classList.add("show");
@@ -165,7 +176,6 @@ function renderStats() {
     });
 }
 
-
 // ==========================================
 // 3. RULE-BASED MESSAGE ANALYSIS
 // ==========================================
@@ -205,7 +215,6 @@ function analyseMessage(text) {
     ];
 
     const matched = checks.filter(check => check.pattern.test(text));
-
     const warnings = matched.map(check => check.warning);
 
     const score = Math.min(
@@ -222,7 +231,6 @@ function analyseMessage(text) {
     return { score, risk, warnings };
 }
 
-
 // ==========================================
 // 4. MESSAGE SCANNER - AI API
 // ==========================================
@@ -232,10 +240,10 @@ const scanButton = $("#scanButton");
 const messageResult = $("#messageResult");
 
 if (messageInput) {
-    messageInput.addEventListener("input", e => {
+    messageInput.addEventListener("input", event => {
         if ($("#charCount")) {
             $("#charCount").textContent =
-                `${e.target.value.length} / 3000`;
+                `${event.target.value.length} / 3000`;
         }
     });
 }
@@ -274,54 +282,58 @@ if (scanButton && messageInput && messageResult) {
             }
 
             state.messages += 1;
+            persist();
+            renderStats();
 
             messageResult.classList.remove("hidden");
 
             const heading = document.createElement("h4");
 
             const riskLabel = document.createElement("span");
-            riskLabel.className = `risk-${String(result.risk).toLowerCase()}`;
+            riskLabel.className =
+                `risk-${String(result.risk).toLowerCase()}`;
             riskLabel.textContent = String(result.risk).toUpperCase();
 
             heading.textContent = "Risk estimate: ";
             heading.append(riskLabel, ` · ${result.score}/100`);
 
-            const advice = document.createElement("p");
             // AI Confidence Meter
-const confidence = Math.max(
-    0,
-    Math.min(100, Number(result.confidence) || 0)
-);
+            const confidence = Math.max(
+                0,
+                Math.min(100, Number(result.confidence) || 0)
+            );
 
-const confidenceSection = document.createElement("div");
-confidenceSection.className = "confidence-section";
+            const confidenceSection = document.createElement("div");
+            confidenceSection.className = "confidence-section";
 
-const confidenceLabel = document.createElement("p");
-confidenceLabel.textContent = `AI Confidence Estimate: ${confidence}%`;
+            const confidenceLabel = document.createElement("p");
+            confidenceLabel.textContent =
+                `AI Confidence Estimate: ${confidence}%`;
 
-const confidenceTrack = document.createElement("div");
-confidenceTrack.className = "confidence-track";
+            const confidenceTrack = document.createElement("div");
+            confidenceTrack.className = "confidence-track";
 
-const confidenceBar = document.createElement("div");
-confidenceBar.className = "confidence-bar";
-confidenceBar.style.width = `${confidence}%`;
+            const confidenceBar = document.createElement("div");
+            confidenceBar.className = "confidence-bar";
+            confidenceBar.style.width = `${confidence}%`;
 
-confidenceTrack.appendChild(confidenceBar);
-confidenceSection.append(confidenceLabel, confidenceTrack);
+            confidenceTrack.appendChild(confidenceBar);
+            confidenceSection.append(confidenceLabel, confidenceTrack);
 
+            // AI Explanation
+            const explanation = document.createElement("p");
+            explanation.className = "ai-explanation";
 
-// AI Explanation
-const explanation = document.createElement("p");
-explanation.className = "ai-explanation";
+            const explanationTitle = document.createElement("strong");
+            explanationTitle.textContent = "AI Explanation: ";
 
-const explanationTitle = document.createElement("strong");
-explanationTitle.textContent = "AI Explanation: ";
+            const explanationText = document.createElement("span");
+            explanationText.textContent =
+                result.explanation || "No explanation available.";
 
-const explanationText = document.createElement("span");
-explanationText.textContent =
-    result.explanation || "No explanation available.";
+            explanation.append(explanationTitle, explanationText);
 
-explanation.append(explanationTitle, explanationText);
+            const advice = document.createElement("p");
             advice.textContent = result.advice || "Stay alert.";
 
             const warningList = document.createElement("ul");
@@ -341,19 +353,16 @@ explanation.append(explanationTitle, explanationText);
                 `${result.analysis_method || "Local analysis"} · A low score does not guarantee safety.`;
 
             messageResult.replaceChildren(
-    heading,
-    confidenceSection,
-    explanation,
-    advice,
-    warningList,
-    method
-);
-            
+                heading,
+                confidenceSection,
+                explanation,
+                advice,
+                warningList,
+                method
+            );
 
             awardXP(20, "Message scan");
             logMessageScan(result);
-
-            // Refresh saved scan history
             loadScanHistory();
 
         } catch (error) {
@@ -361,11 +370,10 @@ explanation.append(explanationTitle, explanationText);
             console.error(error);
         } finally {
             scanButton.disabled = false;
-           scanButton.textContent = "Analyze message →";
+            scanButton.textContent = "Analyze message →";
         }
     });
 }
-
 
 // ==========================================
 // 5. DEMO BUTTON
@@ -387,12 +395,9 @@ if (demoButton) {
 
         if (scanButton) scanButton.click();
 
-        if ($("#labs")) {
-            $("#labs").scrollIntoView({ behavior: "smooth" });
-        }
+        $("#labs")?.scrollIntoView({ behavior: "smooth" });
     });
 }
-
 
 // ==========================================
 // 6. PASSWORD STRENGTH LAB
@@ -438,8 +443,8 @@ function checkPassword(password) {
 const passwordInput = $("#passwordInput");
 
 if (passwordInput) {
-    passwordInput.addEventListener("input", e => {
-        const password = e.target.value;
+    passwordInput.addEventListener("input", event => {
+        const password = event.target.value;
         const result = checkPassword(password);
 
         if ($("#strengthText")) {
@@ -499,7 +504,6 @@ if (passwordInput) {
         }
     });
 }
-
 
 // ==========================================
 // 7. CYBER TERMINAL
@@ -571,10 +575,10 @@ function runCommand(raw) {
         "Unknown command. Type 'help' to see available commands."
     ];
 
-    result.forEach((line, i) => {
+    result.forEach((line, index) => {
         terminalLine(
             line,
-            command === "scan demo" && i === 2
+            command === "scan demo" && index === 2
                 ? "warning-line"
                 : "success-line"
         );
@@ -588,8 +592,8 @@ function runCommand(raw) {
 const terminalForm = $("#terminalForm");
 
 if (terminalForm) {
-    terminalForm.addEventListener("submit", e => {
-        e.preventDefault();
+    terminalForm.addEventListener("submit", event => {
+        event.preventDefault();
 
         const input = $("#terminalInput");
         if (!input) return;
@@ -609,7 +613,6 @@ document.querySelectorAll("[data-command]").forEach(button => {
 // ==========================================
 // 8. CYBER SECURITY QUIZ
 // ==========================================
-
 function renderQuiz() {
     const questionElement = $("#quizQuestion");
     const optionsElement = $("#quizOptions");
@@ -631,24 +634,18 @@ function renderQuiz() {
     q.options.forEach((option, index) => {
         const button = document.createElement("button");
         button.textContent = option;
-        button.dataset.answer = index;
 
         button.addEventListener("click", () => {
-            const selected = index;
+            optionsElement.querySelectorAll("button").forEach((item, i) => {
+                item.disabled = true;
 
-            optionsElement.querySelectorAll("button").forEach((b, i) => {
-                b.disabled = true;
-
-                if (i === q.answer) {
-                    b.classList.add("correct");
-                }
-
-                if (i === selected && selected !== q.answer) {
-                    b.classList.add("incorrect");
+                if (i === q.answer) item.classList.add("correct");
+                if (i === index && index !== q.answer) {
+                    item.classList.add("incorrect");
                 }
             });
 
-            const correct = selected === q.answer;
+            const correct = index === q.answer;
 
             feedbackElement.textContent = correct
                 ? q.explanation
@@ -682,7 +679,6 @@ if (nextQuestion) {
         renderQuiz();
     });
 }
-
 
 // ==========================================
 // 9. ACTIVITY FEED
@@ -725,9 +721,11 @@ function addActivity(iconText, titleText, descriptionText) {
 function logMessageScan(result) {
     const risk = String(result.risk || "Low").toLowerCase();
 
-    const icon =
-        risk === "high" ? "🚨" :
-        risk === "medium" ? "⚠️" : "🛡️";
+    const icon = risk === "high"
+        ? "🚨"
+        : risk === "medium"
+            ? "⚠️"
+            : "🛡️";
 
     addActivity(
         icon,
@@ -735,7 +733,6 @@ function logMessageScan(result) {
         `Risk score: ${result.score}/100 · ${result.analysis_method || "Local analysis"}`
     );
 }
-
 
 // ==========================================
 // 10. THREAT RADAR
@@ -785,7 +782,6 @@ if (radarScanBtn && radarMessage && threatCount && radarMap) {
     });
 }
 
-
 // ==========================================
 // 11. SECURITY SCORE METER
 // ==========================================
@@ -828,10 +824,12 @@ if (scoreCheckBtn && securityScore && scoreMeter && scoreStatus) {
     });
 }
 
-
 // ==========================================
 // 12. SCAN HISTORY
 // ==========================================
+
+let riskChartInstance = null;
+let activityChartInstance = null;
 
 async function loadScanHistory() {
     const historyList = $("#historyList");
@@ -848,6 +846,11 @@ async function loadScanHistory() {
         }
 
         const history = await response.json();
+
+        if (!Array.isArray(history)) {
+            throw new Error("Invalid scan history response");
+        }
+
         renderAnalytics(history);
 
         const totalElement = $("#historyTotal");
@@ -887,7 +890,8 @@ async function loadScanHistory() {
             heading.className = "history-card-heading";
 
             const risk = document.createElement("span");
-            risk.className = `risk-${String(item.risk).toLowerCase()}`;
+            risk.className =
+                `risk-${String(item.risk).toLowerCase()}`;
             risk.textContent = item.risk;
 
             const score = document.createElement("strong");
@@ -896,10 +900,10 @@ async function loadScanHistory() {
             heading.append(risk, score);
 
             const message = document.createElement("p");
-            message.textContent = item.message;
+            message.textContent = item.message || "Message unavailable";
 
             const date = document.createElement("small");
-            date.textContent = item.scanned_at;
+            date.textContent = item.scanned_at || "Date unavailable";
 
             const detailsButton = document.createElement("button");
             detailsButton.className = "button secondary";
@@ -907,7 +911,9 @@ async function loadScanHistory() {
 
             detailsButton.addEventListener("click", async () => {
                 try {
-                    const response = await fetch(`/api/history/${item.id}`);
+                    const response = await fetch(
+                        `/api/history/${encodeURIComponent(item.id)}`
+                    );
 
                     const details = await response.json();
 
@@ -951,8 +957,14 @@ async function loadScanHistory() {
                     );
 
                     addDetail("Safety Advice", details.advice);
-                    addDetail("AI Confidence", `${details.confidence ?? "Not available"}%`);
-                    addDetail("AI Explanation", details.explanation || "Not available");
+                    addDetail(
+                        "AI Confidence",
+                        `${details.confidence ?? "Not available"}%`
+                    );
+                    addDetail(
+                        "AI Explanation",
+                        details.explanation || "Not available"
+                    );
                     addDetail("Scanned At", details.scanned_at);
 
                     modal.style.display = "flex";
@@ -973,7 +985,6 @@ async function loadScanHistory() {
     }
 }
 
-
 // ==========================================
 // 13. REFRESH SCAN HISTORY
 // ==========================================
@@ -983,7 +994,6 @@ const refreshHistory = $("#refreshHistory");
 if (refreshHistory) {
     refreshHistory.addEventListener("click", loadScanHistory);
 }
-
 
 // ==========================================
 // 14. DELETE SCAN HISTORY
@@ -1008,8 +1018,7 @@ if (deleteHistory) {
                 throw new Error("Delete failed");
             }
 
-            alert("Scan history deleted successfully!");
-
+            toast("Scan history deleted successfully!");
             loadScanHistory();
 
         } catch (error) {
@@ -1018,7 +1027,6 @@ if (deleteHistory) {
         }
     });
 }
-
 
 // ==========================================
 // 15. EXPORT SCAN REPORT
@@ -1031,7 +1039,6 @@ if (exportHistory) {
         window.location.href = "/api/export";
     });
 }
-
 
 // ==========================================
 // 16. CLOSE SCAN DETAILS MODAL
@@ -1053,12 +1060,10 @@ if (scanModal) {
         }
     });
 }
-// =====================================
-// CYBERVERSE SCAN ANALYTICS
-// =====================================
 
-let riskChartInstance = null;
-let activityChartInstance = null;
+// ==========================================
+// 17. SCAN ANALYTICS
+// ==========================================
 
 async function loadAnalytics() {
     try {
@@ -1069,7 +1074,6 @@ async function loadAnalytics() {
         }
 
         const history = await response.json();
-
         renderAnalytics(history);
 
     } catch (error) {
@@ -1078,617 +1082,231 @@ async function loadAnalytics() {
 }
 
 function renderAnalytics(history) {
+    const riskCanvas = $("#riskChart");
+    const activityCanvas = $("#activityChart");
 
-    const riskCanvas = document.getElementById("riskChart");
-    // AI PERFORMANCE METRICS
-const aiScanCount = document.getElementById("aiScanCount");
-const avgConfidence = document.getElementById("avgConfidence");
-
-// AI-powered scans (confidence > 0)
-const aiScans = history.filter(
-    item => Number(item.confidence) > 0
-);
-
-if (aiScanCount) {
-    aiScanCount.textContent = aiScans.length;
-}
-
-// Average AI confidence
-const confidenceTotal = aiScans.reduce(
-    (sum, item) => sum + Number(item.confidence),
-    0
-);
-
-const average = aiScans.length
-    ? Math.round(confidenceTotal / aiScans.length)
-    : 0;
-
-if (avgConfidence) {
-    avgConfidence.textContent = `${average}%`;
-}
-    const activityCanvas = document.getElementById("activityChart");
-
-    if (!riskCanvas || !activityCanvas || typeof Chart === "undefined") {
+    if (
+        !riskCanvas ||
+        !activityCanvas ||
+        typeof Chart === "undefined" ||
+        !Array.isArray(history)
+    ) {
         return;
     }
 
-    // ==========================================
-// PREMIUM RISK DISTRIBUTION CHART
-// ==========================================
+    const high = history.filter(item => item.risk === "High").length;
+    const medium = history.filter(item => item.risk === "Medium").length;
+    const low = history.filter(item => item.risk === "Low").length;
 
-const high = history.filter(item => item.risk === "High").length;
-const medium = history.filter(item => item.risk === "Medium").length;
-const low = history.filter(item => item.risk === "Low").length;
+    const total = high + medium + low;
 
-const total = high + medium + low;
-
-if (riskChartInstance) {
-    riskChartInstance.destroy();
-}
-
-const centerTextPlugin = {
-    id: "riskCenterText",
-
-    afterDraw(chart) {
-        const { ctx, chartArea } = chart;
-
-        if (!chartArea) return;
-
-        const centerX = (chartArea.left + chartArea.right) / 2;
-        const centerY = (chartArea.top + chartArea.bottom) / 2;
-
-        ctx.save();
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        ctx.font = "bold 30px Inter";
-        ctx.fillStyle = "#edf2ff";
-
-        ctx.fillText(total, centerX, centerY - 9);
-
-        ctx.font = "11px Inter";
-        ctx.fillStyle = "#8d9ab9";
-
-        ctx.fillText("TOTAL SCANS", centerX, centerY + 17);
-
-        ctx.restore();
+    if (riskChartInstance) {
+        riskChartInstance.destroy();
     }
-};
 
-riskChartInstance = new Chart(riskCanvas, {
-    type: "doughnut",
+    const centerTextPlugin = {
+        id: "riskCenterText",
 
-    data: {
-        labels: ["High Risk", "Medium Risk", "Low Risk"],
+        afterDraw(chart) {
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return;
 
-        datasets: [{
-            data: total > 0 ? [high, medium, low] : [1],
+            const centerX = (chartArea.left + chartArea.right) / 2;
+            const centerY = (chartArea.top + chartArea.bottom) / 2;
 
-            backgroundColor: total > 0
-                ? ["#ff5470", "#ffbd59", "#43e6a0"]
-                : ["#293653"],
+            ctx.save();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
 
-            borderColor: "#0b122a",
-            borderWidth: 5,
-            borderRadius: 8,
-            hoverOffset: 12,
-            spacing: 4
-        }]
-    },
+            ctx.font = "bold 30px Inter";
+            ctx.fillStyle = "#edf2ff";
+            ctx.fillText(total, centerX, centerY - 9);
 
-    plugins: [centerTextPlugin],
+            ctx.font = "11px Inter";
+            ctx.fillStyle = "#8d9ab9";
+            ctx.fillText("TOTAL SCANS", centerX, centerY + 17);
 
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        cutout: "76%",
+            ctx.restore();
+        }
+    };
 
-        animation: {
-            animateRotate: true,
-            animateScale: true,
-            duration: 1000
+    riskChartInstance = new Chart(riskCanvas, {
+        type: "doughnut",
+
+        data: {
+            labels: ["High Risk", "Medium Risk", "Low Risk"],
+
+            datasets: [{
+                data: total > 0 ? [high, medium, low] : [1],
+
+                backgroundColor: total > 0
+                    ? ["#ff5470", "#ffbd59", "#43e6a0"]
+                    : ["#293653"],
+
+                borderColor: "#0b122a",
+                borderWidth: 5,
+                borderRadius: 8,
+                hoverOffset: 12,
+                spacing: 4
+            }]
         },
 
-        plugins: {
-            legend: {
-                position: "bottom",
+        plugins: [centerTextPlugin],
 
-                labels: {
-                    color: "#cbd5ed",
-                    padding: 22,
-                    usePointStyle: true,
-                    pointStyle: "circle",
-                    boxWidth: 9,
-                    boxHeight: 9,
-                    font: {
-                        family: "Inter",
-                        size: 11,
-                        weight: "500"
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: "76%",
+
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 1000
+            },
+
+            plugins: {
+                legend: {
+                    position: "bottom",
+
+                    labels: {
+                        color: "#cbd5ed",
+                        padding: 22,
+                        usePointStyle: true,
+                        pointStyle: "circle",
+                        boxWidth: 9,
+                        boxHeight: 9,
+                        font: {
+                            family: "Inter",
+                            size: 11,
+                            weight: "500"
+                        }
                     }
-                }
-            },
-
-            tooltip: {
-                enabled: total > 0,
-
-                backgroundColor: "#111a35",
-                titleColor: "#4de5ff",
-                bodyColor: "#edf2ff",
-                borderColor: "rgba(77,229,255,0.3)",
-                borderWidth: 1,
-                padding: 12,
-                cornerRadius: 10,
-
-                callbacks: {
-                    label(context) {
-                        const value = context.raw;
-                        const percentage = ((value / total) * 100).toFixed(1);
-
-                        return ` ${value} scans (${percentage}%)`;
-                    }
-                }
-            }
-        }
-    }
-});
-
-    // Scan activity (last 7 days)
-   // ==========================================
-// RISK TREND - LAST 7 DAYS
-// ==========================================
-
-const days = [];
-
-for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-
-    days.push({
-        label: date.toLocaleDateString("en-IN", {
-            day: "2-digit",
-            month: "short"
-        }),
-        date: date.toLocaleDateString("en-CA"),
-        high: 0,
-        medium: 0,
-        low: 0
-    });
-}
-
-history.forEach(item => {
-    const scanDate = item.scanned_at?.split(" ")[0];
-    const day = days.find(d => d.date === scanDate);
-
-    if (!day) return;
-
-    if (item.risk === "High") day.high++;
-    else if (item.risk === "Medium") day.medium++;
-    else if (item.risk === "Low") day.low++;
-});
-
-if (activityChartInstance) {
-    activityChartInstance.destroy();
-}
-
-activityChartInstance = new Chart(activityCanvas, {
-    type: "line",
-    data: {
-        labels: days.map(day => day.label),
-        datasets: [
-            {
-                label: "High Risk",
-                data: days.map(day => day.high),
-                borderColor: "#ff5470",
-                backgroundColor: "rgba(255,84,112,0.12)",
-                tension: 0.4,
-                fill: false
-            },
-            {
-                label: "Medium Risk",
-                data: days.map(day => day.medium),
-                borderColor: "#ffbd59",
-                backgroundColor: "rgba(255,189,89,0.12)",
-                tension: 0.4,
-                fill: false
-            },
-            {
-                label: "Low Risk",
-                data: days.map(day => day.low),
-                borderColor: "#43e6a0",
-                backgroundColor: "rgba(67,230,160,0.12)",
-                tension: 0.4,
-                fill: false
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        interaction: {
-            intersect: false,
-            mode: "index"
-        },
-        plugins: {
-            legend: {
-                labels: {
-                    color: "#ffffff"
-                }
-            }
-        },
-        scales: {
-            x: {
-                ticks: { color: "#ffffff" },
-                grid: { display: false }
-            },
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    color: "#ffffff",
-                    precision: 0
-                }
-            }
-        }
-    }
-});
-
-}
-
-
-
-
-
-// ==========================================
-// 17. INITIALIZE APP
-// ==========================================
-
-renderStats();
-renderQuiz();
-loadScanHistory();
-loadUrlHistory();
-loadRecentActivity();
-setInterval(loadRecentActivity, 10000);
-// =====================================
-// URL SECURITY SCANNER
-// =====================================
-
-const urlInput = document.getElementById("urlInput");
-const urlBtn = document.getElementById("urlBtn");
-const urlResult = document.getElementById("urlResult");
-
-if (urlBtn && urlInput && urlResult) {
-    urlBtn.addEventListener("click", async () => {
-        const url = urlInput.value.trim();
-
-        if (!url) {
-            urlResult.classList.remove("hidden");
-            urlResult.textContent = "Please enter a URL first.";
-            return;
-        }
-
-        urlBtn.disabled = true;
-        urlBtn.textContent = "Scanning...";
-
-        urlResult.classList.remove("hidden");
-        urlResult.textContent = "Analyzing URL...";
-
-        try {
-            const response = await fetch("/api/scan-url", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ url: url })
-            });
 
-            const data = await response.json();
+                tooltip: {
+                    enabled: total > 0,
+                    backgroundColor: "#111a35",
+                    titleColor: "#4de5ff",
+                    bodyColor: "#edf2ff",
+                    borderColor: "rgba(77,229,255,0.3)",
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 10,
 
-            if (!response.ok) {
-                throw new Error(data.error || "URL scan failed.");
+                    callbacks: {
+                        label(context) {
+                            const value = context.raw;
+                            const percentage = total
+                                ? ((value / total) * 100).toFixed(1)
+                                : 0;
+
+                            return `${value} scans (${percentage}%)`;
+                        }
+                    }
+                }
             }
-
-            urlResult.replaceChildren();
-
-            const heading = document.createElement("h3");
-            heading.textContent = `${data.risk} Risk — ${data.score}/100`;
-
-            const scannedUrl = document.createElement("p");
-            scannedUrl.textContent = `Scanned URL: ${data.url}`;
-
-            const warningsTitle = document.createElement("strong");
-            warningsTitle.textContent = "Warnings:";
-
-            const warningList = document.createElement("ul");
-
-            if (data.warnings.length > 0) {
-                data.warnings.forEach(warning => {
-                    const item = document.createElement("li");
-                    item.textContent = warning;
-                    warningList.appendChild(item);
-                });
-            } else {
-                const item = document.createElement("li");
-                item.textContent = "No common warning signs detected.";
-                warningList.appendChild(item);
-            }
-
-            const advice = document.createElement("p");
-            advice.textContent = data.advice;
-
-            urlResult.append(
-                heading,
-                scannedUrl,
-                warningsTitle,
-                warningList,
-                advice
-            );
-            loadUrlHistory();
-
-        } catch (error) {
-            urlResult.textContent = error.message;
-        } finally {
-            urlBtn.disabled = false;
-            urlBtn.textContent = "Scan URL →";
         }
     });
-}
-// ==========================================
-// URL SCAN HISTORY
-// ==========================================
 
-async function loadUrlHistory() {
-    const historyList = $("#urlHistoryList");
+    // Last 7 days activity
+    const days = [];
 
-    if (!historyList) return;
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
 
-    try {
-        historyList.textContent = "Loading URL history...";
-
-        const response = await fetch("/api/url-history");
-
-        if (!response.ok) {
-            throw new Error("Unable to load URL history.");
-        }
-
-        const history = await response.json();
-
-        // Update statistics
-        $("#urlHistoryTotal").textContent = history.length;
-        $("#urlHistoryHigh").textContent =
-            history.filter(item => item.risk === "High").length;
-
-        $("#urlHistoryMedium").textContent =
-            history.filter(item => item.risk === "Medium").length;
-
-        $("#urlHistoryLow").textContent =
-            history.filter(item => item.risk === "Low").length;
-
-        historyList.replaceChildren();
-
-        if (history.length === 0) {
-            historyList.textContent = "No URL scans found yet.";
-            return;
-        }
-
-        history.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "history-card";
-
-            const heading = document.createElement("div");
-            heading.className = "history-card-heading";
-
-            const risk = document.createElement("span");
-            risk.className = `risk-${String(item.risk).toLowerCase()}`;
-            risk.textContent = item.risk;
-
-            const score = document.createElement("strong");
-            score.textContent = `${item.score}/100`;
-
-            heading.append(risk, score);
-
-            const url = document.createElement("p");
-            url.textContent = item.url;
-
-            const date = document.createElement("small");
-            date.textContent = item.scanned_at;
-
-            const warnings = document.createElement("p");
-            warnings.textContent =
-                (item.warnings || []).join(" • ") || "No warnings detected.";
-
-            card.append(heading, url, date, warnings);
-            historyList.appendChild(card);
+        days.push({
+            label: date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short"
+            }),
+            date: date.toLocaleDateString("en-CA"),
+            high: 0,
+            medium: 0,
+            low: 0
         });
-
-    } catch (error) {
-        historyList.textContent = "Could not load URL history.";
-        console.error(error);
     }
-}
 
+    history.forEach(item => {
+        const scanDate = item.scanned_at?.split(" ")[0];
+        const day = days.find(d => d.date === scanDate);
 
-// Refresh URL history
-const refreshUrlHistory = $("#refreshUrlHistory");
+        if (!day) return;
 
-if (refreshUrlHistory) {
-    refreshUrlHistory.addEventListener("click", loadUrlHistory);
-}
+        if (item.risk === "High") day.high++;
+        else if (item.risk === "Medium") day.medium++;
+        else if (item.risk === "Low") day.low++;
+    });
 
+    if (activityChartInstance) {
+        activityChartInstance.destroy();
+    }
 
-// Delete URL history
-const deleteUrlHistory = $("#deleteUrlHistory");
+    activityChartInstance = new Chart(activityCanvas, {
+        type: "line",
 
-if (deleteUrlHistory) {
-    deleteUrlHistory.addEventListener("click", async () => {
+        data: {
+            labels: days.map(day => day.label),
 
-        if (!confirm("Delete all URL scan history?")) return;
+            datasets: [
+                {
+                    label: "High Risk",
+                    data: days.map(day => day.high),
+                    borderColor: "#ff5470",
+                    backgroundColor: "rgba(255,84,112,0.12)",
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: "Medium Risk",
+                    data: days.map(day => day.medium),
+                    borderColor: "#ffbd59",
+                    backgroundColor: "rgba(255,189,89,0.12)",
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: "Low Risk",
+                    data: days.map(day => day.low),
+                    borderColor: "#43e6a0",
+                    backgroundColor: "rgba(67,230,160,0.12)",
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
 
-        try {
-            const response = await fetch("/api/url-history", {
-                method: "DELETE"
-            });
+        options: {
+            responsive: true,
 
-            if (!response.ok) {
-                throw new Error("Delete failed.");
+            interaction: {
+                intersect: false,
+                mode: "index"
+            },
+
+            plugins: {
+                legend: {
+                    labels: {
+                        color: "#ffffff"
+                    }
+                }
+            },
+
+            scales: {
+                x: {
+                    ticks: { color: "#ffffff" },
+                    grid: { display: false }
+                },
+
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: "#ffffff",
+                        precision: 0
+                    }
+                }
             }
-
-            toast("URL history deleted successfully!");
-            loadUrlHistory();
-
-        } catch (error) {
-            toast("Could not delete URL history.");
-            console.error(error);
         }
     });
 }
 
-// ===================================
-// CYBERVERSE - LIVE ACTIVITY FEED
-// ===================================
-
-async function loadRecentActivity() {
-    const feed = document.getElementById("activity-feed");
-
-    if (!feed) return;
-
-    try {
-        const response = await fetch("/api/recent-activity");
-
-        if (!response.ok) {
-            throw new Error("Unable to load activities");
-        }
-
-        const activities = await response.json();
-        // Ignore old alerts during the first page load
-if (!activityInitialized) {
-    activities.forEach(item => {
-        if (item.risk.toLowerCase() === "high") {
-            notifiedThreats.add(item.type + "-" + item.id);
-        }
-    });
-
-    activityInitialized = true;
-}
-
-        feed.innerHTML = "";
-
-        if (activities.length === 0) {
-            feed.innerHTML = `
-                <p class="empty-history">
-                    No recent activity. Start your first security scan!
-                </p>
-            `;
-            return;
-        }
-
-        activities.forEach(item => {
-    showThreatNotification(item);
-
-    const risk = item.risk.toLowerCase();
-
-
-            const icon = risk === "high" ? "🚨"
-                : risk === "medium" ? "⚠️" : "🛡️";
-
-            const activity = document.createElement("div");
-            activity.className = "activity-item";
-
-            const details = document.createElement("div");
-            const title = document.createElement("strong");
-            const target = document.createElement("p");
-            const time = document.createElement("span");
-
-            title.textContent = `${item.type} — ${item.risk} Risk`;
-            target.textContent = `${item.target} | Score: ${item.score}/100`;
-            time.textContent = item.scanned_at;
-
-            const iconElement = document.createElement("span");
-            iconElement.className = "activity-icon";
-            iconElement.textContent = icon;
-
-            time.className = `activity-time risk-${risk}`;
-
-            details.append(title, target);
-            activity.append(iconElement, details, time);
-
-            feed.appendChild(activity);
-        });
-
-    } catch (error) {
-        console.error("Activity Feed Error:", error);
-        feed.textContent = "Unable to load recent activities.";
-    }
-}
-
-// ===================================
-// CYBERVERSE - HIGH RISK NOTIFICATIONS
-// ===================================
-
-const notifiedThreats = new Set();
-let activityInitialized = false;
-
-function showThreatNotification(item) {
-    if (item.risk.toLowerCase() !== "high") return;
-
-    const threatId = item.type + "-" + item.id;
-
-    // Prevent duplicate notifications
-    if (notifiedThreats.has(threatId)) return;
-
-    notifiedThreats.add(threatId);
-
-    const notification = document.createElement("div");
-    notification.className = "threat-notification";
-
-    notification.innerHTML = `
-    <span>🚨</span>
-    <div>
-        <strong>HIGH RISK DETECTED!</strong>
-        <p>${item.type} requires your attention.</p>
-        <button class="view-details-btn">View Details</button>
-    </div>
-    <button class="notification-close">×</button>
-`;
-notification.querySelector(".view-details-btn").onclick = () => {
-    const modal = $("#scanModal");
-    const modalDetails = $("#modalScanDetails");
-
-    if (!modal || !modalDetails) {
-        toast("Details modal not found.");
-        return;
-    }
-
-    modalDetails.replaceChildren();
-
-    const details = [
-        ["Scan Type", item.type],
-        ["Target", item.target],
-        ["Risk Level", item.risk],
-        ["Risk Score", `${item.score}/100`],
-        ["Scanned At", item.scanned_at]
-    ];
-
-    details.forEach(([label, value]) => {
-        const section = document.createElement("div");
-        const heading = document.createElement("h3");
-        const content = document.createElement("p");
-
-        heading.textContent = label;
-        content.textContent = value ?? "Not available";
-
-        section.append(heading, content);
-        modalDetails.appendChild(section);
-    });
-
-    modal.style.display = "flex";
-    notification.remove();
-};
-
-notification.querySelector(".notification-close").onclick = () => {
-    notification.remove();
-};
-
-    document.body.appendChild(notification);
-
-    
-
-    setTimeout(() => notification.remove(), 6000);
-}
