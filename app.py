@@ -1,14 +1,20 @@
-from flask import Flask, request, jsonify, render_template
+
+from flask import Flask, request, jsonify, render_template, make_response
 import re
 import requests
 import json
 import sqlite3
-from datetime import datetime
 import csv
 from io import StringIO
-from flask import make_response
+from datetime import datetime
+from urllib.parse import urlparse
 
 app = Flask(__name__)
+
+# ==========================================
+# DATABASE
+# ==========================================
+
 def init_db():
     conn = sqlite3.connect("cyberverse.db")
     cursor = conn.cursor()
@@ -24,6 +30,7 @@ def init_db():
             scanned_at TEXT
         )
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS url_scan_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,10 +42,10 @@ def init_db():
             scanned_at TEXT
         )
     """)
-    # Add AI fields to existing scan history database
+
     cursor.execute("PRAGMA table_info(scan_history)")
     columns = [column[1] for column in cursor.fetchall()]
- 
+
     if "confidence" not in columns:
         cursor.execute(
             "ALTER TABLE scan_history ADD COLUMN confidence INTEGER"
@@ -48,11 +55,18 @@ def init_db():
         cursor.execute(
             "ALTER TABLE scan_history ADD COLUMN explanation TEXT"
         )
+
     conn.commit()
     conn.close()
 
 
 init_db()
+
+
+# ==========================================
+# SAVE SCAN DATA
+# ==========================================
+
 def save_scan(message, result):
     conn = sqlite3.connect("cyberverse.db")
     cursor = conn.cursor()
@@ -69,15 +83,13 @@ def save_scan(message, result):
         json.dumps(result["warnings"]),
         result["advice"],
         result.get("confidence", 0),
-        result.get(
-            "explanation",
-            "AI explanation unavailable (rule-based fallback)."
-        ),
+        result.get("explanation", "Not available"),
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
 
     conn.commit()
     conn.close()
+
 
 def save_url_scan(url, result):
     conn = sqlite3.connect("cyberverse.db")
@@ -100,16 +112,28 @@ def save_url_scan(url, result):
     conn.close()
 
 
+# ==========================================
+# OLLAMA AI CONFIGURATION
+# ==========================================
+
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "qwen2.5:1.5b"
 
 
+# ==========================================
+# RULE-BASED PHISHING ANALYSIS
+# ==========================================
+
 def analyse_message(message):
+
     text = message.lower()
     score = 0
     warnings = []
 
-    if re.search(r"\b(urgent|immediately|act now|account suspended)\b", text):
+    if re.search(
+        r"\b(urgent|immediately|act now|account suspended)\b",
+        text
+    ):
         score += 20
         warnings.append("Urgent or threatening language detected.")
 
@@ -119,15 +143,27 @@ def analyse_message(message):
         text
     ):
         score += 25
-        warnings.append("Message appears to request sensitive information.")
+        warnings.append(
+            "Message appears to request sensitive information."
+        )
 
-    if re.search(r"\b(click here|verify account|login now|reset password)\b", text):
+    if re.search(
+        r"\b(click here|verify account|login now|reset password)\b",
+        text
+    ):
         score += 25
-        warnings.append("Suspicious link or account-verification language detected.")
+        warnings.append(
+            "Suspicious link or account-verification language detected."
+        )
 
-    if re.search(r"\b(won a prize|claim reward|free gift|lottery winner)\b", text):
+    if re.search(
+        r"\b(won a prize|claim reward|free gift|lottery winner)\b",
+        text
+    ):
         score += 25
-        warnings.append("Possible prize or reward scam language detected.")
+        warnings.append(
+            "Possible prize or reward scam language detected."
+        )
 
     score = min(score, 100)
 
@@ -139,7 +175,9 @@ def analyse_message(message):
         risk = "Low"
 
     if not warnings:
-        warnings.append("No common phishing keywords were detected.")
+        warnings.append(
+            "No common phishing keywords were detected."
+        )
 
     return {
         "score": score,
@@ -152,7 +190,12 @@ def analyse_message(message):
     }
 
 
+# ==========================================
+# AI PHISHING ANALYSIS
+# ==========================================
+
 def analyse_with_ai(message):
+
     prompt = f"""
 You are CyberVerse, an expert cybersecurity assistant.
 
@@ -167,30 +210,28 @@ Analyze this message:
 Identify phishing, scams, suspicious links, urgency,
 requests for OTP/password, impersonation, and other risks.
 
-Return ONLY valid JSON in this exact structure:
+Return ONLY valid JSON:
 {{
   "score": 0,
   "risk": "Low",
   "confidence": 0,
-  "explanation": "Explain why this message received this risk assessment.",
+  "explanation": "Explain the evidence behind the risk assessment.",
   "warnings": [
     "Specific suspicious behaviour found in the message"
   ],
-  "advice": "Give 2-3 specific and practical safety actions based on this message."
+  "advice": "Give practical safety actions."
 }}
 
 Rules:
 - Score must be an integer from 0 to 100.
 - Risk must be Low, Medium, or High.
 - Do not assume every message is phishing.
-- Explain what the user should do next.
-- Never advise the user to click suspicious links.
-- Never ask the user to share OTPs, passwords, PINs or CVV.
+- Never advise clicking suspicious links.
+- Never ask users to share OTPs or passwords.
+- Never describe a suspicious link as trustworthy.
 - Keep advice clear and simple.
 - Confidence must be an integer from 0 to 100.
-- Explanation must briefly describe the evidence behind the risk assessment.
 """
-
 
     response = requests.post(
         OLLAMA_URL,
@@ -198,22 +239,49 @@ Rules:
             "model": OLLAMA_MODEL,
             "prompt": prompt,
             "stream": False,
-            "format": "json"
+            "format": "json",
+            "options": {
+                "num_predict": 4096,
+                "temperature": 0.3
+            }
         },
         timeout=90
     )
+
     response.raise_for_status()
 
     raw = response.json()["response"]
     result = json.loads(raw)
 
     score = max(0, min(100, int(result["score"])))
-    confidence = 50
-    explanation = str(result.get("explanation", "No explanation provided."))
-    risk = str(result["risk"]).title()
 
-    if risk not in ("Low", "Medium", "High"):
-        risk = "High" if score >= 50 else "Medium" if score >= 25 else "Low"
+    explanation = str(
+        result.get("explanation", "No explanation provided.")
+    )
+
+    # Prevent unsafe AI explanations
+    unsafe_phrases = [
+        "the link is to be trusted",
+        "click the suspicious link",
+        "share your password",
+        "share your otp",
+        "does not contain any known indicators",
+        "no known indicators of phishing",
+        "does not contain any indicators",
+        "no signs of phishing",
+        "not a phishing attempt"
+    ]
+
+    if any(
+        phrase in explanation.lower()
+        for phrase in unsafe_phrases
+    ):
+        explanation = (
+            "This message may be a phishing attempt. "
+            "It uses suspicious language that could pressure users "
+            "into clicking a link or sharing sensitive information. "
+            "Verify the sender through an official channel."
+        )
 
     warnings = result.get("warnings", [])
 
@@ -227,7 +295,9 @@ Rules:
     ]
 
     if not warnings:
-        warnings = ["No specific suspicious behaviour was identified by AI."]
+        warnings = [
+            "No specific suspicious behaviour was identified by AI."
+        ]
 
     if score >= 50:
         risk = "High"
@@ -240,36 +310,178 @@ Rules:
         "score": score,
         "risk": risk,
         "warnings": warnings,
-        "confidence": confidence,
+        "confidence": 50,
         "explanation": explanation,
-        "advice": str(result.get(
-            "advice",
-            "Verify the sender before clicking links or sharing information."
-        )),
+        "advice": str(
+            result.get(
+                "advice",
+                "Verify the sender before clicking links or sharing information."
+            )
+        ),
         "analysis_method": "Local AI (Ollama)"
     }
+
+# ==========================================
+# OLLAMA AI QUIZ GENERATOR
+# ==========================================
+
+@app.route("/api/generate-quiz", methods=["POST"])
+def generate_quiz():
+
+    data = request.get_json(silent=True) or {}
+    difficulty = data.get("difficulty", "Medium")
+
+    if difficulty not in ["Easy", "Medium", "Hard"]:
+        difficulty = "Medium"
+
+    prompt = f"""
+You are a cybersecurity quiz creator.
+
+Generate exactly 10 multiple-choice questions
+about cybersecurity.
+
+Difficulty: {difficulty}
+
+Topics:
+- Phishing attacks
+- Password security
+- Social engineering
+- Malware
+- Network security
+- Online privacy
+- Two-factor authentication
+- Safe browsing
+
+Return ONLY valid JSON in this exact format:
+
+{{
+    "questions": [
+        {{
+            "question": "Question text",
+            "options": [
+                "Option A",
+                "Option B",
+                "Option C",
+                "Option D"
+            ],
+            "answer": 0,
+            "explanation": "Explain why this answer is correct."
+        }}
+    ]
+}}
+
+Rules:
+- Generate exactly 10 questions.
+- Each question must have exactly 4 options.
+- Answer must be an integer from 0 to 3.
+- Questions must be factually accurate.
+- Every question must have one correct answer.
+- Do not include markdown.
+"""
+
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json"
+            },
+            timeout=120
+        )
+
+        response.raise_for_status()
+
+        result = json.loads(response.json()["response"])
+        questions = result.get("questions", [])
+
+        if not isinstance(questions, list) or len(questions) < 1:
+         raise ValueError("AI did not generate any valid questions.")
+
+        questions = questions[:10]
+        for question in questions:
+            if not isinstance(question, dict):
+                raise ValueError("Invalid question format.")
+
+            if not isinstance(question.get("question"), str):
+                raise ValueError("Invalid question text.")
+
+            options = question.get("options")
+
+            if (
+                not isinstance(options, list)
+                or len(options) != 4
+                or not all(isinstance(option, str) for option in options)
+            ):
+                raise ValueError("Invalid question options.")
+
+            answer = question.get("answer")
+
+            if type(answer) is not int or answer not in range(4):
+                raise ValueError("Invalid correct answer.")
+
+            if not isinstance(question.get("explanation"), str):
+                raise ValueError("Invalid explanation.")
+
+        return jsonify({
+            "success": True,
+            "difficulty": difficulty,
+            "questions": questions
+        })
+
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        TypeError
+    ) as error:
+
+        print("QUIZ GENERATION ERROR:", repr(error))
+
+        return jsonify({
+            "success": False,
+            "error": "AI quiz generation failed. Please try again."
+        }), 503
+
+# ==========================================
+# HOME
+# ==========================================
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-
+# ==========================================
+# HYBRID MESSAGE ANALYSIS API
+# ==========================================
 
 @app.route("/api/analyze", methods=["POST"])
 def analyze():
+
     data = request.get_json(silent=True) or {}
     message = data.get("message", "")
 
     if not isinstance(message, str) or not message.strip():
-        return jsonify({"error": "Please enter a message to analyze."}), 400
+        return jsonify({
+            "error": "Please enter a message to analyze."
+        }), 400
+
     if len(message) > 5000:
-        return jsonify({"error": "Message must be 5000 characters or fewer."}), 400
-    
+        return jsonify({
+            "error": "Message must be 5000 characters or fewer."
+        }), 400
+
     try:
+
         ai_result = analyse_with_ai(message)
         rule_result = analyse_message(message)
 
-        final_score = max(ai_result["score"], rule_result["score"])
+        final_score = max(
+            ai_result["score"],
+            rule_result["score"]
+        )
 
         if final_score >= 50:
             final_risk = "High"
@@ -277,32 +489,30 @@ def analyze():
             final_risk = "Medium"
         else:
             final_risk = "Low"
+
         combined_warnings = list(dict.fromkeys(
             ai_result["warnings"] + rule_result["warnings"]
         ))
 
-        if "Message appears to request sensitive information." in rule_result["warnings"]:
-            combined_warnings = [
-                warning for warning in combined_warnings
-                if warning != "No specific suspicious behaviour was identified by AI."
-            ]
-
-        # Estimate consistency based on AI and rule-based agreement
+        # Estimate scanner consistency
         if ai_result["risk"] == rule_result["risk"]:
-            confidence = 80
+            consistency = 80
         else:
-            confidence = 60
+            consistency = 60
 
-        # Keep AI explanation consistent with rule-based warnings
         explanation = ai_result["explanation"]
         advice = ai_result["advice"]
 
-        if "Message appears to request sensitive information." in rule_result["warnings"]:
+        if (
+            "Message appears to request sensitive information."
+            in rule_result["warnings"]
+        ):
             explanation = (
                 "This message appears to request sensitive information "
-                "such as an OTP, password, PIN or CVV. Sharing these details "
-                "can compromise your account."
+                "such as an OTP, password, PIN or CVV. Sharing these "
+                "details can compromise your account."
             )
+
             advice = (
                 "Do not share your OTP, password, PIN or CVV. "
                 "Verify the request directly with the official service."
@@ -311,27 +521,41 @@ def analyze():
         result = {
             "score": final_score,
             "risk": final_risk,
-            "confidence": confidence,
+            "confidence": consistency,
             "explanation": explanation,
             "warnings": combined_warnings,
             "advice": advice,
             "analysis_method": "Hybrid AI + Rule-Based"
         }
 
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        TypeError
+    ) as error:
 
-         
-    except (requests.RequestException, ValueError, KeyError, TypeError) as e:
-        print("AI ANALYSIS ERROR:", repr(e))
+        print("AI ANALYSIS ERROR:", repr(error))
+
         result = analyse_message(message)
         result["confidence"] = 0
-        result["explanation"] = "AI analysis failed. Rule-based fallback is active."
+        result["explanation"] = (
+            "AI analysis failed. Rule-based fallback is active."
+        )
         result["analysis_method"] = "Rule-based fallback"
 
     save_scan(message, result)
+
     return jsonify(result)
+
+
+# ==========================================
+# SCAN HISTORY API
+# ==========================================
 
 @app.route("/api/history", methods=["GET"])
 def get_history():
+
     conn = sqlite3.connect("cyberverse.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -361,8 +585,49 @@ def get_history():
         })
 
     return jsonify(history)
+
+
+# ==========================================
+# ANALYTICS API
+# ==========================================
+
+@app.route("/api/analytics", methods=["GET"])
+def get_analytics():
+
+    conn = sqlite3.connect("cyberverse.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            COUNT(CASE WHEN confidence > 0 THEN 1 END),
+            COALESCE(ROUND(AVG(
+                CASE WHEN confidence > 0 THEN confidence END
+            )), 0),
+            COUNT(CASE WHEN risk = 'High' THEN 1 END),
+            COUNT(CASE WHEN risk = 'Medium' THEN 1 END),
+            COUNT(CASE WHEN risk = 'Low' THEN 1 END)
+        FROM scan_history
+    """)
+
+    row = cursor.fetchone()
+    conn.close()
+
+    return jsonify({
+        "ai_scans": row[0],
+        "average_consistency": row[1],
+        "high_risk": row[2],
+        "medium_risk": row[3],
+        "low_risk": row[4]
+    })
+
+
+# ==========================================
+# DELETE MESSAGE HISTORY
+# ==========================================
+
 @app.route("/api/history", methods=["DELETE"])
 def delete_history():
+
     conn = sqlite3.connect("cyberverse.db")
     cursor = conn.cursor()
 
@@ -371,15 +636,24 @@ def delete_history():
     conn.commit()
     conn.close()
 
-    return jsonify({"message": "Scan history deleted successfully"})
+    return jsonify({
+        "message": "Scan history deleted successfully"
+    })
+
+
+# ==========================================
+# EXPORT CSV
+# ==========================================
+
 @app.route("/api/export", methods=["GET"])
 def export_history():
+
     conn = sqlite3.connect("cyberverse.db")
     cursor = conn.cursor()
 
     cursor.execute("""
-       SELECT id, message, score, risk, warnings,
-       advice, confidence, explanation, scanned_at
+        SELECT id, message, score, risk, warnings,
+        advice, confidence, explanation, scanned_at
         FROM scan_history
         ORDER BY id DESC
     """)
@@ -391,22 +665,32 @@ def export_history():
     writer = csv.writer(output)
 
     writer.writerow([
-    "ID", "Message", "Score", "Risk",
-    "Warnings", "Advice", "AI Confidence",
-    "AI Explanation", "Scanned At"
-])
+        "ID", "Message", "Score", "Risk",
+        "Warnings", "Advice", "Scanner Consistency",
+        "Explanation", "Scanned At"
+    ])
 
     for row in rows:
         writer.writerow(row)
 
     response = make_response(output.getvalue())
-    response.headers["Content-Disposition"] = "attachment; filename=cyberverse_scan_report.csv"
+
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=cyberverse_scan_report.csv"
+    )
+
     response.headers["Content-Type"] = "text/csv"
 
     return response
 
+
+# ==========================================
+# SINGLE SCAN DETAILS
+# ==========================================
+
 @app.route("/api/history/<int:scan_id>", methods=["GET"])
 def get_scan_details(scan_id):
+
     conn = sqlite3.connect("cyberverse.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -434,15 +718,21 @@ def get_scan_details(scan_id):
         "scanned_at": row["scanned_at"]
     })
 
-from urllib.parse import urlparse
+
+# ==========================================
+# URL SCANNER
+# ==========================================
 
 @app.route("/api/scan-url", methods=["POST"])
 def scan_url():
-    data = request.get_json(silent=True) or {}
-    url = data.get("url", "").strip()
 
-    if not url:
+    data = request.get_json(silent=True) or {}
+    url = data.get("url", "")
+
+    if not isinstance(url, str) or not url.strip():
         return jsonify({"error": "Please enter a URL."}), 400
+
+    url = url.strip()
 
     if len(url) > 2048:
         return jsonify({"error": "URL is too long."}), 400
@@ -450,9 +740,14 @@ def scan_url():
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
-    parsed = urlparse(url)
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError:
+        return jsonify({"error": "Invalid URL."}), 400
 
-    if not parsed.hostname:
+    if not hostname:
         return jsonify({"error": "Invalid URL."}), 400
 
     score = 0
@@ -462,7 +757,7 @@ def scan_url():
         score += 20
         warnings.append("Website does not use HTTPS.")
 
-    if parsed.hostname.startswith("xn--") or "xn--" in parsed.hostname:
+    if "xn--" in hostname:
         score += 25
         warnings.append("Domain contains encoded characters.")
 
@@ -470,13 +765,15 @@ def scan_url():
         score += 25
         warnings.append("URL contains an unusual @ symbol.")
 
-    if parsed.port and parsed.port not in (80, 443):
+    if port and port not in (80, 443):
         score += 15
         warnings.append("URL uses an unusual port.")
 
-    if len(parsed.hostname) > 40:
+    if len(hostname) > 40:
         score += 10
         warnings.append("Domain name is unusually long.")
+
+    score = min(score, 100)
 
     if score >= 40:
         risk = "High"
@@ -487,18 +784,26 @@ def scan_url():
 
     result = {
         "url": url,
-        "score": min(score, 100),
+        "score": score,
         "risk": risk,
         "warnings": warnings,
-        "advice": "Avoid entering personal information on suspicious websites."
+        "advice": (
+            "Avoid entering personal information on suspicious websites."
+        )
     }
 
     save_url_scan(url, result)
 
     return jsonify(result)
 
+
+# ==========================================
+# URL HISTORY
+# ==========================================
+
 @app.route("/api/url-history", methods=["GET"])
 def get_url_history():
+
     conn = sqlite3.connect("cyberverse.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -520,15 +825,17 @@ def get_url_history():
             "url": row["url"],
             "score": row["score"],
             "risk": row["risk"],
-            "warnings": json.loads(row["warnings"]),
+            "warnings": json.loads(row["warnings"] or "[]"),
             "advice": row["advice"],
             "scanned_at": row["scanned_at"]
         })
 
     return jsonify(history)
 
+
 @app.route("/api/url-history", methods=["DELETE"])
 def delete_url_history():
+
     conn = sqlite3.connect("cyberverse.db")
     cursor = conn.cursor()
 
@@ -541,8 +848,14 @@ def delete_url_history():
         "message": "URL scan history deleted successfully"
     })
 
+
+# ==========================================
+# RECENT ACTIVITY
+# ==========================================
+
 @app.route("/api/recent-activity", methods=["GET"])
 def get_recent_activity():
+
     conn = sqlite3.connect("cyberverse.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -579,6 +892,10 @@ def get_recent_activity():
 
     return jsonify(activities)
 
+
+# ==========================================
+# RUN APPLICATION
+# ==========================================
+
 if __name__ == "__main__":
     app.run(debug=True)
-

@@ -2,1311 +2,1515 @@
 "use strict";
 
 // ==========================================
-// CYBERVERSE - MAIN JAVASCRIPT
-// PART 1 OF 3
+// CYBERVERSE - COMPLETE MAIN JAVASCRIPT
 // ==========================================
 
-const $ = (selector) => document.querySelector(selector);
+document.addEventListener("DOMContentLoaded", () => {
 
-// ==========================================
-// 1. GAME STATE AND QUIZ
-// ==========================================
+    // ======================================
+    // 1. HELPERS & APP STATE
+    // ======================================
 
-const state = {
-    xp: 0,
-    completed: 0,
-    messages: 0,
-    quizCorrect: false,
-    quizIndex: 0
-};
+    const $ = (selector) => document.querySelector(selector);
 
-const quiz = [
-    {
-        question: "What should you do if an unexpected email asks you to verify your password using a link?",
-        options: [
-            "Click quickly before the account closes",
-            "Avoid the link and verify through the official website or app",
-            "Forward it to all your friends"
-        ],
-        answer: 1,
-        explanation: "Correct! Use a trusted route to the service instead of an unexpected link."
-    },
-    {
-        question: "Which is the safest way to handle a one-time password (OTP)?",
-        options: [
-            "Share it with a caller who says they are support",
-            "Post it in a group for help",
-            "Never share it with anyone"
-        ],
-        answer: 2,
-        explanation: "Correct! Legitimate support should not ask you to reveal your OTP."
-    },
-    {
-        question: "A message says you won a prize you never entered to win. What is a warning sign?",
-        options: [
-            "It asks you to click a link urgently",
-            "It has a greeting",
-            "It arrived in the morning"
-        ],
-        answer: 0,
-        explanation: "Correct! Unexpected rewards and urgent links are common scam signals."
-    },
-    {
-        question: "What helps make an account safer?",
-        options: [
-            "Reuse one password everywhere",
-            "Use unique passwords and enable MFA",
-            "Use your birthday as a password"
-        ],
-        answer: 1,
-        explanation: "Correct! Unique passwords and multi-factor authentication improve account security."
-    }
-];
+    const state = {
+        xp: Number(localStorage.getItem("cyberverseXP")) || 0,
+        completed: Number(localStorage.getItem("cyberverseCompleted")) || 0,
+        messages: Number(localStorage.getItem("cyberverseMessages")) || 0,
+        quizCorrect: JSON.parse(localStorage.getItem("cyberverseQuizCorrect") || "[]"),
+        activity: []
+    };
 
-const saved = (() => {
-    try {
-        return JSON.parse(localStorage.getItem("cyberverse-progress")) || {};
-    } catch (error) {
-        console.error("Progress loading error:", error);
-        return {};
-    }
-})();
+    let riskChart = null;
+    let activityChart = null;
+    let currentHistory = [];
 
-state.xp = Number(saved.xp) || 0;
-state.completed = Number(saved.completed) || 0;
-state.messages = Number(saved.messages) || 0;
-state.quizCorrect = Boolean(saved.quizCorrect);
-
-// ==========================================
-// 2. PROGRESS AND XP
-// ==========================================
-
-function persist() {
-    localStorage.setItem("cyberverse-progress", JSON.stringify({
-        xp: state.xp,
-        completed: state.completed,
-        messages: state.messages,
-        quizCorrect: state.quizCorrect
-    }));
-}
-
-function toast(message) {
-    const el = $("#toast");
-
-    if (!el) {
-        console.log(message);
-        return;
+    function saveState() {
+        localStorage.setItem("cyberverseXP", state.xp);
+        localStorage.setItem("cyberverseCompleted", state.completed);
+        localStorage.setItem("cyberverseMessages", state.messages);
+        localStorage.setItem(
+            "cyberverseQuizCorrect",
+            JSON.stringify(state.quizCorrect)
+        );
     }
 
-    el.textContent = message;
-    el.classList.add("show");
+    async function api(url, options = {}) {
+        const response = await fetch(url, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            },
+            ...options
+        });
 
-    clearTimeout(toast.timer);
+        const data = await response.json().catch(() => ({}));
 
-    toast.timer = setTimeout(() => {
-        el.classList.remove("show");
-    }, 2600);
-}
-
-function awardXP(amount, labName) {
-    state.xp += amount;
-    state.completed += 1;
-
-    persist();
-    renderStats();
-
-    toast(`+${amount} XP earned · ${labName} completed`);
-}
-
-function renderStats() {
-    const level = Math.floor(state.xp / 100) + 1;
-    const progress = state.xp % 100;
-
-    const badgeCount =
-        Number(state.completed >= 1) +
-        Number(state.messages >= 3) +
-        Number(state.quizCorrect);
-
-    if ($("#totalXP")) $("#totalXP").textContent = state.xp;
-    if ($("#heroXP")) $("#heroXP").textContent = `${state.xp} XP`;
-    if ($("#heroScans")) $("#heroScans").textContent = state.completed;
-    if ($("#completed")) $("#completed").textContent = state.completed;
-    if ($("#level")) $("#level").textContent = level;
-
-    if ($("#nextLevel")) {
-        $("#nextLevel").textContent = `${100 - progress} XP to next level`;
-    }
-
-    if ($("#badges")) $("#badges").textContent = badgeCount;
-
-    if ($("#badgeHint")) {
-        $("#badgeHint").textContent = badgeCount
-            ? "Keep collecting badges"
-            : "Your first badge awaits";
-    }
-
-    if ($("#progressLabel")) {
-        $("#progressLabel").textContent = `${progress} / 100 XP`;
-    }
-
-    if ($("#progressBar")) {
-        $("#progressBar").style.width = `${progress}%`;
-    }
-
-    if ($("#badgeFirst")) {
-        $("#badgeFirst").classList.toggle("unlocked", state.completed >= 1);
-    }
-
-    if ($("#badgeAnalyst")) {
-        $("#badgeAnalyst").classList.toggle("unlocked", state.messages >= 3);
-    }
-
-    if ($("#badgeScholar")) {
-        $("#badgeScholar").classList.toggle("unlocked", state.quizCorrect);
-    }
-
-    document.querySelectorAll(".achievement").forEach(el => {
-        const status = el.querySelector(".achievement-state");
-
-        if (status) {
-            status.textContent = el.classList.contains("unlocked")
-                ? "UNLOCKED"
-                : "LOCKED";
+        if (!response.ok) {
+            throw new Error(data.error || "Something went wrong.");
         }
-    });
-}
 
-// ==========================================
-// 3. RULE-BASED MESSAGE ANALYSIS
-// ==========================================
+        return data;
+    }
 
-function analyseMessage(text) {
-    const checks = [
-        {
-            pattern: /\b(urgent|immediately|act now|within 24 hours|right away)\b/i,
-            points: 20,
-            warning: "Urgent or pressuring language"
-        },
-        {
-            pattern: /\b(password|otp|one[- ]time passcode|pin)\b/i,
-            points: 25,
-            warning: "Requests or mentions sensitive credentials"
-        },
-        {
-            pattern: /\b(click here|verify (your )?account|login now|reset your account)\b/i,
-            points: 25,
-            warning: "Call to action that may lead to a fake login page"
-        },
-        {
-            pattern: /\b(won a prize|claim (your )?(reward|gift)|free gift|lottery winner)\b/i,
-            points: 20,
-            warning: "Unexpected prize or reward language"
-        },
-        {
-            pattern: /\b(suspended|locked|limited access|account will close)\b/i,
-            points: 15,
-            warning: "Threat of account suspension or loss of access"
-        },
-        {
-            pattern: /\b(gift card|wire transfer|crypto payment|send money)\b/i,
-            points: 15,
-            warning: "Unusual payment request"
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        })[char]);
+    }
+
+    function showToast(message) {
+        let toast = $("#cyberToast");
+
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = "cyberToast";
+            toast.style.cssText = `
+                position:fixed;
+                bottom:25px;
+                right:25px;
+                z-index:99999;
+                padding:14px 20px;
+                border-radius:10px;
+                background:#171b35;
+                color:white;
+                border:1px solid #6555dc;
+                box-shadow:0 5px 25px #0005;
+                font-size:14px;
+            `;
+            document.body.appendChild(toast);
         }
-    ];
 
-    const matched = checks.filter(check => check.pattern.test(text));
-    const warnings = matched.map(check => check.warning);
+        toast.textContent = message;
+        toast.style.display = "block";
 
-    const score = Math.min(
-        100,
-        matched.reduce((sum, check) => sum + check.points, 0)
-    );
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => {
+            toast.style.display = "none";
+        }, 2800);
+    }
 
-    const risk = score >= 50
-        ? "High"
-        : score >= 25
-            ? "Medium"
-            : "Low";
+    function addXP(amount, reason = "Activity completed") {
+        state.xp += amount;
+        state.completed++;
+        saveState();
+        updateProgress();
+        showToast(`+${amount} XP — ${reason}`);
+    }
 
-    return { score, risk, warnings };
-}
+    function addActivity(message, type = "info") {
+        const feed = $("#activity-feed");
+        if (!feed) return;
 
-// ==========================================
-// 4. MESSAGE SCANNER - AI API
-// ==========================================
+        const item = document.createElement("div");
+        item.className = "activity-item";
 
-const messageInput = $("#messageInput");
-const scanButton = $("#scanButton");
-const messageResult = $("#messageResult");
+        const icon = document.createElement("span");
+        icon.className = "activity-icon";
+        icon.textContent =
+            type === "danger" ? "⚠️" :
+            type === "success" ? "✓" : "●";
 
-if (messageInput) {
-    messageInput.addEventListener("input", event => {
-        if ($("#charCount")) {
-            $("#charCount").textContent =
-                `${event.target.value.length} / 3000`;
+        const content = document.createElement("span");
+        content.textContent = message;
+
+        item.append(icon, content);
+        feed.prepend(item);
+
+        while (feed.children.length > 8) {
+            feed.lastElementChild.remove();
         }
-    });
-}
+    }
 
-if (scanButton && messageInput && messageResult) {
-    scanButton.addEventListener("click", async () => {
+    // ======================================
+    // 2. XP, LEVELS & ACHIEVEMENTS
+    // ======================================
+
+    function updateProgress() {
+        const level = Math.floor(state.xp / 100) + 1;
+        const progress = state.xp % 100;
+
+        const values = {
+            "#heroXP": state.xp,
+            "#totalXP": state.xp,
+            "#heroScans": state.messages,
+            "#completed": state.completed,
+            "#level": level,
+            "#nextLevel": 100 - progress,
+            "#progressLabel": `${progress}%`,
+            "#badges": getBadgeCount()
+        };
+
+        Object.entries(values).forEach(([selector, value]) => {
+            const element = $(selector);
+            if (element) element.textContent = value;
+        });
+
+        const bar = $("#progressBar");
+        if (bar) bar.style.width = `${progress}%`;
+
+        const first = $("#badgeFirst");
+        const analyst = $("#badgeAnalyst");
+        const scholar = $("#badgeScholar");
+
+        if (first) first.classList.toggle("unlocked", state.completed >= 1);
+        if (analyst) analyst.classList.toggle("unlocked", state.messages >= 5);
+        if (scholar) scholar.classList.toggle(
+            "unlocked",
+            state.quizCorrect.length >= 3
+        );
+
+        const hint = $("#badgeHint");
+        if (hint) {
+            hint.textContent =
+                state.completed === 0
+                    ? "Complete your first activity to unlock a badge."
+                    : "Keep learning to unlock more achievements!";
+        }
+    }
+
+    function getBadgeCount() {
+        return [
+            state.completed >= 1,
+            state.messages >= 5,
+            state.quizCorrect.length >= 3
+        ].filter(Boolean).length;
+    }
+
+    // ======================================
+    // 3. PHISHING MESSAGE SCANNER
+    // ======================================
+
+    const messageInput = $("#messageInput");
+    const scanButton = $("#scanButton");
+    const messageResult = $("#messageResult");
+    const charCount = $("#charCount");
+
+    if (messageInput && charCount) {
+        messageInput.addEventListener("input", () => {
+            charCount.textContent = messageInput.value.length;
+        });
+    }
+
+    function renderMessageResult(data) {
+        if (!messageResult) return;
+
+        const score = Number(data.score) || 0;
+        const risk = data.risk || "Unknown";
+        const warnings = Array.isArray(data.warnings)
+            ? data.warnings
+            : [];
+
+        const resultClass = risk.toLowerCase();
+
+        messageResult.innerHTML = `
+            <div class="result-card ${escapeHTML(resultClass)}">
+                <h3>Security Risk: ${escapeHTML(risk)}</h3>
+                <h2>${score}/100</h2>
+                <p>${escapeHTML(data.explanation || "Analysis completed.")}</p>
+
+                <p>
+                    Scanner consistency estimate:
+                    ${Number(data.confidence) || 0}%
+                </p>
+
+                <h4>Detected warnings</h4>
+                <ul>
+                    ${
+                        warnings.length
+                            ? warnings.map(item =>
+                                `<li>${escapeHTML(item)}</li>`
+                            ).join("")
+                            : "<li>No specific warning returned.</li>"
+                    }
+                </ul>
+
+                <h4>Recommended action</h4>
+                <p>${escapeHTML(data.advice || "Stay cautious.")}</p>
+            </div>
+        `;
+
+        messageResult.style.display = "block";
+        messageResult.classList.remove("hidden");
+    }
+
+    async function scanMessage() {
+        if (!messageInput || !messageResult) return;
+
         const message = messageInput.value.trim();
 
         if (!message) {
-            toast("Paste a message first to run the analysis.");
-            messageInput.focus();
+            showToast("Please enter a message first.");
             return;
         }
 
         if (message.length > 5000) {
-            toast("Message is too long.");
+            showToast("Message is too long.");
             return;
         }
 
         scanButton.disabled = true;
         scanButton.textContent = "Analyzing...";
 
+        messageResult.innerHTML = "<p>Scanning message with AI and security rules...</p>";
+
         try {
-            const response = await fetch("/api/analyze", {
+            const data = await api("/api/analyze", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
                 body: JSON.stringify({ message })
             });
 
-            const result = await response.json();
+            renderMessageResult(data);
 
-            if (!response.ok) {
-                throw new Error(result.error || "Analysis failed.");
-            }
-
-            state.messages += 1;
-            persist();
-            renderStats();
-
-            messageResult.classList.remove("hidden");
-
-            const heading = document.createElement("h4");
-
-            const riskLabel = document.createElement("span");
-            riskLabel.className =
-                `risk-${String(result.risk).toLowerCase()}`;
-            riskLabel.textContent = String(result.risk).toUpperCase();
-
-            heading.textContent = "Risk estimate: ";
-            heading.append(riskLabel, ` · ${result.score}/100`);
-
-            // AI Confidence Meter
-            const confidence = Math.max(
-                0,
-                Math.min(100, Number(result.confidence) || 0)
+            state.messages++;
+            addXP(15, "Message scanned");
+            addActivity(
+                `Message scan completed — ${data.risk || "Unknown"} risk`,
+                data.risk === "High" ? "danger" : "success"
             );
 
-            const confidenceSection = document.createElement("div");
-            confidenceSection.className = "confidence-section";
-
-            const confidenceLabel = document.createElement("p");
-            confidenceLabel.textContent =
-                `AI Confidence Estimate: ${confidence}%`;
-
-            const confidenceTrack = document.createElement("div");
-            confidenceTrack.className = "confidence-track";
-
-            const confidenceBar = document.createElement("div");
-            confidenceBar.className = "confidence-bar";
-            confidenceBar.style.width = `${confidence}%`;
-
-            confidenceTrack.appendChild(confidenceBar);
-            confidenceSection.append(confidenceLabel, confidenceTrack);
-
-            // AI Explanation
-            const explanation = document.createElement("p");
-            explanation.className = "ai-explanation";
-
-            const explanationTitle = document.createElement("strong");
-            explanationTitle.textContent = "AI Explanation: ";
-
-            const explanationText = document.createElement("span");
-            explanationText.textContent =
-                result.explanation || "No explanation available.";
-
-            explanation.append(explanationTitle, explanationText);
-
-            const advice = document.createElement("p");
-            advice.textContent = result.advice || "Stay alert.";
-
-            const warningList = document.createElement("ul");
-
-            (result.warnings || []).forEach(warning => {
-                const li = document.createElement("li");
-                li.textContent = warning;
-                warningList.appendChild(li);
-            });
-
-            const method = document.createElement("p");
-            method.style.marginTop = "8px";
-            method.style.color = "#7485a9";
-            method.style.fontSize = ".67rem";
-
-            method.textContent =
-                `${result.analysis_method || "Local analysis"} · A low score does not guarantee safety.`;
-
-            messageResult.replaceChildren(
-                heading,
-                confidenceSection,
-                explanation,
-                advice,
-                warningList,
-                method
-            );
-
-            awardXP(20, "Message scan");
-            logMessageScan(result);
-            loadScanHistory();
+            await refreshDashboard();
+            await loadRecentActivity();
 
         } catch (error) {
-            toast(error.message || "Could not connect to the server.");
-            console.error(error);
+            messageResult.textContent = error.message;
+            showToast("Scanner error. Check Flask server and Ollama.");
         } finally {
             scanButton.disabled = false;
-            scanButton.textContent = "Analyze message →";
+            scanButton.textContent = "Scan Message";
         }
-    });
-}
-
-// ==========================================
-// 5. DEMO BUTTON
-// ==========================================
-
-const demoButton = $("#demoButton");
-
-if (demoButton) {
-    demoButton.addEventListener("click", () => {
-        if (!messageInput) return;
-
-        messageInput.value =
-            "URGENT: Your account will be suspended. Verify your account immediately and enter your password using this link.";
-
-        if ($("#charCount")) {
-            $("#charCount").textContent =
-                `${messageInput.value.length} / 3000`;
-        }
-
-        if (scanButton) scanButton.click();
-
-        $("#labs")?.scrollIntoView({ behavior: "smooth" });
-    });
-}
-
-// ==========================================
-// 6. PASSWORD STRENGTH LAB
-// ==========================================
-
-function checkPassword(password) {
-    const checks = [
-        ["At least 12 characters", password.length >= 12],
-        [
-            "Contains uppercase and lowercase letters",
-            /[a-z]/.test(password) && /[A-Z]/.test(password)
-        ],
-        ["Contains a number", /\d/.test(password)],
-        ["Contains a special character", /[^A-Za-z0-9]/.test(password)],
-        [
-            "Avoids common words or sequences",
-            !/(password|qwerty|123456|letmein|admin)/i.test(password)
-        ]
-    ];
-
-    let score = checks.filter(item => item[1]).length;
-
-    if (password.length < 8) {
-        score = Math.min(score, 1);
     }
 
-    const labels = [
-        "Very weak",
-        "Weak",
-        "Fair",
-        "Good",
-        "Strong",
-        "Very strong"
-    ];
-
-    return {
-        checks,
-        score,
-        label: password ? labels[Math.min(score, 5)] : "Not checked"
-    };
-}
-
-const passwordInput = $("#passwordInput");
-
-if (passwordInput) {
-    passwordInput.addEventListener("input", event => {
-        const password = event.target.value;
-        const result = checkPassword(password);
-
-        if ($("#strengthText")) {
-            $("#strengthText").textContent = result.label;
-        }
-
-        if ($("#strengthBar")) {
-            $("#strengthBar").style.width = `${result.score * 20}%`;
-
-            $("#strengthBar").style.background =
-                result.score < 2
-                    ? "#ff6f86"
-                    : result.score < 4
-                        ? "#ffbf69"
-                        : "#5df2b1";
-        }
-
-        const tips = $("#passwordTips");
-
-        if (tips) {
-            tips.replaceChildren();
-
-            if (!password) {
-                const li = document.createElement("li");
-                li.textContent = "Enter a made-up password to see tips.";
-                tips.appendChild(li);
-            } else {
-                result.checks.forEach(([label, ok]) => {
-                    const li = document.createElement("li");
-                    li.textContent = label;
-
-                    if (ok) li.classList.add("good");
-
-                    tips.appendChild(li);
-                });
-            }
-        }
-    });
-}
-
-const togglePassword = $("#togglePassword");
-
-if (togglePassword && passwordInput) {
-    togglePassword.addEventListener("click", () => {
-        passwordInput.type =
-            passwordInput.type === "password" ? "text" : "password";
-    });
-}
-
-let passwordAwarded = false;
-
-if (passwordInput) {
-    passwordInput.addEventListener("change", () => {
-        if (passwordInput.value && !passwordAwarded) {
-            passwordAwarded = true;
-            awardXP(10, "Password lab");
-        }
-    });
-}
-
-// ==========================================
-// 7. CYBER TERMINAL
-// ==========================================
-
-const terminalOutput = $("#terminalOutput");
-
-function terminalLine(text, className = "") {
-    if (!terminalOutput) return;
-
-    const p = document.createElement("p");
-    p.textContent = text;
-
-    if (className) {
-        p.className = className;
+    if (scanButton) {
+        scanButton.addEventListener("click", scanMessage);
     }
 
-    terminalOutput.appendChild(p);
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-}
+    const demoButton = $("#demoButton");
 
-function runCommand(raw) {
-    const command = raw.trim().toLowerCase();
+    if (demoButton && messageInput) {
+        demoButton.addEventListener("click", () => {
+            messageInput.value =
+                "URGENT! Your bank account will be blocked. " +
+                "Verify your account immediately and share your OTP.";
 
-    if (!command) return;
-
-    terminalLine(`guest@cyberverse:~$ ${raw}`, "command-line");
-
-    if (command === "clear") {
-        if (terminalOutput) terminalOutput.replaceChildren();
-        return;
-    }
-
-    const responses = {
-        help: [
-            "Available demo commands:",
-            "help — show commands",
-            "status — show simulator status",
-            "scan demo — run a safe sample scan",
-            "tips — display security tips",
-            "whoami — show current demo user",
-            "clear — clear terminal output"
-        ],
-        status: [
-            "SIMULATOR: ONLINE",
-            "MODE: LOCAL EDUCATIONAL DEMO",
-            "NETWORK ACCESS: NOT USED",
-            "THREAT FEED: SIMULATED DATA"
-        ],
-        tips: [
-            "Never share passwords or OTPs.",
-            "Use unique passwords and MFA.",
-            "Check the real domain before signing in.",
-            "Pause before responding to urgent requests."
-        ],
-        whoami: [
-            "guest — CyberVerse training user",
-            "Permission level: learner"
-        ],
-        "scan demo": [
-            "Starting sample analysis...",
-            "Sample indicators: urgent language + credential request",
-            "DEMO RESULT: HIGH RISK — 65/100",
-            "This is a preset simulation, not a real network scan."
-        ]
-    };
-
-    const result = responses[command] || [
-        "Unknown command. Type 'help' to see available commands."
-    ];
-
-    result.forEach((line, index) => {
-        terminalLine(
-            line,
-            command === "scan demo" && index === 2
-                ? "warning-line"
-                : "success-line"
-        );
-    });
-
-    if (command === "scan demo" || command === "tips") {
-        awardXP(5, "Terminal exercise");
-    }
-}
-
-const terminalForm = $("#terminalForm");
-
-if (terminalForm) {
-    terminalForm.addEventListener("submit", event => {
-        event.preventDefault();
-
-        const input = $("#terminalInput");
-        if (!input) return;
-
-        runCommand(input.value);
-        input.value = "";
-    });
-}
-
-document.querySelectorAll("[data-command]").forEach(button => {
-    button.addEventListener("click", () => {
-        runCommand(button.dataset.command);
-    });
-});
-
-
-// ==========================================
-// 8. CYBER SECURITY QUIZ
-// ==========================================
-function renderQuiz() {
-    const questionElement = $("#quizQuestion");
-    const optionsElement = $("#quizOptions");
-    const feedbackElement = $("#quizFeedback");
-    const nextButton = $("#nextQuestion");
-
-    if (!questionElement || !optionsElement || !feedbackElement || !nextButton) {
-        return;
-    }
-
-    const q = quiz[state.quizIndex];
-
-    questionElement.textContent = q.question;
-    feedbackElement.textContent = "";
-    nextButton.classList.add("hidden");
-
-    optionsElement.replaceChildren();
-
-    q.options.forEach((option, index) => {
-        const button = document.createElement("button");
-        button.textContent = option;
-
-        button.addEventListener("click", () => {
-            optionsElement.querySelectorAll("button").forEach((item, i) => {
-                item.disabled = true;
-
-                if (i === q.answer) item.classList.add("correct");
-                if (i === index && index !== q.answer) {
-                    item.classList.add("incorrect");
-                }
-            });
-
-            const correct = index === q.answer;
-
-            feedbackElement.textContent = correct
-                ? q.explanation
-                : `Not quite. ${q.explanation}`;
-
-            if (correct) {
-                state.quizCorrect = true;
-                awardXP(15, "Quiz question");
+            if (charCount) {
+                charCount.textContent = messageInput.value.length;
             }
 
-            persist();
-            renderStats();
-
-            nextButton.textContent =
-                state.quizIndex === quiz.length - 1
-                    ? "Restart quiz ↻"
-                    : "Next question →";
-
-            nextButton.classList.remove("hidden");
+            scanMessage();
         });
-
-        optionsElement.appendChild(button);
-    });
-}
-
-const nextQuestion = $("#nextQuestion");
-
-if (nextQuestion) {
-    nextQuestion.addEventListener("click", () => {
-        state.quizIndex = (state.quizIndex + 1) % quiz.length;
-        renderQuiz();
-    });
-}
-
-// ==========================================
-// 9. ACTIVITY FEED
-// ==========================================
-
-const activityFeed = $("#activity-feed");
-
-function addActivity(iconText, titleText, descriptionText) {
-    if (!activityFeed) return;
-
-    const item = document.createElement("div");
-    item.className = "activity-item";
-
-    const icon = document.createElement("span");
-    icon.className = "activity-icon";
-    icon.textContent = iconText;
-
-    const details = document.createElement("div");
-
-    const title = document.createElement("strong");
-    title.textContent = titleText;
-
-    const description = document.createElement("p");
-    description.textContent = descriptionText;
-
-    const time = document.createElement("span");
-    time.className = "activity-time";
-    time.textContent = "JUST NOW";
-
-    details.append(title, description);
-    item.append(icon, details, time);
-
-    activityFeed.prepend(item);
-
-    while (activityFeed.children.length > 5) {
-        activityFeed.lastElementChild.remove();
     }
-}
 
-function logMessageScan(result) {
-    const risk = String(result.risk || "Low").toLowerCase();
+    // ======================================
+    // 4. URL SECURITY SCANNER
+    // ======================================
 
-    const icon = risk === "high"
-        ? "🚨"
-        : risk === "medium"
-            ? "⚠️"
-            : "🛡️";
+    const urlInput = $("#urlInput");
+    const urlButton = $("#urlBtn");
+    const urlResult = $("#urlResult");
 
-    addActivity(
-        icon,
-        `${risk.toUpperCase()} risk message analyzed`,
-        `Risk score: ${result.score}/100 · ${result.analysis_method || "Local analysis"}`
-    );
-}
+    function renderURLResult(data) {
+        if (!urlResult) return;
 
-// ==========================================
-// 10. THREAT RADAR
-// ==========================================
+        const warnings = Array.isArray(data.warnings)
+            ? data.warnings
+            : [];
 
-const radarScanBtn = $("#radar-scan-btn");
-const radarMessage = $("#radar-message");
-const threatCount = $("#threat-count");
-const radarMap = $("#radar-map");
+        urlResult.innerHTML = `
+            <div class="result-card ${escapeHTML(
+                String(data.risk || "").toLowerCase()
+            )}">
+                <h3>URL Risk: ${escapeHTML(data.risk || "Unknown")}</h3>
+                <h2>${Number(data.score) || 0}/100</h2>
 
-if (radarScanBtn && radarMessage && threatCount && radarMap) {
-    radarScanBtn.addEventListener("click", () => {
-        radarScanBtn.disabled = true;
-        radarScanBtn.textContent = "⟳ Scanning...";
-        radarMessage.textContent = "Running simulated radar scan...";
+                <h4>Warnings</h4>
+                <ul>
+                    ${
+                        warnings.length
+                            ? warnings.map(item =>
+                                `<li>${escapeHTML(item)}</li>`
+                            ).join("")
+                            : "<li>No heuristic warning detected.</li>"
+                    }
+                </ul>
 
-        radarMap.style.borderColor = "#00ffe1";
+                <p>${escapeHTML(data.advice || "Use caution with unknown URLs.")}</p>
 
-        setTimeout(() => {
-            const demoThreats = Math.floor(Math.random() * 20) + 1;
-            const currentCount = Number(threatCount.textContent) || 248;
+                <small>
+                    Heuristic analysis only. This does not verify live
+                    malware or website reputation.
+                </small>
+            </div>
+        `;
 
-            threatCount.textContent = String(
-                currentCount + demoThreats
-            ).padStart(4, "0");
+        urlResult.style.display = "block";
+        urlResult.classList.remove("hidden");
+    }
 
-            radarMessage.textContent =
-                `Demo scan complete! ${demoThreats} simulated threat signals detected.`;
+    async function scanURL() {
+        if (!urlInput || !urlResult) return;
 
-            addActivity(
-                "📡",
-                "Radar scan completed",
-                `${demoThreats} simulated signals detected.`
-            );
+        const url = urlInput.value.trim();
 
-            radarScanBtn.textContent = "⟳ Run Radar Scan";
-            radarScanBtn.disabled = false;
-
-            radarMap.style.boxShadow =
-                "0 0 22px rgba(0, 255, 225, 0.2)";
-
-            setTimeout(() => {
-                radarMap.style.boxShadow = "none";
-            }, 1200);
-
-        }, 1500);
-    });
-}
-
-// ==========================================
-// 11. SECURITY SCORE METER
-// ==========================================
-
-const scoreCheckBtn = $("#score-check-btn");
-const securityScore = $("#security-score");
-const scoreMeter = $("#score-meter");
-const scoreStatus = $("#score-status");
-
-if (scoreCheckBtn && securityScore && scoreMeter && scoreStatus) {
-    scoreCheckBtn.addEventListener("click", () => {
-        scoreCheckBtn.disabled = true;
-        scoreCheckBtn.textContent = "Calculating...";
-
-        // Educational demo score, not a real security assessment.
-        const newScore = Math.floor(Math.random() * 31) + 70;
-
-        securityScore.textContent = newScore;
-
-        const degrees = newScore * 3.6;
-
-        scoreMeter.style.background =
-            `conic-gradient(#00ffe1 0deg ${degrees}deg, #203449 ${degrees}deg 360deg)`;
-
-        if (newScore >= 90) {
-            scoreStatus.textContent = "Demo status: Excellent";
-            scoreStatus.style.color = "#65ff9a";
-        } else if (newScore >= 80) {
-            scoreStatus.textContent = "Demo status: Good";
-            scoreStatus.style.color = "#00ffe1";
-        } else {
-            scoreStatus.textContent = "Demo status: Needs improvement";
-            scoreStatus.style.color = "#ffbf69";
-        }
-
-        setTimeout(() => {
-            scoreCheckBtn.disabled = false;
-            scoreCheckBtn.textContent = "Recalculate Score ↻";
-        }, 700);
-    });
-}
-
-// ==========================================
-// 12. SCAN HISTORY
-// ==========================================
-
-let riskChartInstance = null;
-let activityChartInstance = null;
-
-async function loadScanHistory() {
-    const historyList = $("#historyList");
-
-    if (!historyList) return;
-
-    try {
-        historyList.textContent = "Loading scan history...";
-
-        const response = await fetch("/api/history");
-
-        if (!response.ok) {
-            throw new Error("Unable to load scan history");
-        }
-
-        const history = await response.json();
-
-        if (!Array.isArray(history)) {
-            throw new Error("Invalid scan history response");
-        }
-
-        renderAnalytics(history);
-
-        const totalElement = $("#historyTotal");
-        const highElement = $("#historyHigh");
-        const mediumElement = $("#historyMedium");
-        const lowElement = $("#historyLow");
-
-        if (totalElement) totalElement.textContent = history.length;
-
-        if (highElement) {
-            highElement.textContent =
-                history.filter(item => item.risk === "High").length;
-        }
-
-        if (mediumElement) {
-            mediumElement.textContent =
-                history.filter(item => item.risk === "Medium").length;
-        }
-
-        if (lowElement) {
-            lowElement.textContent =
-                history.filter(item => item.risk === "Low").length;
-        }
-
-        historyList.replaceChildren();
-
-        if (history.length === 0) {
-            historyList.textContent = "No scans found yet.";
+        if (!url) {
+            showToast("Enter a URL first.");
             return;
         }
 
-        history.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "history-card";
+        urlButton.disabled = true;
+        urlButton.textContent = "Checking...";
 
-            const heading = document.createElement("div");
-            heading.className = "history-card-heading";
-
-            const risk = document.createElement("span");
-            risk.className =
-                `risk-${String(item.risk).toLowerCase()}`;
-            risk.textContent = item.risk;
-
-            const score = document.createElement("strong");
-            score.textContent = `${item.score}/100`;
-
-            heading.append(risk, score);
-
-            const message = document.createElement("p");
-            message.textContent = item.message || "Message unavailable";
-
-            const date = document.createElement("small");
-            date.textContent = item.scanned_at || "Date unavailable";
-
-            const detailsButton = document.createElement("button");
-            detailsButton.className = "button secondary";
-            detailsButton.textContent = "View Details";
-
-            detailsButton.addEventListener("click", async () => {
-                try {
-                    const response = await fetch(
-                        `/api/history/${encodeURIComponent(item.id)}`
-                    );
-
-                    const details = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(
-                            details.error || "Could not load scan details"
-                        );
-                    }
-
-                    const modal = $("#scanModal");
-                    const modalDetails = $("#modalScanDetails");
-
-                    if (!modal || !modalDetails) {
-                        throw new Error("Scan details modal not found in HTML");
-                    }
-
-                    modalDetails.replaceChildren();
-
-                    function addDetail(label, value) {
-                        const section = document.createElement("div");
-                        section.style.marginBottom = "18px";
-
-                        const title = document.createElement("h3");
-                        title.textContent = label;
-                        title.style.color = "#42d9f5";
-
-                        const content = document.createElement("p");
-                        content.textContent = value ?? "Not available";
-
-                        section.append(title, content);
-                        modalDetails.appendChild(section);
-                    }
-
-                    addDetail("Risk Level", details.risk);
-                    addDetail("Risk Score", `${details.score}/100`);
-                    addDetail("Scanned Message", details.message);
-
-                    addDetail(
-                        "Warnings",
-                        (details.warnings || []).join(" • ") || "No warnings"
-                    );
-
-                    addDetail("Safety Advice", details.advice);
-                    addDetail(
-                        "AI Confidence",
-                        `${details.confidence ?? "Not available"}%`
-                    );
-                    addDetail(
-                        "AI Explanation",
-                        details.explanation || "Not available"
-                    );
-                    addDetail("Scanned At", details.scanned_at);
-
-                    modal.style.display = "flex";
-
-                } catch (error) {
-                    alert("Could not load scan details: " + error.message);
-                    console.error(error);
-                }
-            });
-
-            card.append(heading, message, date, detailsButton);
-            historyList.appendChild(card);
-        });
-
-    } catch (error) {
-        historyList.textContent = "Could not load scan history.";
-        console.error(error);
-    }
-}
-
-// ==========================================
-// 13. REFRESH SCAN HISTORY
-// ==========================================
-
-const refreshHistory = $("#refreshHistory");
-
-if (refreshHistory) {
-    refreshHistory.addEventListener("click", loadScanHistory);
-}
-
-// ==========================================
-// 14. DELETE SCAN HISTORY
-// ==========================================
-
-const deleteHistory = $("#deleteHistory");
-
-if (deleteHistory) {
-    deleteHistory.addEventListener("click", async () => {
-        const confirmDelete = confirm(
-            "Are you sure you want to delete all scan history?"
-        );
-
-        if (!confirmDelete) return;
+        urlResult.textContent = "Analyzing URL...";
 
         try {
-            const response = await fetch("/api/history", {
-                method: "DELETE"
+            const data = await api("/api/scan-url", {
+                method: "POST",
+                body: JSON.stringify({ url })
             });
 
-            if (!response.ok) {
-                throw new Error("Delete failed");
-            }
+            renderURLResult(data);
 
-            toast("Scan history deleted successfully!");
-            loadScanHistory();
+            addXP(10, "URL checked");
+            addActivity(
+                `URL checked — ${data.risk || "Unknown"} risk`,
+                data.risk === "High" ? "danger" : "success"
+            );
+
+            await loadURLHistory();
+            await refreshDashboard();
+            await loadRecentActivity();
 
         } catch (error) {
-            alert("Could not delete scan history.");
-            console.error(error);
+            urlResult.textContent = error.message;
+            showToast("URL scan failed.");
+        } finally {
+            urlButton.disabled = false;
+            urlButton.textContent = "Scan URL";
         }
-    });
-}
+    }
 
-// ==========================================
-// 15. EXPORT SCAN REPORT
-// ==========================================
+    if (urlButton) {
+        urlButton.addEventListener("click", scanURL);
+    }
 
-const exportHistory = $("#exportHistory");
+    // ======================================
+    // 5. PASSWORD STRENGTH LAB
+    // ======================================
 
-if (exportHistory) {
-    exportHistory.addEventListener("click", () => {
-        window.location.href = "/api/export";
-    });
-}
+    const passwordInput = $("#passwordInput");
+    const togglePassword = $("#togglePassword");
+    const strengthBar = $("#strengthBar");
+    const strengthText = $("#strengthText");
+    const passwordTips = $("#passwordTips");
 
-// ==========================================
-// 16. CLOSE SCAN DETAILS MODAL
-// ==========================================
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener("click", () => {
+            passwordInput.type =
+                passwordInput.type === "password" ? "text" : "password";
+        });
+    }
 
-const closeScanModal = $("#closeScanModal");
-const scanModal = $("#scanModal");
+    function checkPassword() {
+        if (!passwordInput) return;
 
-if (closeScanModal && scanModal) {
-    closeScanModal.addEventListener("click", () => {
-        scanModal.style.display = "none";
-    });
-}
+        const password = passwordInput.value;
 
-if (scanModal) {
-    scanModal.addEventListener("click", event => {
-        if (event.target === scanModal) {
-            scanModal.style.display = "none";
+        const checks = [
+            password.length >= 8,
+            password.length >= 12,
+            /[A-Z]/.test(password),
+            /[a-z]/.test(password),
+            /[0-9]/.test(password),
+            /[^A-Za-z0-9]/.test(password)
+        ];
+
+        const score = checks.filter(Boolean).length;
+
+        let label = "Very Weak";
+        let percentage = 10;
+
+        if (score >= 6) {
+            label = "Very Strong";
+            percentage = 100;
+        } else if (score >= 5) {
+            label = "Strong";
+            percentage = 80;
+        } else if (score >= 4) {
+            label = "Medium";
+            percentage = 60;
+        } else if (score >= 3) {
+            label = "Weak";
+            percentage = 40;
         }
+
+        if (!password) {
+            label = "Enter a password";
+            percentage = 0;
+        }
+
+        if (strengthText) {
+            strengthText.textContent = label;
+        }
+
+        if (strengthBar) {
+            strengthBar.style.width = `${percentage}%`;
+        }
+
+        const tips = [];
+
+        if (password.length < 12) tips.push("Use at least 12 characters.");
+        if (!/[A-Z]/.test(password)) tips.push("Add uppercase letters.");
+        if (!/[a-z]/.test(password)) tips.push("Add lowercase letters.");
+        if (!/[0-9]/.test(password)) tips.push("Add numbers.");
+        if (!/[^A-Za-z0-9]/.test(password)) tips.push("Add special characters.");
+
+        if (passwordTips) {
+            passwordTips.innerHTML = tips.length
+                ? tips.map(tip => `<li>${escapeHTML(tip)}</li>`).join("")
+                : "<li>Good password structure. Avoid reusing passwords.</li>";
+        }
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener("input", checkPassword);
+    }
+
+    // Passwords are checked only in the browser.
+    // They are never sent to the Flask backend.
+
+    // ======================================
+    // 6. CYBER TERMINAL
+    // ======================================
+
+    const terminalForm = $("#terminalForm");
+    const terminalInput = $("#terminalInput");
+    const terminalOutput = $("#terminalOutput");
+
+    function terminalPrint(message) {
+        if (!terminalOutput) return;
+
+        const line = document.createElement("div");
+        line.textContent = message;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function runTerminalCommand(command) {
+        const input = String(command || "").trim().toLowerCase();
+
+        if (!input) return;
+
+        terminalPrint(`visitor@cyberverse:~$ ${input}`);
+
+        switch (input) {
+            case "help":
+                terminalPrint(
+                    "Commands: help, status, tips, whoami, scan demo, clear"
+                );
+                break;
+
+            case "status":
+                terminalPrint("CyberVerse system: ONLINE");
+                terminalPrint("Local Flask API: configured");
+                terminalPrint("Security modules: ACTIVE");
+                break;
+
+            case "tips":
+                terminalPrint("Never share OTP, passwords or PINs.");
+                terminalPrint("Check URLs before opening links.");
+                terminalPrint("Enable two-factor authentication.");
+                break;
+
+            case "whoami":
+                terminalPrint("You are a CyberVerse security learner.");
+                break;
+
+            case "scan demo":
+                terminalPrint("Loading demo phishing message...");
+                if (messageInput) {
+                    messageInput.value =
+                        "Congratulations! You won a prize. " +
+                        "Click here immediately and share your password.";
+                    if (charCount) {
+                        charCount.textContent = messageInput.value.length;
+                    }
+                    messageInput.scrollIntoView({ behavior: "smooth" });
+                    setTimeout(() => scanMessage(), 500);
+                }
+                break;
+
+            case "clear":
+                terminalOutput.innerHTML = "";
+                break;
+
+            default:
+                terminalPrint("Unknown command. Type 'help'.");
+        }
+    }
+
+    if (terminalForm) {
+        terminalForm.addEventListener("submit", event => {
+            event.preventDefault();
+
+            runTerminalCommand(terminalInput?.value);
+
+            if (terminalInput) terminalInput.value = "";
+        });
+    }
+
+    document.querySelectorAll("[data-command]").forEach(button => {
+        button.addEventListener("click", () => {
+            runTerminalCommand(button.dataset.command);
+        });
     });
-}
 
-// ==========================================
-// 17. SCAN ANALYTICS
-// ==========================================
+   
+// ======================================
+// 7. CYBER ACADEMY - AI POWERED QUIZ
+// ======================================
 
-async function loadAnalytics() {
+let quiz = [];
+let quizIndex = 0;
+let quizAnswered = false;
+let quizLoading = false;
+
+const quizQuestion = $("#quizQuestion");
+const quizOptions = $("#quizOptions");
+const quizFeedback = $("#quizFeedback");
+const nextQuestion = $("#nextQuestion");
+
+// Track correct answers for the current quiz
+let quizSessionCorrect = new Set();
+
+// ======================================
+// GENERATE QUIZ USING OLLAMA AI
+// ======================================
+
+async function generateAIQuiz() {
+
+    if (quizLoading) return;
+
+    quizLoading = true;
+
+    quiz = [];
+    quizIndex = 0;
+    quizAnswered = false;
+    quizSessionCorrect.clear();
+
+    if (quizQuestion) {
+        quizQuestion.textContent = "🤖 AI is generating your quiz...";
+    }
+
+    if (quizOptions) {
+        quizOptions.innerHTML = "";
+    }
+
+    if (quizFeedback) {
+        quizFeedback.textContent = "Connecting to local AI...";
+    }
+
+    if (nextQuestion) {
+        nextQuestion.disabled = true;
+        nextQuestion.textContent = "Generating...";
+    }
+
     try {
-        const response = await fetch("/api/history");
 
-        if (!response.ok) {
-            throw new Error("Could not load scan history");
+        const response = await fetch("/api/generate-quiz", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                difficulty: "Medium"
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.error || "Unable to generate AI quiz."
+            );
         }
 
-        const history = await response.json();
-        renderAnalytics(history);
+        if (!Array.isArray(data.questions) || data.questions.length === 0) {
+            throw new Error("AI returned invalid questions.");
+        }
+
+        quiz = data.questions;
+
+        quizIndex = 0;
+
+        renderQuiz();
+
+        showToast("AI Quiz generated successfully!");
 
     } catch (error) {
-        console.error("Analytics error:", error);
+
+        console.error("AI QUIZ ERROR:", error);
+
+        if (quizQuestion) {
+            quizQuestion.textContent = "AI Quiz generation failed.";
+        }
+
+        if (quizFeedback) {
+            quizFeedback.textContent =
+                error.message + " Please try again.";
+        }
+
+        if (nextQuestion) {
+            nextQuestion.textContent = "Try Again";
+            nextQuestion.disabled = false;
+        }
+
+    } finally {
+
+        quizLoading = false;
+
     }
 }
 
-function renderAnalytics(history) {
-    const riskCanvas = $("#riskChart");
-    const activityCanvas = $("#activityChart");
+// ======================================
+// RENDER CURRENT QUESTION
+// ======================================
 
-    if (
-        !riskCanvas ||
-        !activityCanvas ||
-        typeof Chart === "undefined" ||
-        !Array.isArray(history)
-    ) {
+function renderQuiz() {
+
+    if (!quizQuestion || !quizOptions || quiz.length === 0) {
         return;
     }
 
-    const high = history.filter(item => item.risk === "High").length;
-    const medium = history.filter(item => item.risk === "Medium").length;
-    const low = history.filter(item => item.risk === "Low").length;
+    const item = quiz[quizIndex];
 
-    const total = high + medium + low;
+    quizAnswered = false;
 
-    if (riskChartInstance) {
-        riskChartInstance.destroy();
-    }
+    quizQuestion.textContent =
+        `Question ${quizIndex + 1}/${quiz.length}: ${item.question}`;
 
-    const centerTextPlugin = {
-        id: "riskCenterText",
+    quizOptions.innerHTML = "";
 
-        afterDraw(chart) {
-            const { ctx, chartArea } = chart;
-            if (!chartArea) return;
+    item.options.forEach((option, index) => {
 
-            const centerX = (chartArea.left + chartArea.right) / 2;
-            const centerY = (chartArea.top + chartArea.bottom) / 2;
+        const button = document.createElement("button");
 
-            ctx.save();
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
+        button.className = "quiz-option";
+        button.textContent = option;
 
-            ctx.font = "bold 30px Inter";
-            ctx.fillStyle = "#edf2ff";
-            ctx.fillText(total, centerX, centerY - 9);
+        button.addEventListener("click", () => {
 
-            ctx.font = "11px Inter";
-            ctx.fillStyle = "#8d9ab9";
-            ctx.fillText("TOTAL SCANS", centerX, centerY + 17);
+            if (quizAnswered) return;
 
-            ctx.restore();
-        }
-    };
+            quizAnswered = true;
 
-    riskChartInstance = new Chart(riskCanvas, {
-        type: "doughnut",
+            const correct = index === item.answer;
 
-        data: {
-            labels: ["High Risk", "Medium Risk", "Low Risk"],
+            // Disable all options after answering
+            Array.from(quizOptions.children).forEach(optionButton => {
+                optionButton.disabled = true;
+            });
 
-            datasets: [{
-                data: total > 0 ? [high, medium, low] : [1],
+            if (correct) {
 
-                backgroundColor: total > 0
-                    ? ["#ff5470", "#ffbd59", "#43e6a0"]
-                    : ["#293653"],
+                button.classList.add("correct");
 
-                borderColor: "#0b122a",
-                borderWidth: 5,
-                borderRadius: 8,
-                hoverOffset: 12,
-                spacing: 4
-            }]
-        },
+                if (!quizSessionCorrect.has(quizIndex)) {
 
-        plugins: [centerTextPlugin],
+                    quizSessionCorrect.add(quizIndex);
 
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            cutout: "76%",
+                    addXP(20, "Correct AI quiz answer");
 
-            animation: {
-                animateRotate: true,
-                animateScale: true,
-                duration: 1000
-            },
-
-            plugins: {
-                legend: {
-                    position: "bottom",
-
-                    labels: {
-                        color: "#cbd5ed",
-                        padding: 22,
-                        usePointStyle: true,
-                        pointStyle: "circle",
-                        boxWidth: 9,
-                        boxHeight: 9,
-                        font: {
-                            family: "Inter",
-                            size: 11,
-                            weight: "500"
-                        }
-                    }
-                },
-
-                tooltip: {
-                    enabled: total > 0,
-                    backgroundColor: "#111a35",
-                    titleColor: "#4de5ff",
-                    bodyColor: "#edf2ff",
-                    borderColor: "rgba(77,229,255,0.3)",
-                    borderWidth: 1,
-                    padding: 12,
-                    cornerRadius: 10,
-
-                    callbacks: {
-                        label(context) {
-                            const value = context.raw;
-                            const percentage = total
-                                ? ((value / total) * 100).toFixed(1)
-                                : 0;
-
-                            return `${value} scans (${percentage}%)`;
-                        }
-                    }
                 }
+
+                if (quizFeedback) {
+                    quizFeedback.textContent =
+                        "✅ Correct! " + item.explanation;
+                }
+
+            } else {
+
+                button.classList.add("incorrect");
+
+                quizOptions.children[item.answer]?.classList.add("correct");
+
+                if (quizFeedback) {
+                    quizFeedback.textContent =
+                        "❌ Not quite! " + item.explanation;
+                }
+
             }
-        }
+
+            // Update progress and save
+            saveState();
+            updateProgress();
+
+            // Enable next button
+            if (nextQuestion) {
+                nextQuestion.disabled = false;
+            }
+
+        });
+
+        quizOptions.appendChild(button);
+
     });
 
-    // Last 7 days activity
-    const days = [];
+    if (quizFeedback) {
+        quizFeedback.textContent = "";
+    }
 
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
+    if (nextQuestion) {
 
-        days.push({
-            label: date.toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "short"
-            }),
-            date: date.toLocaleDateString("en-CA"),
-            high: 0,
-            medium: 0,
-            low: 0
+        nextQuestion.disabled = true;
+
+        nextQuestion.textContent =
+            quizIndex === quiz.length - 1
+                ? "Finish Quiz"
+                : "Next Question";
+
+    }
+
+}
+
+// ======================================
+// NEXT QUESTION / RESTART QUIZ
+// ======================================
+
+if (nextQuestion) {
+
+    nextQuestion.addEventListener("click", () => {
+
+        // Retry if AI generation previously failed
+        if (quiz.length === 0) {
+
+            generateAIQuiz();
+
+            return;
+        }
+
+        quizIndex++;
+
+        // Quiz completed
+        if (quizIndex >= quiz.length) {
+
+            const finalScore = quizSessionCorrect.size;
+
+            showToast(
+                `Quiz completed! Score: ${finalScore}/${quiz.length}`
+            );
+
+            if (quizQuestion) {
+                quizQuestion.textContent =
+                    `🎉 Quiz Completed! You scored ${finalScore}/${quiz.length}.`;
+            }
+
+            if (quizOptions) {
+                quizOptions.innerHTML = "";
+            }
+
+            if (quizFeedback) {
+                quizFeedback.textContent =
+                    "Great work! Generate a fresh AI quiz to practice again.";
+            }
+
+            nextQuestion.textContent = "Generate New Quiz";
+            nextQuestion.disabled = false;
+
+            quiz = [];
+
+            return;
+        }
+
+        renderQuiz();
+
+    });
+
+}
+
+// ======================================
+// START AI QUIZ AUTOMATICALLY
+// ======================================
+
+generateAIQuiz();
+
+// ======================================
+// END OF SECTION 7
+// ======================================
+
+  // ======================================
+// 8. THREAT RADAR & SECURITY SCORE
+// ======================================
+
+const radarButton = $("#radar-scan-btn");
+const radarMessage = $("#radar-message");
+const threatCount = $("#threat-count");
+
+const scoreButton = $("#score-check-btn");
+const securityScore = $("#security-score");
+const scoreStatus = $("#score-status");
+const scoreMeter = $("#score-meter");
+
+// Store latest scan data
+let radarRecords = [];
+
+// ======================================
+// LOAD REAL SCAN DATA
+// ======================================
+
+async function loadRadarData() {
+
+    try {
+
+        // Load message history
+        const messageData = await api("/api/history");
+
+        const messages = Array.isArray(messageData)
+            ? messageData
+            : (messageData.history || messageData.records || []);
+
+        // Load URL history
+        const urlData = await api("/api/url-history");
+
+        const urls = Array.isArray(urlData)
+            ? urlData
+            : (urlData.history || urlData.records || []);
+
+        const records = [...messages, ...urls];
+        // Sort scans: newest first
+records.sort((a, b) =>
+    new Date(b.scanned_at || 0) - new Date(a.scanned_at || 0)
+);
+
+// Update radar dots using latest 4 scans
+const radarPoints = document.querySelectorAll(".radar-point");
+console.log("Radar points found:", radarPoints.length);
+console.log("Latest scan records:", records.slice(0, 4));
+
+
+
+// DYNAMIC RADAR POINTS
+
+radarPoints.forEach((point, index) => {
+
+    point.classList.remove(
+        "high-threat",
+        "medium-threat",
+        "low-threat",
+        "no-threat"
+    );
+
+    const record = records[index];
+    const risk = record?.risk;
+
+    if (risk === "High") {
+        point.classList.add("high-threat");
+    }
+    else if (risk === "Medium") {
+        point.classList.add("medium-threat");
+    }
+    else if (risk === "Low") {
+        point.classList.add("low-threat");
+    }
+    else {
+        point.classList.add("no-threat");
+    }
+
+    // Dynamic position
+    const angle = (index * 90) + Math.random() * 25;
+    const radius = 25 + Math.random() * 20;
+
+    const x = 50 + radius * Math.cos(angle * Math.PI / 180);
+    const y = 50 + radius * Math.sin(angle * Math.PI / 180);
+
+    point.style.left = `${x}%`;
+    point.style.top = `${y}%`;
+
+});
+
+        const high = records.filter(r => r.risk === "High").length;
+        const medium = records.filter(r => r.risk === "Medium").length;
+        const low = records.filter(r => r.risk === "Low").length;
+
+        const total = records.length;
+        const threats = high + medium;
+
+        // Security score
+        const riskPoints = (high * 100) + (medium * 50);
+
+        const score = total > 0
+            ? Math.round(100 - riskPoints / total)
+            : 100;
+
+        // System health estimate
+        const health = score;
+
+        // Network status estimate
+        const network = high > 0
+            ? "AT RISK"
+            : medium > 0
+                ? "CAUTION"
+                : "SECURE";
+
+        // Update threat count
+        if (threatCount) {
+            threatCount.textContent = threats;
+        }
+
+        const threatDetail = $("#threat-detail");
+
+        if (threatDetail) {
+            threatDetail.textContent = `${total} total scans analyzed`;
+        }
+
+        // Update system health
+        const systemHealth = $("#system-health");
+
+        if (systemHealth) {
+            systemHealth.textContent = `${health}%`;
+        }
+
+        const healthDetail = $("#health-detail");
+
+        if (healthDetail) {
+            healthDetail.textContent = "Scan-based health estimate";
+        }
+
+        // Update network status
+        const networkStatus = $("#network-status");
+
+        if (networkStatus) {
+            networkStatus.textContent = network;
+            networkStatus.className =
+                network === "SECURE" ? "safe-text" : "warning-text";
+        }
+
+        const networkDetail = $("#network-detail");
+
+        if (networkDetail) {
+            networkDetail.textContent =
+                `${high} high-risk, ${medium} medium-risk scans`;
+        }
+
+        // Update risk breakdown
+        const highElement = $("#radarHigh");
+        const mediumElement = $("#radarMedium");
+        const lowElement = $("#radarLow");
+
+        if (highElement) highElement.textContent = high;
+        if (mediumElement) mediumElement.textContent = medium;
+        if (lowElement) lowElement.textContent = low;
+
+        // Update security score
+        if (securityScore) {
+            securityScore.textContent = score;
+        }
+
+        if (scoreMeter) {
+            scoreMeter.style.width = `${score}%`;
+        }
+
+        if (scoreStatus) {
+            scoreStatus.textContent =
+                `Based on ${total} recent message and URL scans.`;
+        }
+
+        // Update radar message
+        if (radarMessage) {
+            radarMessage.textContent =
+                `Analysis complete: ${high} High, ${medium} Medium, ${low} Low risks.`;
+        }
+
+        return { high, medium, low, total, threats, score };
+
+    } catch (error) {
+
+        console.error("Threat Radar Error:", error);
+
+        if (radarMessage) {
+            radarMessage.textContent =
+                "Could not load scan data.";
+        }
+
+        return null;
+    }
+}
+
+// ======================================
+// INITIAL RADAR DATA
+// ======================================
+
+loadRadarData();
+
+// ======================================
+// END OF SECTION 8
+// ======================================
+
+    // ======================================
+    // 9. SCAN HISTORY
+    // ======================================
+
+    const historyList = $("#historyList");
+
+    function renderHistory(records) {
+        if (!historyList) return;
+
+        currentHistory = records || [];
+
+        if (!currentHistory.length) {
+            historyList.innerHTML = "<p>No message scans yet.</p>";
+            return;
+        }
+
+        historyList.innerHTML = currentHistory.map(record => `
+            <div class="history-card">
+                <div>
+                    <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
+                    <p>${escapeHTML(String(record.message || "").slice(0, 100))}</p>
+                    <small>${escapeHTML(record.scanned_at || "")}</small>
+                </div>
+
+                <div>
+                    <strong>${Number(record.score) || 0}/100</strong>
+                    <button
+                        type="button"
+                        class="history-details"
+                        data-id="${Number(record.id)}"
+                    >
+                        Details
+                    </button>
+                </div>
+            </div>
+        `).join("");
+
+        historyList.querySelectorAll(".history-details").forEach(button => {
+            button.addEventListener("click", () => {
+                openHistoryDetails(button.dataset.id);
+            });
         });
     }
 
-    history.forEach(item => {
-        const scanDate = item.scanned_at?.split(" ")[0];
-        const day = days.find(d => d.date === scanDate);
-
-        if (!day) return;
-
-        if (item.risk === "High") day.high++;
-        else if (item.risk === "Medium") day.medium++;
-        else if (item.risk === "Low") day.low++;
-    });
-
-    if (activityChartInstance) {
-        activityChartInstance.destroy();
-    }
-
-    activityChartInstance = new Chart(activityCanvas, {
-        type: "line",
-
-        data: {
-            labels: days.map(day => day.label),
-
-            datasets: [
-                {
-                    label: "High Risk",
-                    data: days.map(day => day.high),
-                    borderColor: "#ff5470",
-                    backgroundColor: "rgba(255,84,112,0.12)",
-                    tension: 0.4,
-                    fill: false
-                },
-                {
-                    label: "Medium Risk",
-                    data: days.map(day => day.medium),
-                    borderColor: "#ffbd59",
-                    backgroundColor: "rgba(255,189,89,0.12)",
-                    tension: 0.4,
-                    fill: false
-                },
-                {
-                    label: "Low Risk",
-                    data: days.map(day => day.low),
-                    borderColor: "#43e6a0",
-                    backgroundColor: "rgba(67,230,160,0.12)",
-                    tension: 0.4,
-                    fill: false
-                }
-            ]
-        },
-
-        options: {
-            responsive: true,
-
-            interaction: {
-                intersect: false,
-                mode: "index"
-            },
-
-            plugins: {
-                legend: {
-                    labels: {
-                        color: "#ffffff"
-                    }
-                }
-            },
-
-            scales: {
-                x: {
-                    ticks: { color: "#ffffff" },
-                    grid: { display: false }
-                },
-
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: "#ffffff",
-                        precision: 0
-                    }
-                }
+    async function loadHistory() {
+        try {
+            const data = await api("/api/history");
+            renderHistory(data.history || data.records || data);
+            renderHistoryStats(currentHistory);
+            renderCharts(currentHistory);
+        } catch (error) {
+            if (historyList) {
+                historyList.textContent = "Could not load scan history.";
             }
         }
-    });
+    }
+
+    function renderHistoryStats(records) {
+        const total = records.length;
+        const high = records.filter(r => r.risk === "High").length;
+        const medium = records.filter(r => r.risk === "Medium").length;
+        const low = records.filter(r => r.risk === "Low").length;
+
+        const aiRecords = records.filter(r => Number(r.confidence) > 0);
+
+        const average = aiRecords.length
+            ? Math.round(
+                aiRecords.reduce(
+                    (sum, record) => sum + Number(record.confidence || 0),
+                    0
+                ) / aiRecords.length
+            )
+            : 0;
+
+        const values = {
+            "#historyTotal": total,
+            "#historyHigh": high,
+            "#historyMedium": medium,
+            "#historyLow": low,
+            "#aiScanCount": aiRecords.length,
+            "#avgConfidence": `${average}%`,
+            "#highRiskCount": high,
+            "#mediumRiskCount": medium,
+            "#lowRiskCount": low
+        };
+
+        Object.entries(values).forEach(([selector, value]) => {
+            const element = $(selector);
+            if (element) element.textContent = value;
+        });
+    }
+
+    // ======================================
+    // 10. ANALYTICS CHARTS
+    // ======================================
+
+    function renderCharts(records) {
+        if (typeof Chart === "undefined") return;
+
+        const riskCanvas = $("#riskChart");
+        const activityCanvas = $("#activityChart");
+
+        if (riskCanvas) {
+            if (riskChart) riskChart.destroy();
+
+            const high = records.filter(r => r.risk === "High").length;
+            const medium = records.filter(r => r.risk === "Medium").length;
+            const low = records.filter(r => r.risk === "Low").length;
+
+            riskChart = new Chart(riskCanvas, {
+                type: "doughnut",
+                data: {
+                    labels: ["High", "Medium", "Low"],
+                    datasets: [{
+                        data: [high, medium, low],
+                        backgroundColor: ["#ef4444", "#f59e0b", "#22c55e"],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            });
+        }
+
+        if (activityCanvas) {
+            if (activityChart) activityChart.destroy();
+
+            const last7Days = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+
+                const key = date.toISOString().slice(0, 10);
+
+                last7Days.push({
+                    date: key,
+                    count: records.filter(record =>
+                        String(record.scanned_at || "").startsWith(key)
+                    ).length
+                });
+            }
+
+            activityChart = new Chart(activityCanvas, {
+                type: "bar",
+                data: {
+                    labels: last7Days.map(day => day.date.slice(5)),
+                    datasets: [{
+                        label: "Message Scans",
+                        data: last7Days.map(day => day.count),
+                        backgroundColor: "#7867f7",
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // ======================================
+    // 11. HISTORY DETAILS MODAL
+    // ======================================
+
+    const scanModal = $("#scanModal");
+    const modalDetails = $("#modalScanDetails");
+    const closeModal = $("#closeScanModal");
+
+    async function openHistoryDetails(id) {
+        try {
+            const data = await api(`/api/history/${id}`);
+
+            const record = data.scan || data.record || data;
+
+            if (!modalDetails || !scanModal) return;
+
+            const warnings = Array.isArray(record.warnings)
+                ? record.warnings
+                : [];
+
+            modalDetails.innerHTML = `
+                <h3>${escapeHTML(record.risk || "Unknown")} Risk</h3>
+                <h2>${Number(record.score) || 0}/100</h2>
+
+                <p>${escapeHTML(record.message || "")}</p>
+
+                <h4>Warnings</h4>
+                <ul>
+                    ${
+                        warnings.map(w =>
+                            `<li>${escapeHTML(w)}</li>`
+                        ).join("") || "<li>No warnings recorded.</li>"
+                    }
+                </ul>
+
+                <h4>Explanation</h4>
+                <p>${escapeHTML(record.explanation || "Not available.")}</p>
+
+                <h4>Advice</h4>
+                <p>${escapeHTML(record.advice || "Not available.")}</p>
+
+                <p>Scanner consistency estimate: ${Number(record.confidence) || 0}%</p>
+                <small>${escapeHTML(record.scanned_at || "")}</small>
+            `;
+
+            scanModal.style.display = "flex";
+
+        } catch (error) {
+            showToast("Could not load scan details.");
+        }
+    }
+
+    if (closeModal && scanModal) {
+        closeModal.addEventListener("click", () => {
+            scanModal.style.display = "none";
+        });
+
+        scanModal.addEventListener("click", event => {
+            if (event.target === scanModal) {
+                scanModal.style.display = "none";
+            }
+        });
+    }
+
+    // ======================================
+    // 12. DELETE & EXPORT MESSAGE HISTORY
+    // ======================================
+
+    const refreshHistory = $("#refreshHistory");
+    const deleteHistory = $("#deleteHistory");
+    const exportHistory = $("#exportHistory");
+
+    if (refreshHistory) {
+        refreshHistory.addEventListener("click", loadHistory);
+    }
+
+    if (deleteHistory) {
+        deleteHistory.addEventListener("click", async () => {
+            if (!confirm("Delete all message scan history?")) return;
+
+            try {
+                await api("/api/history", { method: "DELETE" });
+                showToast("Message history deleted.");
+                await loadHistory();
+            } catch (error) {
+                showToast("Could not delete history.");
+            }
+        });
+    }
+
+    if (exportHistory) {
+        exportHistory.addEventListener("click", () => {
+            window.location.href = "/api/export";
+        });
+    }
+    // ======================================
+    // 13. URL SCAN HISTORY
+    // ======================================
+
+    const urlHistoryList = $("#urlHistoryList");
+
+    async function loadURLHistory() {
+        try {
+            const data = await api("/api/url-history");
+
+            const records = data.history || data.records || data;
+
+            if (!Array.isArray(records)) return;
+
+            const high = records.filter(r => r.risk === "High").length;
+            const medium = records.filter(r => r.risk === "Medium").length;
+            const low = records.filter(r => r.risk === "Low").length;
+
+            const values = {
+                "#urlHistoryTotal": records.length,
+                "#urlHistoryHigh": high,
+                "#urlHistoryMedium": medium,
+                "#urlHistoryLow": low
+            };
+
+            Object.entries(values).forEach(([selector, value]) => {
+                const element = $(selector);
+                if (element) element.textContent = value;
+            });
+
+            if (urlHistoryList) {
+                urlHistoryList.innerHTML = records.length
+                    ? records.map(record => `
+                        <div class="history-card">
+                            <div>
+                                <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
+                                <p>${escapeHTML(record.url || "")}</p>
+                                <small>${escapeHTML(record.scanned_at || "")}</small>
+                            </div>
+                            <strong>${Number(record.score) || 0}/100</strong>
+                        </div>
+                    `).join("")
+                    : "<p>No URL scans yet.</p>";
+            }
+
+        } catch (error) {
+            if (urlHistoryList) {
+                urlHistoryList.textContent = "Could not load URL history.";
+            }
+        }
+    }
+
+    const refreshURLHistory = $("#refreshUrlHistory");
+    const deleteURLHistory = $("#deleteUrlHistory");
+
+    if (refreshURLHistory) {
+        refreshURLHistory.addEventListener("click", loadURLHistory);
+    }
+
+    if (deleteURLHistory) {
+        deleteURLHistory.addEventListener("click", async () => {
+            if (!confirm("Delete all URL scan history?")) return;
+
+            try {
+                await api("/api/url-history", { method: "DELETE" });
+                showToast("URL history deleted.");
+                await loadURLHistory();
+            } catch (error) {
+                showToast("Could not delete URL history.");
+            }
+        });
+    }
+
+
+// ======================================
+// 14. LIVE ACTIVITY FEED
+// ======================================
+
+async function loadRecentActivity() {
+    const feed = $("#activity-feed");
+    if (!feed) return;
+
+    try {
+        const data = await api("/api/recent-activity");
+
+        const records = data.activity || data.records || data.history || data;
+
+        if (!Array.isArray(records)) {
+            throw new Error("Invalid activity data.");
+        }
+
+        // Newest scans first
+        records.sort((a, b) =>
+            new Date(String(b.scanned_at || "").replace(" ", "T")) -
+            new Date(String(a.scanned_at || "").replace(" ", "T"))
+        );
+
+        // Remove old static and duplicate activity items
+        feed.innerHTML = "";
+
+        if (records.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "activity-empty";
+            empty.textContent = "No scans yet. Complete your first security scan!";
+            feed.appendChild(empty);
+            return;
+        }
+
+        records.slice(0, 8).forEach(record => {
+
+            const isURL = Boolean(record.url);
+            const risk = String(record.risk || "Unknown");
+            const riskClass = risk.toLowerCase();
+
+            const item = document.createElement("div");
+            item.className = "activity-item";
+
+            const icon = document.createElement("span");
+            icon.className = "activity-icon";
+            icon.textContent = isURL ? "🌐" : "🛡️";
+
+            const content = document.createElement("div");
+            content.className = "activity-content";
+
+            const title = document.createElement("strong");
+            title.textContent = isURL
+                ? "URL Security Scan"
+                : "Message Security Scan";
+
+            const description = document.createElement("p");
+
+            const scannedValue = isURL
+                ? record.url
+                : record.message;
+
+            description.textContent =
+                String(scannedValue || "Scan completed").slice(0, 75);
+
+            const details = document.createElement("small");
+            details.textContent =
+                `Score: ${Number(record.score) || 0}/100`;
+
+            content.append(title, description, details);
+
+            const badge = document.createElement("span");
+            badge.className = `activity-risk ${riskClass}`;
+            badge.textContent = risk;
+
+            const time = document.createElement("span");
+            time.className = "activity-time";
+
+            const date = new Date(
+                String(record.scanned_at || "").replace(" ", "T")
+            );
+
+            time.textContent = Number.isNaN(date.getTime())
+                ? "Recently"
+                : date.toLocaleString();
+
+            item.append(icon, content, badge, time);
+            feed.appendChild(item);
+        });
+
+    } catch (error) {
+        console.error("Activity Feed Error:", error);
+        feed.textContent = "Could not load recent activity.";
+    }
 }
 
+    // ======================================
+    // 15. DASHBOARD REFRESH
+    // ======================================
+
+    async function refreshDashboard() {
+        await Promise.allSettled([
+            loadHistory(),
+            loadURLHistory()
+        ]);
+    }
+
+    // ======================================
+    // 16. INITIALIZATION
+    // ======================================
+
+    updateProgress();
+    checkPassword();
+
+    loadHistory();
+    loadURLHistory();
+    loadRecentActivity();
+
+    console.log("CyberVerse initialized successfully.");
+});

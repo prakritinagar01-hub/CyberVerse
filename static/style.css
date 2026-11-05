@@ -1146,6 +1146,38 @@ input::placeholder {
   box-shadow: 0 0 13px var(--pink);
   animation: pointPulse 1.8s infinite alternate;
 }
+/* DYNAMIC THREAT RADAR COLORS */
+
+.radar-point {
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+    animation: pointPulse 1.8s infinite alternate;
+    z-index: 5;
+}
+
+/* High Risk */
+.radar-point.high-threat {
+    background: #ff3b5c;
+    box-shadow: 0 0 15px #ff3b5c;
+}
+
+/* Medium Risk */
+.radar-point.medium-threat {
+    background: #ffad33;
+    box-shadow: 0 0 15px #ffad33;
+}
+
+/* Low Risk */
+.radar-point.low-threat {
+    background: #22e6a8;
+    box-shadow: 0 0 15px #22e6a8;
+}
+
+/* No Threat */
+.radar-point.no-threat {
+    background: #64748b;
+    box-shadow: 0 0 8px #64748b;
+    opacity: 0.4;
+}
 
 .point-one { top: 25%; left: 32%; }
 .point-two { top: 65%; left: 65%; animation-delay: 0.4s; }
@@ -1171,12 +1203,60 @@ input::placeholder {
   background: #071426;
   color: var(--cyan);
   font: 10px "Space Mono", monospace;
+  z-index: 6;
 }
 
 #radar-message {
   margin-top: 13px;
   color: var(--muted);
   font-size: 11px;
+}
+
+/* ANIMATED THREAT DETECTION */
+
+.radar-point.high-threat {
+    animation: highThreatPulse 1s infinite alternate;
+}
+
+.radar-point.medium-threat {
+    animation: mediumThreatPulse 1.5s infinite alternate;
+}
+
+.radar-point.low-threat {
+    animation: lowThreatPulse 2s infinite alternate;
+}
+
+@keyframes highThreatPulse {
+    from {
+        transform: scale(0.8);
+        box-shadow: 0 0 8px #ff3b5c;
+    }
+    to {
+        transform: scale(1.8);
+        box-shadow: 0 0 25px #ff3b5c;
+    }
+}
+
+@keyframes mediumThreatPulse {
+    from {
+        transform: scale(0.8);
+        box-shadow: 0 0 8px #ffad33;
+    }
+    to {
+        transform: scale(1.5);
+        box-shadow: 0 0 20px #ffad33;
+    }
+}
+
+@keyframes lowThreatPulse {
+    from {
+        transform: scale(0.8);
+        box-shadow: 0 0 6px #22e6a8;
+    }
+    to {
+        transform: scale(1.3);
+        box-shadow: 0 0 15px #22e6a8;
+    }
 }
 
 /* LIVE ACTIVITY FEED */
@@ -2183,4 +2263,121 @@ footer > span {
 
 .ai-metrics-grid .analytics-card small {
     color: #8796b5;
+}
+
+
+/* ======================================
+   LIVE ACTIVITY FEED - PREMIUM STYLING
+====================================== */
+
+.activity-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    transition: 0.25s ease;
+}
+
+.activity-item:hover {
+    transform: translateX(4px);
+    border-color: rgba(120, 103, 247, 0.5);
+    background: rgba(120, 103, 247, 0.07);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(120, 103, 247, 0.12);
+    font-size: 19px;
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-content strong {
+    display: block;
+    font-size: 13px;
+    color: #f1f5f9;
+    margin-bottom: 5px;
+}
+
+.activity-content p {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0 0 5px;
+    overflow-wrap: anywhere;
+}
+
+.activity-content small {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.activity-risk {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.activity-risk.high {
+    color: #ff647c;
+    background: rgba(255, 59, 92, 0.12);
+    border: 1px solid rgba(255, 59, 92, 0.3);
+}
+
+.activity-risk.medium {
+    color: #ffbd59;
+    background: rgba(255, 173, 51, 0.12);
+    border: 1px solid rgba(255, 173, 51, 0.3);
+}
+
+.activity-risk.low {
+    color: #22e6a8;
+    background: rgba(34, 230, 168, 0.1);
+    border: 1px solid rgba(34, 230, 168, 0.3);
+}
+
+.activity-risk.unknown {
+    color: #a5b4fc;
+    background: rgba(120, 103, 247, 0.12);
+}
+
+.activity-time {
+    font-size: 10px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.activity-empty {
+    text-align: center;
+    padding: 25px;
+    color: #94a3b8;
+}
+
+@media (max-width: 600px) {
+    .activity-item {
+        flex-wrap: wrap;
+    }
+
+    .activity-time {
+        width: 100%;
+        padding-left: 54px;
+    }
 }
