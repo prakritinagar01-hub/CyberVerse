@@ -1,179 +1,333 @@
+# 🛡️ CyberVerse – AI-Powered Cybersecurity Learning Platform
 
-# 🛡️ CyberVerse — Interactive Cybersecurity Learning Platform
+<p align="center">
+  <strong>Think Before You Click. Stay Ahead of Cyber Threats.</strong>
+</p>
 
-CyberVerse is an interactive cybersecurity learning platform designed to help users understand online threats through practical security labs, phishing-message analysis, password-strength testing, quizzes, and simulated threat monitoring.
+<p align="center">
+  An interactive cybersecurity platform that helps users identify potential phishing messages, analyze suspicious URLs, improve password security, and learn cybersecurity through AI-powered tools.
+</p>
 
-The project combines a modern web interface with a Python Flask backend to make cybersecurity concepts easier to explore.
+---
+
+## 🚀 Overview
+
+**CyberVerse** is a full-stack cybersecurity web application developed using Python, Flask, HTML, CSS, and JavaScript.
+
+The platform combines AI-assisted message analysis, rule-based threat detection, interactive security tools, data visualization, and gamified learning to create an engaging cybersecurity experience.
+
+It helps users understand potential online threats and develop safer digital habits through practical simulations and security analysis.
 
 ## ✨ Features
 
-### 🔍 Phishing Message Analyzer
-- Analyze suspicious messages for common phishing indicators.
-- Assign a risk score from 0 to 100.
-- Categorize results as Low, Medium, or High risk.
-- Display warning signs and security advice.
-- Flask API endpoint for message analysis.
+### 1. 🤖 AI-Powered Phishing Message Scanner
+- Analyze suspicious messages and text.
+- Uses a locally hosted Ollama language model for AI-assisted analysis.
+- Combines AI analysis with Python-based rule detection.
+- Generates a risk score out of 100.
+- Classifies potential threats as Low, Medium, or High.
+- Displays suspicious indicators and analysis results.
 
-### 🔗 Phishing URL Checker
-- Dedicated interface for checking suspicious URLs.
-- Designed for future integration with additional URL-analysis capabilities.
+### 2. 🌐 URL Security Scanner
+- Analyze suspicious website URLs.
+- Identify potentially unsafe URL patterns.
+- Evaluate suspicious domains and URL structures.
+- Generate heuristic-based risk assessments.
 
-### 🔐 Password Security Lab
-- Evaluate password-strength indicators.
-- Display password improvement tips.
-- Encourage unique passwords and stronger authentication practices.
+> Note: URL analysis is heuristic-based. It does not independently verify live malware status or website reputation.
 
-### 📡 Threat Radar Dashboard
-- Interactive simulated threat radar.
-- Display simulated threat signals.
-- Activity feed for recent demo scans.
+### 3. 🔐 Password Strength Checker
+- Test password strength.
+- Identify basic password weaknesses.
+- Provide interactive password security feedback.
 
-### 📊 Security Score Meter
-- Interactive security-score visualization.
-- Demonstration score and status indicators.
+### 4. 🎓 Cyber Academy
+- Interactive cybersecurity quizzes.
+- AI-generated questions using Ollama.
+- Multiple-choice answer checking.
+- Quiz progress tracking.
+- Learn about phishing, passwords, and online security.
 
-### 🧠 Cybersecurity Quiz
-- Multiple-choice cybersecurity questions.
-- Instant feedback and explanations.
-- XP rewards for correct answers.
+### 5. 📡 Threat Radar
+- Animated threat visualization.
+- Displays indicators based on stored scan history.
+- Provides an interactive cybersecurity dashboard experience.
 
-### 💻 Interactive Terminal
-- Practice basic security concepts through simulated commands.
-- Includes help, status, tips, and sample scan commands.
-- Does not perform real network scans.
+> Note: Threat Radar is a visual simulation based on local scan records, not a real-time global threat monitoring system.
 
-### 🏆 Gamification
-- XP points, levels, achievements, and progress tracking.
-- Saves learning progress using browser LocalStorage.
+### 6. 📊 Security Analytics Dashboard
+- Total security scans.
+- High, Medium, and Low risk statistics.
+- Security score estimation.
+- Interactive charts using Chart.js.
+- Risk distribution and scan analytics.
+
+### 7. 📁 Scan History & CSV Export
+- Store message and URL scan records using SQLite.
+- View previous scan results.
+- Review risk scores and timestamps.
+- Export scan history as CSV.
+- Delete stored scan history.
+
+### 8. ⚡ Gamification System
+- Earn XP points.
+- Progress through levels.
+- Unlock achievements.
+- Track quiz performance.
+- Monitor learning activity.
+
+### 9. 📡 Live Activity Feed
+- Display recent security scans.
+- Show scan types and risk levels.
+- Display timestamps and scan scores.
+- Automatically refresh activity after new scans.
+
+---
 
 ## 🛠️ Tech Stack
 
-**Frontend**
-- HTML5
-- CSS3
-- JavaScript
+| Technology | Purpose |
+|---|---|
+| Python | Backend programming |
+| Flask | Backend framework and REST APIs |
+| HTML5 | Web structure |
+| CSS3 | Responsive UI and animations |
+| JavaScript | Frontend interactions |
+| SQLite | Scan history storage |
+| Ollama | Local LLM integration |
+| Qwen 2.5 (1.5B) | Local AI model |
+| Chart.js | Analytics visualizations |
+| Git & GitHub | Version control |
 
-**Backend**
-- Python
-- Flask
-- Flask JSON API
+---
 
-**Planned Extensions**
-- Local AI integration using Ollama
-- SQLite database
-- Secure user registration and login
-- Persistent scan history
-
-## 📁 Project Structure
+## 🏗️ Project Architecture
 
 ```text
 CyberVerse/
 │
-├── index.html
-├── style.css
-├── script.js
 ├── app.py
-├── README.md
+│
+├── app_secureai_lab.py
+│
+├── requirements.txt
+│
+├── cyberverse.db
+│
+├── templates/
+│   └── index.html
+│
+├── static/
+│   ├── style.css
+│   └── script.js
+│
 ├── .gitignore
-└── .venv/
+│
+└── README.md
 ```
 
-The `.venv/` directory is a local virtual environment and should not be uploaded to GitHub.
+**Architecture workflow:**
 
-## 🚀 Getting Started
+```text
+User
+  |
+  v
+HTML / CSS / JavaScript
+  |
+  v
+Flask Backend
+  |
+  +----------------------+
+  |                      |
+  v                      v
+Ollama AI           Python Rule Engine
+  |                      |
+  +-----------+----------+
+              |
+              v
+       Risk Analysis
+              |
+              v
+        SQLite Database
+              |
+              v
+    Dashboard & Analytics
+```
 
-### 1. Clone the repository
+---
+
+## ⚙️ Installation & Setup
+
+### Prerequisites
+
+Install the following:
+
+- Python 3.10 or later
+- Git
+- Ollama
+- A compatible local AI model
+
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/prakritinagar01-hub/CyberVerse.git
+```
+
+### Step 2: Navigate to the Project
+
+```bash
 cd CyberVerse
 ```
 
-### 2. Create a virtual environment
+### Step 3: Create a Virtual Environment
 
 ```bash
 python -m venv .venv
 ```
 
-### 3. Activate the environment
-
-**Windows PowerShell:**
+Activate it on Windows:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
+.venv\Scripts\Activate
 ```
 
-### 4. Install dependencies
+### Step 4: Install Dependencies
 
 ```bash
-python -m pip install Flask
+pip install -r requirements.txt
 ```
 
-Additional dependencies may be required as new features are implemented.
+### Step 5: Install and Configure Ollama
 
-### 5. Run the application
+Download Ollama from:
+
+https://ollama.com/
+
+Pull the required model:
+
+```bash
+ollama pull qwen2.5:1.5b
+```
+
+Ensure Ollama is running locally before using AI-powered features.
+
+### Step 6: Run CyberVerse
 
 ```bash
 python app.py
 ```
 
-### 6. Open in your browser
+Open your browser:
 
-Visit:
-
+```text
 http://127.0.0.1:5000
-
-## 🔌 API Endpoint
-
-### Analyze a message
-
-**Endpoint:** `/api/analyze`
-
-**Method:** `POST`
-
-**Request body:**
-
-```json
-{
-  "message": "URGENT: Verify your account immediately."
-}
 ```
 
-The endpoint returns a JSON response containing a risk score, risk category, warning messages, and security advice.
+---
 
-## 🔒 Security and Privacy
+## 🔌 API Endpoints
 
-- Never commit API keys, passwords, or other secrets to GitHub.
-- Keep local configuration files such as `.env` out of version control.
-- Use password hashing when implementing account registration.
-- Validate and limit user input on the server.
-- Do not enter real passwords, OTPs, or confidential messages into the demo.
+The application uses Flask APIs for communication between the frontend and backend.
 
-## ⚠️ Disclaimer
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/` | GET | Load main dashboard |
+| `/api/analyze` | POST | Analyze suspicious messages |
+| `/api/scan-url` | POST | Analyze website URLs |
+| `/api/history` | GET | Retrieve message scan history |
+| `/api/url-history` | GET | Retrieve URL scan history |
+| `/api/recent-activity` | GET | Retrieve recent scan activity |
 
-CyberVerse is an educational cybersecurity project.
+Additional quiz, analytics, export, and history-management routes are implemented in the backend.
 
-The current message analyzer uses keyword-based heuristics. It is not a production-grade phishing detector, antivirus, or threat intelligence platform. The threat radar and security score are simulated demonstrations.
+---
 
-A low risk score does not guarantee that a message or URL is safe. Always verify suspicious communications through trusted official channels.
+## 🧠 AI & Detection Approach
 
-## 🔮 Future Enhancements
+CyberVerse uses a hybrid analysis approach for phishing message detection.
 
-- Local AI-powered phishing analysis using Ollama
-- Improved suspicious URL analysis
-- Secure login and registration
-- SQLite-backed user accounts and scan history
-- Personalized security recommendations
-- More cybersecurity labs and quizzes
-- Improved accessibility and mobile responsiveness
+**AI-assisted analysis:**
+- Uses a locally hosted Ollama model.
+- Helps interpret suspicious messages.
+- Generates contextual analysis.
+
+**Rule-based analysis:**
+- Detects urgent language.
+- Identifies password and OTP-related requests.
+- Checks suspicious links and verification requests.
+- Identifies prize and reward-related patterns.
+
+The combined system produces a risk assessment to help users recognize potentially dangerous messages.
+
+> Risk scores are heuristic assessments, not calibrated probabilities or guaranteed malware/phishing detection results.
+
+---
+
+## 🔒 Security & Limitations
+
+- AI features require a running Ollama service in the local setup.
+- The URL scanner uses heuristic checks rather than live reputation databases.
+- The Threat Radar visualizes stored scan records.
+- The security score is an estimate derived from scan history.
+- SQLite is used for local scan-history storage.
+- Do not enter real passwords, OTPs, or confidential information into the demonstration tools.
+
+---
+
+## ☁️ Deployment
+
+CyberVerse can be deployed as a Flask web application using platforms such as Render.
+
+For deployment, configure:
+
+**Build Command**
+```bash
+pip install -r requirements.txt
+```
+
+**Start Command**
+```bash
+gunicorn app:app
+```
+
+### Important Deployment Note
+
+Ollama running on your local computer is not automatically available to a cloud-hosted application.
+
+To enable AI-powered features in production, configure a separately hosted AI inference service or another accessible model API.
+
+SQLite storage on a typical cloud web-service filesystem may not persist across restarts or redeployments. Use persistent storage or a managed database if permanent history is required.
+
+---
+
+## 🎯 Future Improvements
+
+- Live malicious URL reputation checking.
+- Integration with threat intelligence APIs.
+- Cloud-hosted AI inference.
+- User authentication and role-based access.
+- Persistent cloud database.
+- Advanced phishing detection models.
+- More cybersecurity learning modules.
+- Detailed security reports and downloadable PDFs.
+
+---
 
 ## 👩‍💻 Author
 
 **Prakriti Nagar**
 
-- GitHub: [@prakritinagar01-hub](https://github.com/prakritinagar01-hub)
+B.Tech – Mathematics & Computing
+
+Shri Mata Vaishno Devi University
+
+- GitHub: https://github.com/prakritinagar01-hub
+- LinkedIn: https://linkedin.com/in/prakriti-nagar-237546326
 
 ---
 
-Built to make cybersecurity learning interactive, practical, and accessible. 🛡️
+## ⭐ Support
 
+If you find CyberVerse interesting, consider giving the repository a ⭐ on GitHub!
+
+**CyberVerse – Think Before You Click. Stay Cyber Safe.**
