@@ -1,4 +1,6 @@
 
+import traceback
+import random
 from flask import Flask, request, jsonify, render_template, make_response
 import re
 import requests
@@ -322,6 +324,7 @@ Rules:
     }
 
 
+
 @app.route("/api/generate-quiz", methods=["POST"])
 def generate_quiz():
 
@@ -331,133 +334,358 @@ def generate_quiz():
     if difficulty not in ["Easy", "Medium", "Hard"]:
         difficulty = "Medium"
 
-    prompt = f"""
-Create exactly 10 cybersecurity multiple-choice questions.
-Difficulty: {difficulty}
+    # Built-in cybersecurity question bank
+    question_bank = {
 
-Topics:
-1. Phishing
-2. Password security
-3. Social engineering
-4. Malware
-5. Network security
-6. Online privacy
-7. Two-factor authentication
-8. Safe browsing
-
-Return a JSON object with this structure:
-{{
-  "questions": [
-    {{
-      "question": "Question text",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "answer": 0,
-      "explanation": "Explanation"
-    }}
-  ]
-}}
-
-Requirements:
-- Exactly 10 questions.
-- Exactly 4 options per question.
-- answer must be an integer from 0 to 3.
-- Only one correct answer per question.
-- Keep questions factually accurate.
-- Return JSON only. No markdown or extra text.
-"""
-
-    try:
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": OLLAMA_MODEL,
-                "prompt": prompt,
-                "stream": False,
-                "format": "json",
-                "options": {
-                    "temperature": 0.2,
-                    "num_predict": 3000
-                }
+        "Easy": [
+            {
+                "question": "What is phishing?",
+                "options": [
+                    "A type of cyberattack",
+                    "A programming language",
+                    "A computer component",
+                    "A search engine"
+                ],
+                "answer": 0,
+                "explanation": "Phishing tricks users into revealing sensitive information."
             },
-            timeout=180
-        )
+            {
+                "question": "Which password is strongest?",
+                "options": [
+                    "123456",
+                    "password",
+                    "Prakriti123",
+                    "T9#kL2@pQ8!x"
+                ],
+                "answer": 3,
+                "explanation": "A strong password uses a mix of characters and is difficult to guess."
+            },
+            {
+                "question": "What does HTTPS indicate?",
+                "options": [
+                    "Encrypted communication",
+                    "A faster computer",
+                    "Free internet",
+                    "A virus-free website"
+                ],
+                "answer": 0,
+                "explanation": "HTTPS encrypts communication between the browser and website."
+            },
+            {
+                "question": "What should you do with an unknown email attachment?",
+                "options": [
+                    "Open immediately",
+                    "Forward it",
+                    "Verify the sender first",
+                    "Download it"
+                ],
+                "answer": 2,
+                "explanation": "Unknown attachments may contain malicious files."
+            },
+            {
+                "question": "What is OTP?",
+                "options": [
+                    "One-Time Password",
+                    "Online Transfer Protocol",
+                    "Open Text Program",
+                    "One-Time Payment"
+                ],
+                "answer": 0,
+                "explanation": "An OTP is a temporary authentication code."
+            },
+            {
+                "question": "What is malware?",
+                "options": [
+                    "A security update",
+                    "Malicious software",
+                    "A web browser",
+                    "An operating system"
+                ],
+                "answer": 1,
+                "explanation": "Malware is software designed to harm or exploit systems."
+            },
+            {
+                "question": "Which information should never be shared with strangers?",
+                "options": [
+                    "Favourite colour",
+                    "Public username",
+                    "OTP and password",
+                    "Favourite movie"
+                ],
+                "answer": 2,
+                "explanation": "OTP and passwords must remain confidential."
+            },
+            {
+                "question": "What is two-factor authentication?",
+                "options": [
+                    "Two passwords only",
+                    "An additional identity verification step",
+                    "Two email accounts",
+                    "Two browsers"
+                ],
+                "answer": 1,
+                "explanation": "2FA adds another verification layer to account security."
+            },
+            {
+                "question": "Why should software be updated?",
+                "options": [
+                    "To fix security vulnerabilities",
+                    "To delete all files",
+                    "To disable security",
+                    "To remove passwords"
+                ],
+                "answer": 0,
+                "explanation": "Updates often patch security vulnerabilities."
+            },
+            {
+                "question": "What is a firewall?",
+                "options": [
+                    "A gaming application",
+                    "A network security system",
+                    "A file format",
+                    "A programming language"
+                ],
+                "answer": 1,
+                "explanation": "A firewall monitors and controls network traffic."
+            }
+        ],
 
-        response.raise_for_status()
+        "Medium": [
+            {
+                "question": "What is social engineering?",
+                "options": [
+                    "Manipulating people to reveal information",
+                    "Building social networks",
+                    "Writing software",
+                    "Encrypting databases"
+                ],
+                "answer": 0,
+                "explanation": "Social engineering exploits human psychology rather than only technical vulnerabilities."
+            },
+            {
+                "question": "What does ransomware typically do?",
+                "options": [
+                    "Improves system performance",
+                    "Encrypts files and demands payment",
+                    "Updates antivirus",
+                    "Creates backups"
+                ],
+                "answer": 1,
+                "explanation": "Ransomware commonly locks or encrypts data and demands a ransom."
+            },
+            {
+                "question": "What is a brute-force attack?",
+                "options": [
+                    "Guessing passwords through repeated attempts",
+                    "Stealing hardware",
+                    "Deleting browser history",
+                    "Blocking advertisements"
+                ],
+                "answer": 0,
+                "explanation": "Brute-force attacks repeatedly try possible credentials."
+            },
+            {
+                "question": "What is a VPN primarily used for?",
+                "options": [
+                    "Increasing screen brightness",
+                    "Creating an encrypted network connection",
+                    "Removing malware automatically",
+                    "Increasing storage"
+                ],
+                "answer": 1,
+                "explanation": "A VPN can encrypt traffic between your device and the VPN server."
+            },
+            {
+                "question": "What is SQL injection?",
+                "options": [
+                    "A database backup method",
+                    "An attack that manipulates database queries",
+                    "A network cable",
+                    "A password manager"
+                ],
+                "answer": 1,
+                "explanation": "SQL injection exploits unsafe handling of database queries."
+            },
+            {
+                "question": "What does the principle of least privilege mean?",
+                "options": [
+                    "Give everyone administrator access",
+                    "Give users only the access they need",
+                    "Disable all accounts",
+                    "Share passwords"
+                ],
+                "answer": 1,
+                "explanation": "Least privilege limits access to only what is necessary."
+            },
+            {
+                "question": "What is a man-in-the-middle attack?",
+                "options": [
+                    "Intercepting communication between parties",
+                    "Deleting files",
+                    "Cracking a keyboard",
+                    "Updating software"
+                ],
+                "answer": 0,
+                "explanation": "An attacker secretly intercepts or potentially modifies communication."
+            },
+            {
+                "question": "Why is salting used when storing passwords?",
+                "options": [
+                    "To make passwords shorter",
+                    "To add unique random data before hashing",
+                    "To display passwords",
+                    "To remove encryption"
+                ],
+                "answer": 1,
+                "explanation": "Salts make identical passwords produce different password hashes."
+            },
+            {
+                "question": "What is a zero-day vulnerability?",
+                "options": [
+                    "A vulnerability unknown to the vendor or without an available patch",
+                    "An expired password",
+                    "A deleted account",
+                    "A harmless software update"
+                ],
+                "answer": 0,
+                "explanation": "Zero-day vulnerabilities can be exploited before a fix is available."
+            },
+            {
+                "question": "What is the purpose of a digital signature?",
+                "options": [
+                    "Increase internet speed",
+                    "Verify authenticity and integrity",
+                    "Hide the monitor",
+                    "Compress images"
+                ],
+                "answer": 1,
+                "explanation": "Digital signatures help verify who signed data and whether it was modified."
+            }
+        ],
 
-        ollama_data = response.json()
-        ai_text = ollama_data.get("response", "")
+        "Hard": [
+            {
+                "question": "Which cryptographic property does SHA-256 provide?",
+                "options": [
+                    "Reversible encryption",
+                    "A 256-bit hash digest",
+                    "Password recovery",
+                    "Data compression"
+                ],
+                "answer": 1,
+                "explanation": "SHA-256 produces a 256-bit cryptographic hash digest."
+            },
+            {
+                "question": "What is privilege escalation?",
+                "options": [
+                    "Gaining higher access permissions than authorized",
+                    "Changing a username",
+                    "Installing a browser",
+                    "Encrypting a file"
+                ],
+                "answer": 0,
+                "explanation": "Privilege escalation allows an attacker to gain elevated permissions."
+            },
+            {
+                "question": "What is the main purpose of a SIEM system?",
+                "options": [
+                    "Design websites",
+                    "Collect and analyze security logs",
+                    "Compress files",
+                    "Manage keyboards"
+                ],
+                "answer": 1,
+                "explanation": "SIEM platforms centralize security events for monitoring and investigation."
+            },
+            {
+                "question": "Which technique helps prevent replay attacks?",
+                "options": [
+                    "Using timestamps and nonces",
+                    "Using shorter passwords",
+                    "Disabling encryption",
+                    "Sharing session tokens"
+                ],
+                "answer": 0,
+                "explanation": "Nonces and timestamps help detect repeated or stale requests."
+            },
+            {
+                "question": "What is cross-site scripting (XSS)?",
+                "options": [
+                    "Injecting malicious scripts into web content",
+                    "Encrypting network traffic",
+                    "Scanning hard drives",
+                    "Backing up databases"
+                ],
+                "answer": 0,
+                "explanation": "XSS allows attacker-controlled scripts to execute in users' browsers."
+            },
+            {
+                "question": "What does a CSRF attack exploit?",
+                "options": [
+                    "A user's authenticated browser session",
+                    "A broken monitor",
+                    "A weak Wi-Fi signal",
+                    "An outdated keyboard"
+                ],
+                "answer": 0,
+                "explanation": "CSRF tricks an authenticated browser into submitting an unwanted request."
+            },
+            {
+                "question": "What is asymmetric cryptography?",
+                "options": [
+                    "Using one shared key only",
+                    "Using a public and private key pair",
+                    "Using no keys",
+                    "Using only passwords"
+                ],
+                "answer": 1,
+                "explanation": "Asymmetric cryptography uses mathematically related public and private keys."
+            },
+            {
+                "question": "What is network segmentation?",
+                "options": [
+                    "Dividing a network into isolated sections",
+                    "Increasing monitor resolution",
+                    "Deleting network logs",
+                    "Sharing all network credentials"
+                ],
+                "answer": 0,
+                "explanation": "Segmentation limits unnecessary communication and can contain attacks."
+            },
+            {
+                "question": "What is a supply-chain attack?",
+                "options": [
+                    "Compromising a trusted vendor or dependency",
+                    "Changing a computer wallpaper",
+                    "Deleting temporary files",
+                    "Increasing bandwidth"
+                ],
+                "answer": 0,
+                "explanation": "Supply-chain attacks target software, services, or vendors trusted by the victim."
+            },
+            {
+                "question": "What is the main function of an intrusion detection system?",
+                "options": [
+                    "Detect suspicious activities",
+                    "Create user accounts",
+                    "Increase storage",
+                    "Replace the operating system"
+                ],
+                "answer": 0,
+                "explanation": "An IDS monitors activity and alerts on potential security threats."
+            }
+        ]
+    }
 
-        if not ai_text:
-            raise ValueError("Ollama returned an empty response.")
+    questions = question_bank[difficulty].copy()
+    random.shuffle(questions)
 
-        # Extract JSON safely
-        start = ai_text.find("{")
-        end = ai_text.rfind("}")
-
-        if start == -1 or end == -1:
-            raise ValueError("AI did not return valid JSON.")
-
-        result = json.loads(ai_text[start:end + 1])
-
-        questions = result.get("questions", [])
-
-        if not isinstance(questions, list) or len(questions) != 10:
-            raise ValueError(
-                f"Expected 10 questions, received {len(questions) if isinstance(questions, list) else 'invalid data'}."
-            )
-
-        validated_questions = []
-
-        for question in questions:
-
-            if not isinstance(question, dict):
-                raise ValueError("Invalid question format.")
-
-            question_text = question.get("question")
-            options = question.get("options")
-            answer = question.get("answer")
-            explanation = question.get("explanation")
-
-            if not isinstance(question_text, str) or not question_text.strip():
-                raise ValueError("Invalid question text.")
-
-            if (
-                not isinstance(options, list)
-                or len(options) != 4
-                or not all(
-                    isinstance(option, str) and option.strip()
-                    for option in options
-                )
-            ):
-                raise ValueError("Invalid question options.")
-
-            if type(answer) is not int or answer not in range(4):
-                raise ValueError("Invalid correct answer.")
-
-            if not isinstance(explanation, str) or not explanation.strip():
-                raise ValueError("Invalid explanation.")
-
-            validated_questions.append({
-                "question": question_text.strip(),
-                "options": options,
-                "answer": answer,
-                "explanation": explanation.strip()
-            })
-
-        return jsonify({
-            "success": True,
-            "difficulty": difficulty,
-            "questions": validated_questions
-        })
-
-    except Exception as error:
-
-        print("QUIZ GENERATION ERROR:", repr(error))
-
-        return jsonify({
-            "success": False,
-            "error": "AI quiz generation failed. Please try again."
-        }), 503
+    return jsonify({
+        "success": True,
+        "difficulty": difficulty,
+        "questions": questions,
+        "generation_method": "CyberVerse Question Bank"
+    })
 
 # ==========================================
 # HOME
