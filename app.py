@@ -10,8 +10,48 @@ import csv
 from io import StringIO
 from datetime import datetime
 from urllib.parse import urlparse
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
+load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-20b"
+def groq_generate(prompt, temperature=0.2, max_tokens=3000, timeout=120):
+
+    if not GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY is not configured.")
+
+    response = requests.post(
+        GROQ_API_URL,
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": GROQ_MODEL,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "response_format": {
+                "type": "json_object"
+            }
+        },
+        timeout=timeout
+    )
+
+    response.raise_for_status()
+
+    result = response.json()
+    return result["choices"][0]["message"]["content"]
 
 # ==========================================
 # DATABASE
@@ -115,12 +155,41 @@ def save_url_scan(url, result):
 
 
 # ==========================================
-# OLLAMA AI CONFIGURATION
+# GROQ AI CONFIGURATION
 # ==========================================
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "qwen2.5:1.5b"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "openai/gpt-oss-20b"
 
+
+def groq_generate(prompt, temperature=0.2, max_tokens=3000, timeout=120):
+
+    if not GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY is not configured.")
+
+    response = requests.post(
+        GROQ_API_URL,
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": GROQ_MODEL,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": temperature,
+            "max_completion_tokens": max_tokens,
+            "response_format": {"type": "json_object"}
+        },
+        timeout=timeout
+    )
+
+    response.raise_for_status()
+
+    result = response.json()
+    return result["choices"][0]["message"]["content"]
 
 # ==========================================
 # RULE-BASED PHISHING ANALYSIS
@@ -168,13 +237,12 @@ def analyse_message(message):
         )
 
     score = min(score, 100)
-
     if score >= 50:
-        risk = "High"
+     risk = "High"
     elif score >= 25:
-        risk = "Medium"
+     risk = "Medium"
     else:
-        risk = "Low"
+     risk = "Low"
 
     if not warnings:
         warnings.append(
@@ -234,25 +302,13 @@ Rules:
 - Keep advice clear and simple.
 - Confidence must be an integer from 0 to 100.
 """
-
-    response = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": OLLAMA_MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json",
-            "options": {
-                "num_predict": 4096,
-                "temperature": 0.3
-            }
-        },
+    raw = groq_generate(
+        prompt,
+        temperature=0.3,
+        max_tokens=2000,
         timeout=90
     )
 
-    response.raise_for_status()
-
-    raw = response.json()["response"]
     result = json.loads(raw)
 
     score = max(0, min(100, int(result["score"])))
@@ -320,7 +376,7 @@ Rules:
                 "Verify the sender before clicking links or sharing information."
             )
         ),
-        "analysis_method": "Local AI (Ollama)"
+        "analysis_method": "Groq AI"
     }
 
 
@@ -334,6 +390,71 @@ def generate_quiz():
     if difficulty not in ["Easy", "Medium", "Hard"]:
         difficulty = "Medium"
 
+    # Try Groq AI quiz generation first
+    try:
+        prompt = f"""
+        Generate exactly 10 cybersecurity MCQ questions.
+        Difficulty: {difficulty}
+
+        Topics: phishing, malware, password security,
+        social engineering, network security, privacy,
+        authentication and safe browsing.
+
+        Return JSON only:
+        {{
+            "questions": [
+                {{
+                    "question": "Question",
+                    "options": ["A", "B", "C", "D"],
+                    "answer": 0,
+                    "explanation": "Explanation"
+                }}
+            ]
+        }}
+
+        Rules:
+        - Exactly 10 questions.
+        - Exactly 4 options per question.
+        - Answer must be an integer from 0 to 3.
+        - Questions must be factually accurate.
+        """
+
+        raw = groq_generate(
+            prompt,
+            temperature=0.3,
+            max_tokens=3000,
+            timeout=90
+        )
+
+        result = json.loads(raw)
+        questions = result.get("questions", [])
+
+        if not isinstance(questions, list) or len(questions) != 10:
+            raise ValueError("AI must generate exactly 10 questions.")
+
+        for q in questions:
+            if (
+                not isinstance(q, dict)
+                or not isinstance(q.get("question"), str)
+                or not isinstance(q.get("options"), list)
+                or len(q["options"]) != 4
+                or not all(isinstance(x, str) and x.strip() for x in q["options"])
+                or type(q.get("answer")) is not int
+                or q["answer"] not in range(4)
+                or not isinstance(q.get("explanation"), str)
+            ):
+                raise ValueError("Invalid AI question format.")
+
+        return jsonify({
+            "success": True,
+            "difficulty": difficulty,
+            "questions": questions,
+            "generation_method": "Groq AI"
+        })
+
+    except Exception as error:
+        print("GROQ QUIZ ERROR:", repr(error))
+        print("Using built-in question bank fallback.")
     # Built-in cybersecurity question bank
     question_bank = {
 
@@ -725,6 +846,13 @@ def analyze():
             ai_result["score"],
             rule_result["score"]
         )
+        print("========== CYBERVERSE DEBUG ==========")
+        print("AI SCORE:", ai_result["score"])
+        print("AI RISK:", ai_result["risk"])
+        print("RULE SCORE:", rule_result["score"])
+        print("RULE RISK:", rule_result["risk"])
+        print("FINAL SCORE:", final_score)
+        print("======================================")
 
         if final_score >= 50:
             final_risk = "High"
@@ -1018,12 +1146,12 @@ def scan_url():
 
     score = min(score, 100)
 
-    if score >= 40:
-        risk = "High"
-    elif score >= 20:
-        risk = "Medium"
+    if score >= 50:
+     risk = "High"
+    elif score >= 25:
+     risk = "Medium"
     else:
-        risk = "Low"
+     risk = "Low"
 
     result = {
         "url": url,

@@ -1485,6 +1485,29 @@ input:focus {
     animation: pointPulse 1.8s infinite alternate;
 }
 
+/* RADAR THREAT COLORS */
+
+.radar-point.no-threat {
+    background: #64748b !important;
+    box-shadow: 0 0 13px #64748b !important;
+}
+
+.radar-point.low-threat {
+    background: #22c55e !important;
+    box-shadow: 0 0 15px #22c55e !important;
+}
+
+.radar-point.medium-threat {
+    background: #facc15 !important;
+    box-shadow: 0 0 15px #facc15 !important;
+}
+
+.radar-point.high-threat {
+    background: #ef4444 !important;
+    box-shadow: 0 0 15px #ef4444 !important;
+}
+
+
 .point-one { top: 25%; left: 32%; }
 .point-two { top: 65%; left: 70%; animation-delay: .5s; }
 .point-three { top: 43%; left: 78%; animation-delay: 1s; }

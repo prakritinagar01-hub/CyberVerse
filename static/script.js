@@ -278,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } catch (error) {
             messageResult.textContent = error.message;
-            showToast("Scanner error. Check Flask server and Ollama.");
+            showToast("Scanner error. Check Flask server and Groq AI.");
         } finally {
             scanButton.disabled = false;
             scanButton.textContent = "Scan Message";
@@ -587,7 +587,7 @@ const nextQuestion = $("#nextQuestion");
 let quizSessionCorrect = new Set();
 
 // ======================================
-// GENERATE QUIZ USING OLLAMA AI
+// GENERATE QUIZ USING Groq AI 
 // ======================================
 
 async function generateAIQuiz() {
@@ -889,13 +889,42 @@ records.sort((a, b) =>
 const radarPoints = document.querySelectorAll(".radar-point");
 console.log("Radar points found:", radarPoints.length);
 console.log("Latest scan records:", records.slice(0, 4));
+console.log("Risk values:", records.map(r => ({
+    risk: r.risk,
+    risk_level: r.risk_level
+})));
 
 
 
 // DYNAMIC RADAR POINTS
 
-radarPoints.forEach((point, index) => {
 
+// DYNAMIC RADAR POINTS
+
+const getRisk = (record) => {
+    const value = String(
+        record.risk || record.risk_level || ""
+    ).trim().toLowerCase();
+
+    if (value.includes("high")) return "high";
+    if (value.includes("medium")) return "medium";
+    if (value.includes("low")) return "low";
+
+    return "low";
+};
+
+const highRecords = records.filter(r => getRisk(r) === "high");
+const mediumRecords = records.filter(r => getRisk(r) === "medium");
+const lowRecords = records.filter(r => getRisk(r) === "low");
+
+const radarData = [
+    highRecords[0],
+    mediumRecords[0],
+    lowRecords[0],
+    highRecords[1] || mediumRecords[1] || lowRecords[1]
+];
+
+radarPoints.forEach((point, index) => {
     point.classList.remove(
         "high-threat",
         "medium-threat",
@@ -903,37 +932,19 @@ radarPoints.forEach((point, index) => {
         "no-threat"
     );
 
-    const record = records[index];
-    const risk = record?.risk;
+    const record = radarData[index];
 
-    if (risk === "High") {
-        point.classList.add("high-threat");
-    }
-    else if (risk === "Medium") {
-        point.classList.add("medium-threat");
-    }
-    else if (risk === "Low") {
-        point.classList.add("low-threat");
-    }
-    else {
+    if (record) {
+        point.classList.add(`${getRisk(record)}-threat`);
+    } else {
         point.classList.add("no-threat");
     }
-
-    // Dynamic position
-    const angle = (index * 90) + Math.random() * 25;
-    const radius = 25 + Math.random() * 20;
-
-    const x = 50 + radius * Math.cos(angle * Math.PI / 180);
-    const y = 50 + radius * Math.sin(angle * Math.PI / 180);
-
-    point.style.left = `${x}%`;
-    point.style.top = `${y}%`;
-
 });
 
-        const high = records.filter(r => r.risk === "High").length;
-        const medium = records.filter(r => r.risk === "Medium").length;
-        const low = records.filter(r => r.risk === "Low").length;
+
+        const high = records.filter(r => getRisk(r) === "high").length;
+        const medium = records.filter(r => getRisk(r) === "medium").length;
+        const low = records.filter(r => getRisk(r) === "low").length;
 
         const total = records.length;
         const threats = high + medium;
