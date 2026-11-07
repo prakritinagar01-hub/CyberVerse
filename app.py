@@ -321,9 +321,6 @@ Rules:
         "analysis_method": "Local AI (Ollama)"
     }
 
-# ==========================================
-# OLLAMA AI QUIZ GENERATOR
-# ==========================================
 
 @app.route("/api/generate-quiz", methods=["POST"])
 def generate_quiz():
@@ -335,48 +332,38 @@ def generate_quiz():
         difficulty = "Medium"
 
     prompt = f"""
-You are a cybersecurity quiz creator.
-
-Generate exactly 10 multiple-choice questions
-about cybersecurity.
-
+Create exactly 10 cybersecurity multiple-choice questions.
 Difficulty: {difficulty}
 
 Topics:
-- Phishing attacks
-- Password security
-- Social engineering
-- Malware
-- Network security
-- Online privacy
-- Two-factor authentication
-- Safe browsing
+1. Phishing
+2. Password security
+3. Social engineering
+4. Malware
+5. Network security
+6. Online privacy
+7. Two-factor authentication
+8. Safe browsing
 
-Return ONLY valid JSON in this exact format:
-
+Return a JSON object with this structure:
 {{
-    "questions": [
-        {{
-            "question": "Question text",
-            "options": [
-                "Option A",
-                "Option B",
-                "Option C",
-                "Option D"
-            ],
-            "answer": 0,
-            "explanation": "Explain why this answer is correct."
-        }}
-    ]
+  "questions": [
+    {{
+      "question": "Question text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": 0,
+      "explanation": "Explanation"
+    }}
+  ]
 }}
 
-Rules:
-- Generate exactly 10 questions.
-- Each question must have exactly 4 options.
-- Answer must be an integer from 0 to 3.
-- Questions must be factually accurate.
-- Every question must have one correct answer.
-- Do not include markdown.
+Requirements:
+- Exactly 10 questions.
+- Exactly 4 options per question.
+- answer must be an integer from 0 to 3.
+- Only one correct answer per question.
+- Keep questions factually accurate.
+- Return JSON only. No markdown or extra text.
 """
 
     try:
@@ -386,56 +373,84 @@ Rules:
                 "model": OLLAMA_MODEL,
                 "prompt": prompt,
                 "stream": False,
-                "format": "json"
+                "format": "json",
+                "options": {
+                    "temperature": 0.2,
+                    "num_predict": 3000
+                }
             },
-            timeout=120
+            timeout=180
         )
 
         response.raise_for_status()
 
-        result = json.loads(response.json()["response"])
+        ollama_data = response.json()
+        ai_text = ollama_data.get("response", "")
+
+        if not ai_text:
+            raise ValueError("Ollama returned an empty response.")
+
+        # Extract JSON safely
+        start = ai_text.find("{")
+        end = ai_text.rfind("}")
+
+        if start == -1 or end == -1:
+            raise ValueError("AI did not return valid JSON.")
+
+        result = json.loads(ai_text[start:end + 1])
+
         questions = result.get("questions", [])
 
-        if not isinstance(questions, list) or len(questions) < 1:
-         raise ValueError("AI did not generate any valid questions.")
+        if not isinstance(questions, list) or len(questions) != 10:
+            raise ValueError(
+                f"Expected 10 questions, received {len(questions) if isinstance(questions, list) else 'invalid data'}."
+            )
 
-        questions = questions[:10]
+        validated_questions = []
+
         for question in questions:
+
             if not isinstance(question, dict):
                 raise ValueError("Invalid question format.")
 
-            if not isinstance(question.get("question"), str):
-                raise ValueError("Invalid question text.")
-
+            question_text = question.get("question")
             options = question.get("options")
+            answer = question.get("answer")
+            explanation = question.get("explanation")
+
+            if not isinstance(question_text, str) or not question_text.strip():
+                raise ValueError("Invalid question text.")
 
             if (
                 not isinstance(options, list)
                 or len(options) != 4
-                or not all(isinstance(option, str) for option in options)
+                or not all(
+                    isinstance(option, str) and option.strip()
+                    for option in options
+                )
             ):
                 raise ValueError("Invalid question options.")
-
-            answer = question.get("answer")
 
             if type(answer) is not int or answer not in range(4):
                 raise ValueError("Invalid correct answer.")
 
-            if not isinstance(question.get("explanation"), str):
+            if not isinstance(explanation, str) or not explanation.strip():
                 raise ValueError("Invalid explanation.")
+
+            validated_questions.append({
+                "question": question_text.strip(),
+                "options": options,
+                "answer": answer,
+                "explanation": explanation.strip()
+            })
 
         return jsonify({
             "success": True,
             "difficulty": difficulty,
-            "questions": questions
+            "questions": validated_questions
         })
 
-    except (
-        requests.RequestException,
-        ValueError,
-        KeyError,
-        TypeError
-    ) as error:
+    except Exception as error:
 
         print("QUIZ GENERATION ERROR:", repr(error))
 
