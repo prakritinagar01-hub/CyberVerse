@@ -1,6 +1,7 @@
 
 import traceback
 import random
+import warnings
 from flask import Flask, request, jsonify, render_template, make_response
 import re
 import requests
@@ -9,7 +10,8 @@ import sqlite3
 import csv
 from io import StringIO
 from datetime import datetime
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
+import ipaddress
 import os
 from dotenv import load_dotenv
 
@@ -1124,9 +1126,58 @@ def scan_url():
     score = 0
     warnings = []
 
+    # URL shortener detection
+    shortened_domains = [
+        "bit.ly",
+        "tinyurl.com",
+        "t.co",
+        "is.gd",
+        "cutt.ly",
+        "rebrand.ly",
+        "shorturl.at",
+        "rb.gy"
+    ]
+
+    if hostname.lower() in shortened_domains:
+        score += 15
+        warnings.append(
+            "URL uses a shortened domain that hides the final destination."
+        )
+
+    # IP address detection
+    try:
+        ipaddress.ip_address(hostname)
+        score += 20
+        warnings.append(
+            "URL uses a direct IP address instead of a domain name."
+        )
+    except ValueError:
+        pass
+
     if parsed.scheme != "https":
         score += 20
         warnings.append("Website does not use HTTPS.")
+            # Suspicious redirect parameter detection
+    redirect_parameters = [
+        "redirect",
+        "redirect_url",
+        "url",
+        "next",
+        "return",
+        "return_url",
+        "continue",
+        "callback"
+    ]
+
+    query_parameters = parse_qs(parsed.query)
+
+    for parameter in redirect_parameters:
+        if parameter in query_parameters:
+            score += 15
+            warnings.append(
+                f"URL contains a redirect-related parameter: {parameter}."
+            )
+            break
 
     if "xn--" in hostname:
         score += 25
@@ -1143,6 +1194,43 @@ def scan_url():
     if len(hostname) > 40:
         score += 10
         warnings.append("Domain name is unusually long.")
+            # Suspicious domain keywords
+    suspicious_keywords = [
+        "verify", "secure", "login", "account",
+        "update", "confirm", "banking", "wallet",
+        "password", "support", "signin"
+    ]
+
+    detected_keywords = [
+        word for word in suspicious_keywords
+        if word in hostname.lower().split(".")[-2]
+    ]
+
+    if detected_keywords:
+        score += min(len(detected_keywords) * 10, 20)
+        warnings.append(
+            "Domain contains suspicious security-related keywords: "
+            + ", ".join(detected_keywords)
+        )
+
+    # Suspicious top-level domains
+    suspicious_tlds = [
+        ".xyz", ".top", ".click", ".work",
+        ".loan", ".gq", ".tk", ".ml"
+    ]
+
+    if hostname.lower().endswith(tuple(suspicious_tlds)):
+        score += 20
+        warnings.append(
+            "Domain uses a TLD commonly associated with suspicious websites."
+        )
+
+    # Multiple hyphens in domain
+    if hostname.count("-") >= 3:
+        score += 15
+        warnings.append(
+            "Domain contains multiple hyphens."
+        )
 
     score = min(score, 100)
 

@@ -2841,3 +2841,77 @@ input::placeholder {
     background: #ffffff;
     border-color: #e5eaf2;
 }
+
+/* =========================================
+   CYBERVERSE — SCANNER RESULT LIGHT MODE
+========================================= */
+
+:root[data-theme="light"] .result-box {
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #dbe5f2;
+    border-radius: 14px;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+/* Result headings */
+:root[data-theme="light"] .result-box h1,
+:root[data-theme="light"] .result-box h2,
+:root[data-theme="light"] .result-box h3,
+:root[data-theme="light"] .result-box h4,
+:root[data-theme="light"] .result-box strong {
+    color: #172033;
+}
+
+/* Result paragraphs and lists */
+:root[data-theme="light"] .result-box p,
+:root[data-theme="light"] .result-box li {
+    color: #475569;
+}
+
+/* Risk score */
+:root[data-theme="light"] .result-box h2 {
+    color: #dc2626;
+}
+
+/* Warning markers */
+:root[data-theme="light"] .result-box li::marker {
+    color: #dc2626;
+}
+
+/* =========================================
+   CYBERVERSE — SCANNER RESULT LIGHT MODE
+========================================= */
+
+:root[data-theme="light"] .result-box {
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #dbe5f2;
+    border-radius: 14px;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+/* Result headings */
+:root[data-theme="light"] .result-box h1,
+:root[data-theme="light"] .result-box h2,
+:root[data-theme="light"] .result-box h3,
+:root[data-theme="light"] .result-box h4,
+:root[data-theme="light"] .result-box strong {
+    color: #172033;
+}
+
+/* Result paragraphs and lists */
+:root[data-theme="light"] .result-box p,
+:root[data-theme="light"] .result-box li {
+    color: #475569;
+}
+
+/* Risk score */
+:root[data-theme="light"] .result-box h2 {
+    color: #dc2626;
+}
+
+/* Warning markers */
+:root[data-theme="light"] .result-box li::marker {
+    color: #dc2626;
+}
