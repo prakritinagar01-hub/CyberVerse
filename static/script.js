@@ -13,6 +13,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const $ = (selector) => document.querySelector(selector);
 
+        // =====================================
+    // THEME MANAGEMENT
+    // =====================================
+
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+
+        if (themeIcon) {
+            themeIcon.textContent = theme === "dark" ? "☀" : "☾";
+        }
+
+        if (themeToggle) {
+            const nextTheme = theme === "dark" ? "light" : "dark";
+
+            themeToggle.setAttribute(
+                "aria-label",
+                `Switch to ${nextTheme} mode`
+            );
+
+            themeToggle.title = `Switch to ${nextTheme} mode`;
+        }
+
+        localStorage.setItem("cyberverseTheme", theme);
+    }
+
+    const savedTheme = localStorage.getItem("cyberverseTheme");
+    applyTheme(savedTheme === "light" ? "light" : "dark");
+
+    if (themeToggle) {
+        themeToggle.addEventListener("click", () => {
+            const currentTheme = document.documentElement.dataset.theme;
+            const nextTheme = currentTheme === "dark" ? "light" : "dark";
+
+            applyTheme(nextTheme);
+        });
+    }
+
     const state = {
         xp: Number(localStorage.getItem("cyberverseXP")) || 0,
         completed: Number(localStorage.getItem("cyberverseCompleted")) || 0,

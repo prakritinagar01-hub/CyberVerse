@@ -2160,3 +2160,684 @@ textarea:focus-visible {
         transition-duration: .01ms !important;
     }
 }
+
+/* =====================================
+   CYBERVERSE THEME TOGGLE
+===================================== */
+
+.theme-toggle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease,
+                border-color 0.25s ease, transform 0.25s ease;
+}
+
+.theme-toggle:hover {
+    transform: translateY(-2px);
+    border-color: var(--cyan);
+}
+
+/* LIGHT THEME COLORS */
+
+:root[data-theme="light"] {
+    --bg: #f4f7fb;
+    --panel: #ffffff;
+    --panel-light: #f8fafc;
+    --panel-hover: #eef2f7;
+    --text: #172033;
+    --muted: #64748b;
+    --line: rgba(15, 23, 42, 0.10);
+    --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+    --glow: none;
+}
+
+/* LIGHT THEME BACKGROUNDS */
+
+:root[data-theme="light"] body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+:root[data-theme="light"] .sidebar {
+    background: rgba(255, 255, 255, 0.96);
+    border-right: 1px solid var(--line);
+}
+
+:root[data-theme="light"] .topbar {
+    background: rgba(255, 255, 255, 0.90);
+    border-bottom: 1px solid var(--line);
+}
+
+:root[data-theme="light"] .app-shell {
+    background: var(--bg);
+}
+
+/* SMOOTH THEME TRANSITIONS */
+
+body,
+.sidebar,
+.topbar,
+.theme-toggle,
+.side-link,
+.card,
+.panel {
+    transition: background-color 0.25s ease,
+                color 0.25s ease,
+                border-color 0.25s ease;
+}
+
+/* =========================================
+   CYBERVERSE — PROFESSIONAL UI POLISH
+========================================= */
+
+/* SIDEBAR */
+
+.sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-label {
+    color: var(--muted);
+}
+
+.sidebar-version {
+    color: var(--muted);
+}
+
+/* TOPBAR */
+
+.topbar {
+    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    border-bottom: 1px solid var(--line);
+}
+
+/* PANELS */
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+}
+
+/* NAVIGATION */
+
+.side-link {
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.side-link:hover {
+    transform: translateX(2px);
+}
+
+.side-link.active {
+    box-shadow: inset 3px 0 var(--cyan);
+}
+
+/* HERO */
+
+.hero {
+    border-radius: 22px;
+    overflow: hidden;
+}
+
+.hero-description {
+    color: var(--muted);
+}
+
+/* SECTION SPACING */
+
+.section-heading {
+    margin-top: 48px;
+    margin-bottom: 22px;
+}
+
+/* THEME TOGGLE */
+
+.theme-toggle {
+    border-radius: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+}
+
+.theme-toggle:hover {
+    background: var(--panel-hover);
+}
+
+/* LIGHT THEME REFINEMENTS */
+
+:root[data-theme="light"] .panel {
+    background: #ffffff;
+    border-color: #e5eaf2;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.045);
+}
+
+:root[data-theme="light"] .hero-description {
+    color: #64748b;
+}
+
+:root[data-theme="light"] .side-link.active {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #dbeafe;
+    box-shadow: inset 3px 0 #3b82f6;
+}
+
+:root[data-theme="light"] .side-link.active .side-icon {
+    color: #2563eb;
+}
+
+:root[data-theme="light"] .top-system-status {
+    color: #059669;
+}
+/* =========================================
+   PREMIUM DASHBOARD STAT CARDS
+========================================= */
+
+.stats-grid {
+    gap: 20px;
+}
+
+.stat-card {
+    min-height: 145px;
+    padding: 23px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    transition: transform 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--cyan);
+    box-shadow: 0 12px 28px rgba(34, 211, 238, 0.09);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 14px;
+}
+
+.stat-card p {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.stat-card strong {
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    color: var(--text);
+}
+
+.stat-card small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+/* LIGHT MODE */
+
+:root[data-theme="light"] .stat-card {
+    background: #ffffff;
+    border-color: #e5eaf2;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-theme="light"] .stat-card:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 12px 25px rgba(37, 99, 235, 0.08);
+}
+/* =========================================
+   ACADEMY & PROGRESS CARDS - THEME SUPPORT
+========================================= */
+
+.academy-card,
+.progress-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    transition: background 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+}
+
+.quiz-question {
+    color: var(--text);
+}
+
+.quiz-options button {
+    color: var(--text);
+    background: var(--panel-light);
+    border-color: var(--line);
+}
+
+.quiz-options button:hover {
+    background: var(--panel-hover);
+    border-color: var(--cyan);
+}
+
+.quiz-feedback {
+    color: var(--green);
+}
+
+/* Light mode */
+
+:root[data-theme="light"] .academy-card,
+:root[data-theme="light"] .progress-card {
+    background: #ffffff;
+    border-color: #e5eaf2;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-theme="light"] .quiz-options button {
+    background: #f8fafc;
+    color: #334155;
+}
+
+:root[data-theme="light"] .quiz-options button:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+/* =========================================
+   PROFESSIONAL FORM INPUTS
+========================================= */
+
+textarea,
+input {
+    background: var(--panel-light);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+textarea:focus,
+input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.10);
+}
+
+textarea::placeholder,
+input::placeholder {
+    color: var(--muted);
+}
+
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] input {
+    background: #f8fafc;
+    color: #172033;
+    border-color: #dbe3ee;
+}
+
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] input:focus {
+    background: #ffffff;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.10);
+}
+
+/* =========================================
+   TABLET RESPONSIVE POLISH
+========================================= */
+
+@media (max-width: 900px) {
+    .container {
+        padding: 22px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .stat-card {
+        min-height: 125px;
+        padding: 18px;
+    }
+
+    .hero {
+        gap: 20px;
+    }
+
+    .hero-art {
+        min-height: 250px;
+    }
+
+    .bottom-grid {
+        gap: 16px;
+    }
+}
+
+/* Small tablets and large phones */
+
+@media (max-width: 520px) {
+    .container {
+        padding: 15px 12px;
+    }
+
+    .topbar {
+        padding: 0 12px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+        min-height: 110px;
+    }
+
+    .hero {
+        padding: 24px 18px;
+    }
+}
+
+/* =========================================
+   CYBERVERSE — THREAT RADAR UI POLISH
+========================================= */
+
+.threat-dashboard {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+}
+
+.threat-card,
+.security-score-panel,
+.radar-panel,
+.activity-panel {
+    background: var(--panel-light);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: none;
+}
+
+.threat-card {
+    padding: 21px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.threat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--cyan);
+}
+
+.threat-card strong {
+    color: var(--text);
+    font-size: 27px;
+    letter-spacing: -0.5px;
+}
+
+.security-score-panel {
+    padding: 25px;
+}
+
+.radar-map {
+    border-color: var(--line);
+}
+
+.activity-item {
+    background: var(--panel);
+    border-color: var(--line);
+}
+
+.activity-item:hover {
+    background: var(--panel-hover);
+    border-color: var(--cyan);
+}
+
+/* Light theme */
+
+:root[data-theme="light"] .threat-dashboard,
+:root[data-theme="light"] .threat-card,
+:root[data-theme="light"] .security-score-panel,
+:root[data-theme="light"] .radar-panel,
+:root[data-theme="light"] .activity-panel,
+:root[data-theme="light"] .activity-item {
+    background: #ffffff;
+    border-color: #e5eaf2;
+}
+
+:root[data-theme="light"] .threat-card strong,
+:root[data-theme="light"] .security-score-panel h3,
+:root[data-theme="light"] .radar-info h3,
+:root[data-theme="light"] .activity-heading h3 {
+    color: #172033;
+}
+
+:root[data-theme="light"] .activity-item:hover {
+    background: #f8fafc;
+    border-color: #93c5fd;
+}
+
+:root[data-theme="light"] .score-inner {
+    background: #ffffff;
+}
+
+/* =========================================
+   CYBERVERSE — COMPLETE HERO LIGHT MODE
+========================================= */
+
+:root[data-theme="light"] .hero {
+    background:
+        radial-gradient(
+            circle at 80% 50%,
+            rgba(59, 130, 246, 0.10),
+            transparent 35%
+        ),
+        linear-gradient(135deg, #ffffff, #edf4ff 75%);
+    border: 1px solid #dbe5f2;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+}
+
+:root[data-theme="light"] .hero::before {
+    background-image:
+        linear-gradient(rgba(37, 99, 235, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, .045) 1px, transparent 1px);
+}
+
+:root[data-theme="light"] .hero h1 {
+    color: #172033;
+}
+
+:root[data-theme="light"] .hero h1 span {
+    background: linear-gradient(90deg, #0284c7, #6366f1, #9333ea);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+:root[data-theme="light"] .hero-description {
+    color: #475569;
+}
+
+:root[data-theme="light"] .button.secondary {
+    color: #334155;
+    background: #ffffff;
+    border-color: #cbd5e1;
+}
+
+:root[data-theme="light"] .button.secondary:hover {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+:root[data-theme="light"] .hero-stats strong {
+    color: #0284c7;
+}
+
+:root[data-theme="light"] .hero-stats small {
+    color: #64748b;
+}
+
+/* Floating security cards */
+
+:root[data-theme="light"] .float-card {
+    background: rgba(255, 255, 255, .96);
+    border-color: #dbe5f2;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, .09);
+}
+
+:root[data-theme="light"] .float-card strong {
+    color: #172033;
+}
+
+:root[data-theme="light"] .tiny-label {
+    color: #64748b;
+}
+
+:root[data-theme="light"] .art-caption {
+    color: #64748b;
+}
+
+/* Shield */
+
+:root[data-theme="light"] .shield::before {
+    background: linear-gradient(145deg, #ffffff, #dbeafe);
+}
+
+/* =========================================
+   CYBERVERSE — HISTORY & ANALYTICS LIGHT MODE
+========================================= */
+
+/* Main sections */
+
+:root[data-theme="light"] .scan-history-section,
+:root[data-theme="light"] .analytics-section {
+    background: #ffffff;
+    border: 1px solid #e5eaf2;
+    border-radius: 20px;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .045);
+}
+
+/* Section headings */
+
+:root[data-theme="light"] .scan-history-section h2,
+:root[data-theme="light"] .analytics-section h2,
+:root[data-theme="light"] .analytics-section h3 {
+    color: #172033;
+}
+
+:root[data-theme="light"] .scan-history-section p,
+:root[data-theme="light"] .analytics-section p {
+    color: #64748b;
+}
+
+/* History statistics */
+
+:root[data-theme="light"] .history-stats .threat-card {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+:root[data-theme="light"] .history-stats .threat-card strong {
+    color: #172033;
+}
+
+:root[data-theme="light"] .history-stats .threat-card span,
+:root[data-theme="light"] .history-stats .threat-card small {
+    color: #64748b;
+}
+
+/* Analytics cards */
+
+:root[data-theme="light"] .analytics-card {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    box-shadow: none;
+}
+
+:root[data-theme="light"] .analytics-card h2 {
+    color: #2563eb;
+}
+
+:root[data-theme="light"] .analytics-card h3,
+:root[data-theme="light"] .analytics-card p,
+:root[data-theme="light"] .analytics-card small {
+    color: #475569;
+}
+
+/* History records */
+
+:root[data-theme="light"] .history-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
+}
+
+:root[data-theme="light"] .history-card:hover {
+    background: #f8fafc;
+    border-color: #93c5fd;
+}
+
+:root[data-theme="light"] .history-card strong,
+:root[data-theme="light"] .history-card h3 {
+    color: #172033;
+}
+
+:root[data-theme="light"] .history-card p,
+:root[data-theme="light"] .history-card small,
+:root[data-theme="light"] .history-card span {
+    color: #64748b;
+}
+
+/* History buttons */
+
+:root[data-theme="light"] .history-actions .button.secondary {
+    color: #334155;
+    background: #f8fafc;
+    border-color: #dbe3ee;
+}
+
+:root[data-theme="light"] .history-actions .button.secondary:hover {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+/* Empty history messages */
+
+:root[data-theme="light"] .history-list > p {
+    color: #64748b;
+}
+
+/* URL history */
+
+:root[data-theme="light"] #url-scan-history {
+    background: #ffffff;
+    border-color: #e5eaf2;
+}
+
+:root[data-theme="light"] #url-scan-history .history-card a {
+    color: #2563eb;
+    overflow-wrap: anywhere;
+}
+
+/* Chart containers */
+
+:root[data-theme="light"] .analytics-grid .analytics-card {
+    background: #ffffff;
+    border-color: #e5eaf2;
+}
