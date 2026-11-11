@@ -536,55 +536,51 @@
             <section class="bottom-grid">
 
                 <!-- CYBER ACADEMY -->
-                <article class="panel academy-card" id="academy">
+                
+<!-- CYBER ACADEMY -->
+<article class="panel academy-card" id="academy">
 
-                    <div class="section-heading compact">
+    <div class="section-heading compact">
+        <div>
+            <p class="eyebrow">KNOWLEDGE CHECK</p>
+            <h2>Cyber <span>Academy</span></h2>
+        </div>
 
-                        <div>
-                            <p class="eyebrow">KNOWLEDGE CHECK</p>
-                            <h2>Cyber <span>Academy</span></h2>
-                        </div>
+        <span class="tag">QUIZ MODE</span>
+    </div>
 
-                        <span class="tag">QUIZ MODE</span>
+    <div class="quiz-difficulty">
+        <label for="quizDifficulty">Select Difficulty:</label>
 
-                    </div>
+        <select id="quizDifficulty">
+            <option value="Easy">Easy</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Hard">Hard</option>
+        </select>
+    </div>
 
-                    <p class="quiz-question" id="quizQuestion">
-                        What should you do if an unexpected email asks you
-                        to verify your password using a link?
-                    </p>
+    <p class="quiz-question" id="quizQuestion">
+        Loading cybersecurity question...
+    </p>
 
-                    <div class="quiz-options" id="quizOptions">
+    <div class="quiz-options" id="quizOptions"></div>
 
-                        <button type="button" data-answer="0">
-                            Click quickly before the account closes
-                        </button>
+    <div
+        id="quizFeedback"
+        class="quiz-feedback"
+        aria-live="polite"
+    ></div>
 
-                        <button type="button" data-answer="1">
-                            Avoid the link and verify through the official website or app
-                        </button>
+    <button
+        id="nextQuestion"
+        class="button secondary"
+        type="button"
+    >
+        Next Question →
+    </button>
 
-                        <button type="button" data-answer="2">
-                            Forward it to all your friends
-                        </button>
+</article>
 
-                    </div>
-
-                    <div
-                        id="quizFeedback"
-                        class="quiz-feedback"
-                        aria-live="polite"
-                    ></div>
-
-                    <button
-                        id="nextQuestion"
-                        class="button secondary"
-                        type="button"
-                    >
-                        Next Question →
-                    </button>
-
-                </article>
 
 
                 <!-- ACHIEVEMENTS -->

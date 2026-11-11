@@ -224,11 +224,17 @@ Return ONLY valid JSON:
 }}
 
 Rules:
-- Score and confidence must be integers from 0 to 100.
-- Risk must be Low, Medium, or High.
-- Do not assume every message is phishing.
-- Never advise clicking suspicious links or sharing OTPs/passwords.
-- Keep advice clear and simple.
+- Generate exactly 10 unique questions.
+- Do not repeat the same question or concept within the quiz.
+- Do not ask this question:
+  "What should you do if an unexpected email asks you to verify your password using a link?"
+- Avoid questions about unexpected password-verification emails and suspicious password-reset links.
+- Use different cybersecurity scenarios and topics.
+- Do not reuse common generic phishing questions.
+- Exactly 4 non-empty options per question.
+- Answer must be an integer from 0 to 3.
+- Explanations must be clear and informative.
+- Ensure all questions match the selected difficulty.
 """
 
     raw = groq_generate(prompt, temperature=0.3, max_tokens=2000, timeout=90)
@@ -356,9 +362,34 @@ answer must be integer 0 to 3, explanations must be strings.
 """
         raw = groq_generate(prompt, temperature=0.3, max_tokens=3000, timeout=90)
         questions = json.loads(raw).get("questions", [])
+        # Remove duplicate questions
+        if isinstance(questions, list):
+            unique_questions = []
+            seen_questions = set()
 
-        if not isinstance(questions, list) or len(questions) != 10:
-            raise ValueError("AI must generate exactly 10 questions.")
+            for question in questions:
+                if not isinstance(question, dict) or not isinstance(
+                    question.get("question"), str
+                ):
+                    unique_questions.append(question)
+                    continue
+
+                normalized = re.sub(
+                    r"[^a-z0-9]+",
+                    " ",
+                    question["question"].lower(),
+                ).strip()
+
+                if normalized not in seen_questions:
+                    seen_questions.add(normalized)
+                    unique_questions.append(question)
+
+            questions = unique_questions
+
+        if not isinstance(questions, list) or len(questions) < 10:
+             raise ValueError("AI must generate at least 10 unique questions.")
+
+        questions = questions[:10]
 
         for question in questions:
             if (

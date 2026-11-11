@@ -2915,3 +2915,171 @@ input::placeholder {
 :root[data-theme="light"] .result-box li::marker {
     color: #dc2626;
 }
+
+/* =====================================
+   CYBER ACADEMY - PREMIUM UI
+===================================== */
+
+.academy-card {
+    position: relative;
+    overflow: hidden;
+    padding: 28px;
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    background:
+        radial-gradient(circle at top right, rgba(124, 58, 237, 0.13), transparent 38%),
+        rgba(15, 23, 42, 0.85);
+    border-radius: 22px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.22);
+}
+
+.academy-card .quiz-difficulty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin: 25px 0;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 14px;
+}
+
+.academy-card .quiz-difficulty label {
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+#quizDifficulty {
+    min-width: 130px;
+    padding: 10px 14px;
+    color: #fff;
+    background: #1e293b;
+    border: 1px solid #7c3aed;
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+}
+
+#quizDifficulty option {
+    background: #1e293b;
+    color: #fff;
+}
+
+.academy-card .quiz-question {
+    margin: 25px 0;
+    padding: 22px;
+    color: #f8fafc;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.7;
+    background: rgba(124, 58, 237, 0.09);
+    border-left: 4px solid #8b5cf6;
+    border-radius: 12px;
+}
+
+.academy-card .quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 13px;
+}
+
+.academy-card .quiz-options button {
+    min-height: 65px;
+    padding: 15px 18px;
+    color: #dbeafe;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    background: rgba(30, 41, 59, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 13px;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.academy-card .quiz-options button:hover {
+    color: #fff;
+    background: rgba(124, 58, 237, 0.2);
+    border-color: #8b5cf6;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.15);
+}
+
+.academy-card .quiz-feedback {
+    margin-top: 18px;
+    padding: 14px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    border-radius: 12px;
+}
+
+.academy-card #nextQuestion {
+    margin-top: 18px;
+}
+
+@media (max-width: 600px) {
+    .academy-card .quiz-options {
+        grid-template-columns: 1fr;
+    }
+
+    .academy-card .quiz-difficulty {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #quizDifficulty {
+        width: 100%;
+    }
+}
+/* =====================================
+   CYBER ACADEMY - LIGHT MODE FIX
+===================================== */
+
+:root[data-theme="light"] .academy-card {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.07);
+}
+
+:root[data-theme="light"] .academy-card .quiz-difficulty {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+:root[data-theme="light"] .academy-card .quiz-difficulty label {
+    color: #334155;
+}
+
+:root[data-theme="light"] #quizDifficulty {
+    color: #1e293b;
+    background: #ffffff;
+    border-color: #8b5cf6;
+}
+
+:root[data-theme="light"] #quizDifficulty option {
+    color: #1e293b;
+    background: #ffffff;
+}
+
+:root[data-theme="light"] .academy-card .quiz-question {
+    color: #1e293b;
+    background: #f5f3ff;
+    border-left-color: #7c3aed;
+}
+
+:root[data-theme="light"] .academy-card .quiz-options button {
+    color: #334155;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+:root[data-theme="light"] .academy-card .quiz-options button:hover {
+    color: #5b21b6;
+    background: #f3e8ff;
+    border-color: #8b5cf6;
+}
+
+:root[data-theme="light"] .academy-card .quiz-feedback {
+    color: #334155;
+}

@@ -632,6 +632,21 @@ const quizQuestion = $("#quizQuestion");
 const quizOptions = $("#quizOptions");
 const quizFeedback = $("#quizFeedback");
 const nextQuestion = $("#nextQuestion");
+const quizDifficulty = $("#quizDifficulty");
+// Regenerate quiz whenever difficulty changes
+if (quizDifficulty) {
+    quizDifficulty.addEventListener("change", () => {
+
+        if (quizLoading) return;
+
+        generateAIQuiz();
+
+        showToast(
+            `Generating ${quizDifficulty.value} difficulty quiz...`
+        );
+
+    });
+}
 
 // Track correct answers for the current quiz
 let quizSessionCorrect = new Set();
@@ -676,7 +691,7 @@ async function generateAIQuiz() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                difficulty: "Medium"
+                 difficulty: quizDifficulty ? quizDifficulty.value : "Medium"
             })
         });
 
