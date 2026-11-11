@@ -359,6 +359,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const warnings = Array.isArray(data.warnings)
             ? data.warnings
             : [];
+                const domainAge = data.domain_age;
+
+        const domainAgeText = domainAge !== null &&
+            domainAge !== undefined &&
+            Number.isFinite(Number(domainAge))
+                ? `${Number(domainAge).toLocaleString()} days (${(Number(domainAge) / 365).toFixed(1)} years)`
+                : "Not available";
 
         urlResult.innerHTML = `
             <div class="result-card ${escapeHTML(
@@ -366,6 +373,9 @@ document.addEventListener("DOMContentLoaded", () => {
             )}">
                 <h3>URL Risk: ${escapeHTML(data.risk || "Unknown")}</h3>
                 <h2>${Number(data.score) || 0}/100</h2>
+                <p class="domain-age">
+    <strong>Domain Age:</strong> ${escapeHTML(domainAgeText)}
+</p>
 
                 <h4>Warnings</h4>
                 <ul>
