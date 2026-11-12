@@ -1027,6 +1027,38 @@
 
                 </div>
 
+                
+<!-- URL HISTORY SEARCH AND FILTERS -->
+<div class="url-history-controls">
+
+    <input
+        type="search"
+        id="urlHistorySearch"
+        placeholder="Search URL..."
+        autocomplete="off"
+    >
+
+    <select id="urlRiskFilter">
+        <option value="all">All Risk Levels</option>
+        <option value="High">High Risk</option>
+        <option value="Medium">Medium Risk</option>
+        <option value="Low">Low Risk</option>
+    </select>
+
+    <select id="urlSortOrder">
+        <option value="newest">Latest First</option>
+        <option value="oldest">Oldest First</option>
+    </select>
+
+    <button
+        class="button secondary"
+        id="clearUrlFilters"
+        type="button"
+    >
+        Clear Filters
+    </button>
+
+</div>
 
                 <div id="urlHistoryList" class="history-list">
                     <p>Loading URL history...</p>

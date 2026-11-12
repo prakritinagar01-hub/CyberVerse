@@ -3083,3 +3083,52 @@ input::placeholder {
 :root[data-theme="light"] .academy-card .quiz-feedback {
     color: #334155;
 }
+
+/* ======================================
+   URL HISTORY SEARCH & FILTERS
+====================================== */
+
+.url-history-controls {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 12px;
+    margin: 18px 0;
+    align-items: center;
+}
+
+.url-history-controls input,
+.url-history-controls select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border, #29344f);
+    border-radius: 10px;
+    background: var(--panel, #10172c);
+    color: var(--text, #ffffff);
+    font: inherit;
+    outline: none;
+}
+
+.url-history-controls input:focus,
+.url-history-controls select:focus {
+    border-color: var(--cyan, #22d3ee);
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.12);
+}
+
+.url-history-controls button {
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .url-history-controls {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .url-history-controls input {
+        grid-column: 1 / -1;
+    }
+
+    .url-history-controls button {
+        grid-column: 1 / -1;
+    }
+}

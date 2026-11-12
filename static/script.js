@@ -1427,55 +1427,134 @@ const low = Number(window.analyticsData?.low_risk) || 0;
     // 13. URL SCAN HISTORY
     // ======================================
 
-    const urlHistoryList = $("#urlHistoryList");
+    
+// ======================================
+// 13. URL SCAN HISTORY
+// ======================================
 
-    async function loadURLHistory() {
-        try {
-            const data = await api("/api/url-history");
-            const stats = await api("/api/url-history-analytics");
+const urlHistoryList = $("#urlHistoryList");
 
-            const records = data.history || data.records || data;
+const urlHistorySearch = $("#urlHistorySearch");
+const urlRiskFilter = $("#urlRiskFilter");
+const urlSortOrder = $("#urlSortOrder");
+const clearUrlFilters = $("#clearUrlFilters");
 
-            if (!Array.isArray(records)) return;
+let allURLRecords = [];
 
-            const high = Number(stats.high) || 0;
-const medium = Number(stats.medium) || 0;
-const low = Number(stats.low) || 0;
+function renderURLHistory(records) {
 
-            const values = {
-                "#urlHistoryTotal": records.length,
-                "#urlHistoryHigh": high,
-                "#urlHistoryMedium": medium,
-                "#urlHistoryLow": low
-            };
+    if (!urlHistoryList) return;
 
-            Object.entries(values).forEach(([selector, value]) => {
-                const element = $(selector);
-                if (element) element.textContent = value;
-            });
+    const searchText = urlHistorySearch?.value.trim().toLowerCase() || "";
+    const selectedRisk = urlRiskFilter?.value.toLowerCase() || "all";
+    const sortOrder = urlSortOrder?.value || "newest";
 
-            if (urlHistoryList) {
-                urlHistoryList.innerHTML = records.length
-                    ? records.map(record => `
-                        <div class="history-card">
-                            <div>
-                                <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
-                                <p>${escapeHTML(record.url || "")}</p>
-                                <small>${escapeHTML(record.scanned_at || "")}</small>
-                            </div>
-                            <strong>${Number(record.score) || 0}/100</strong>
-                        </div>
-                    `).join("")
-                    : "<p>No URL scans yet.</p>";
-            }
+    let filteredRecords = [...records];
 
-        } catch (error) {
-            if (urlHistoryList) {
-                urlHistoryList.textContent = "Could not load URL history.";
-            }
-        }
+    // Search by URL
+    if (searchText) {
+        filteredRecords = filteredRecords.filter(record =>
+            String(record.url || "").toLowerCase().includes(searchText)
+        );
     }
 
+    // Filter by risk level
+    if (selectedRisk !== "all") {
+        filteredRecords = filteredRecords.filter(record =>
+            String(record.risk || "").toLowerCase() === selectedRisk
+        );
+    }
+
+    // Sort records
+    filteredRecords.sort((a, b) => {
+        const idA = Number(a.id) || 0;
+        const idB = Number(b.id) || 0;
+
+        return sortOrder === "oldest" ? idA - idB : idB - idA;
+    });
+
+    if (!filteredRecords.length) {
+        urlHistoryList.innerHTML = records.length
+            ? "<p>No URL scans match your filters.</p>"
+            : "<p>No URL scans yet.</p>";
+        return;
+    }
+
+    urlHistoryList.innerHTML = filteredRecords.map(record => `
+        <div class="history-card">
+            <div>
+                <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
+                <p>${escapeHTML(record.url || "")}</p>
+                <small>${escapeHTML(record.scanned_at || "")}</small>
+            </div>
+            <strong>${Number(record.score) || 0}/100</strong>
+        </div>
+    `).join("");
+}
+
+async function loadURLHistory() {
+    try {
+        const data = await api("/api/url-history");
+        const stats = await api("/api/url-history-analytics");
+
+        const records = data.history || data.records || data;
+        allURLRecords = records;
+
+        if (!Array.isArray(records)) return;
+
+        const high = Number(stats.high) || 0;
+        const medium = Number(stats.medium) || 0;
+        const low = Number(stats.low) || 0;
+
+        const values = {
+            "#urlHistoryTotal": records.length,
+            "#urlHistoryHigh": high,
+            "#urlHistoryMedium": medium,
+            "#urlHistoryLow": low
+        };
+
+        Object.entries(values).forEach(([selector, value]) => {
+            const element = $(selector);
+            if (element) element.textContent = value;
+        });
+
+        renderURLHistory(allURLRecords);
+    } catch (error) {
+        if (urlHistoryList) {
+            urlHistoryList.textContent = "Could not load URL history.";
+        }
+    }
+}
+    // URL HISTORY FILTER EVENTS
+
+if (urlHistorySearch) {
+    urlHistorySearch.addEventListener("input", () => {
+        renderURLHistory(allURLRecords);
+    });
+}
+
+if (urlRiskFilter) {
+    urlRiskFilter.addEventListener("change", () => {
+        renderURLHistory(allURLRecords);
+    });
+}
+
+if (urlSortOrder) {
+    urlSortOrder.addEventListener("change", () => {
+        renderURLHistory(allURLRecords);
+    });
+}
+
+if (clearUrlFilters) {
+    clearUrlFilters.addEventListener("click", () => {
+
+        urlHistorySearch.value = "";
+        urlRiskFilter.value = "all";
+        urlSortOrder.value = "newest";
+
+        renderURLHistory(allURLRecords);
+    });
+}
     const refreshURLHistory = $("#refreshUrlHistory");
     const deleteURLHistory = $("#deleteUrlHistory");
     const exportURLHistory = $("#exportUrlHistory");
