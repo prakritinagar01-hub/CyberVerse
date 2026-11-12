@@ -144,6 +144,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function addActivity(message, type = "info") {
         const feed = $("#activity-feed");
+        const emptyMessage = feed?.querySelector(".activity-empty");
+        if (emptyMessage) emptyMessage.remove();
         if (!feed) return;
 
         const item = document.createElement("div");
@@ -253,10 +255,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 <h2>${score}/100</h2>
                 <p>${escapeHTML(data.explanation || "Analysis completed.")}</p>
 
-                <p>
-                    Scanner consistency estimate:
-                    ${Number(data.confidence) || 0}%
-                </p>
+                <div class="scanner-comparison">
+    <p>🤖 AI Scanner Score:
+        <strong>${Number(data.ai_score) || 0}/100</strong>
+    </p>
+
+    <p>🛡️ Rule-Based Scanner Score:
+        <strong>${Number(data.rule_score) || 0}/100</strong>
+    </p>
+
+    <p>Scanner consistency estimate:
+        <strong>${Number(data.confidence) || 0}%</strong>
+    </p>
+</div>
 
                 <h4>Detected warnings</h4>
                 <ul>
@@ -1496,7 +1507,9 @@ async function loadRecentActivity() {
 
         // Remove old static and duplicate activity items
         feed.innerHTML = "";
-
+        feed.querySelectorAll(".activity-item").forEach(item => {
+    item.remove();
+});
         if (records.length === 0) {
             const empty = document.createElement("p");
             empty.className = "activity-empty";
