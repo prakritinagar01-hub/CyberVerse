@@ -1137,7 +1137,31 @@ def get_url_history():
         "scanned_at": row["scanned_at"],
     } for row in rows])
 
+# ==========================================
+# ALL-TIME URL HISTORY ANALYTICS
+# ==========================================
 
+@app.route("/api/url-history-analytics", methods=["GET"])
+def get_url_history_analytics():
+    conn = get_db()
+
+    stats = conn.execute("""
+        SELECT
+            COUNT(*) AS total,
+            COUNT(CASE WHEN risk = 'High' THEN 1 END) AS high,
+            COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
+            COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
+        FROM url_scan_history
+    """).fetchone()
+
+    conn.close()
+
+    return jsonify({
+        "total": stats["total"],
+        "high": stats["high"],
+        "medium": stats["medium"],
+        "low": stats["low"]
+    })
 @app.route("/api/url-history", methods=["DELETE"])
 def delete_url_history():
     conn = get_db()

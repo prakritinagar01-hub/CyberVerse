@@ -1432,14 +1432,15 @@ const low = Number(window.analyticsData?.low_risk) || 0;
     async function loadURLHistory() {
         try {
             const data = await api("/api/url-history");
+            const stats = await api("/api/url-history-analytics");
 
             const records = data.history || data.records || data;
 
             if (!Array.isArray(records)) return;
 
-            const high = records.filter(r => r.risk === "High").length;
-            const medium = records.filter(r => r.risk === "Medium").length;
-            const low = records.filter(r => r.risk === "Low").length;
+            const high = Number(stats.high) || 0;
+const medium = Number(stats.medium) || 0;
+const low = Number(stats.low) || 0;
 
             const values = {
                 "#urlHistoryTotal": records.length,
