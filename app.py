@@ -825,6 +825,55 @@ FROM scan_history ORDER BY id DESC
     response.headers["Content-Type"] = "text/csv"
     return response
 
+# ==========================================
+# URL HISTORY CSV EXPORT
+# ==========================================
+
+@app.route("/api/export-url-history", methods=["GET"])
+def export_url_history():
+    conn = get_db()
+
+    rows = conn.execute("""
+        SELECT id, url, score, risk, warnings, advice, scanned_at
+        FROM url_scan_history
+        ORDER BY id DESC
+    """).fetchall()
+
+    conn.close()
+
+    output = StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "ID",
+        "URL",
+        "Risk Score",
+        "Risk Level",
+        "Warnings",
+        "Advice",
+        "Scanned At"
+    ])
+
+    for row in rows:
+        warnings_list = json.loads(row["warnings"] or "[]")
+        warnings_text = " | ".join(str(item) for item in warnings_list)
+        writer.writerow([
+    row["id"],
+    row["url"],
+    row["score"],
+    row["risk"],
+    warnings_text if warnings_text else "No warnings",
+    row["advice"],
+    row["scanned_at"]
+])
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=cyberverse_url_scan_report.csv"
+    )
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+
+    return response
 
 @app.route("/api/history/<int:scan_id>", methods=["GET"])
 def get_scan_details(scan_id):

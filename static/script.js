@@ -1478,10 +1478,17 @@ const low = Number(stats.low) || 0;
 
     const refreshURLHistory = $("#refreshUrlHistory");
     const deleteURLHistory = $("#deleteUrlHistory");
+    const exportURLHistory = $("#exportUrlHistory");
 
     if (refreshURLHistory) {
         refreshURLHistory.addEventListener("click", loadURLHistory);
     }
+    if (exportURLHistory) {
+    exportURLHistory.addEventListener("click", () => {
+        window.location.href = "/api/export-url-history";
+        showToast("Downloading URL scan report...");
+    });
+}
 
     if (deleteURLHistory) {
         deleteURLHistory.addEventListener("click", async () => {
