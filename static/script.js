@@ -956,6 +956,8 @@ async function loadRadarData() {
             : (urlData.history || urlData.records || []);
 
         const records = [...messages, ...urls];
+        // Load all-time radar statistics
+const stats = await api("/api/radar-analytics");
         // Sort scans: newest first
 records.sort((a, b) =>
     new Date(b.scanned_at || 0) - new Date(a.scanned_at || 0)
@@ -1018,19 +1020,15 @@ radarPoints.forEach((point, index) => {
 });
 
 
-        const high = records.filter(r => getRisk(r) === "high").length;
-        const medium = records.filter(r => getRisk(r) === "medium").length;
-        const low = records.filter(r => getRisk(r) === "low").length;
+        const high = Number(stats.high) || 0;
+const medium = Number(stats.medium) || 0;
+const low = Number(stats.low) || 0;
 
-        const total = records.length;
-        const threats = high + medium;
+const total = Number(stats.total) || 0;
+const threats = Number(stats.threats) || 0;
 
         // Security score
-        const riskPoints = (high * 100) + (medium * 50);
-
-        const score = total > 0
-            ? Math.round(100 - riskPoints / total)
-            : 100;
+       const score = Number(stats.security_score) || 0;
 
         // System health estimate
         const health = score;
@@ -1102,7 +1100,7 @@ radarPoints.forEach((point, index) => {
 
         if (scoreStatus) {
             scoreStatus.textContent =
-                `Based on ${total} recent message and URL scans.`;
+                `Based on ${total} all-time message and URL scans.`;
         }
 
         // Update radar message
@@ -1184,7 +1182,7 @@ loadRadarData();
         try {
             const data = await api("/api/history");
             renderHistory(data.history || data.records || data);
-            renderHistoryStats(currentHistory);
+            await loadAnalytics();
             renderCharts(currentHistory);
         } catch (error) {
             if (historyList) {
@@ -1192,6 +1190,37 @@ loadRadarData();
             }
         }
     }
+    // ==========================================
+// LOAD ADVANCED SECURITY ANALYTICS
+// ==========================================
+
+async function loadAnalytics() {
+    try {
+        const data = await api("/api/analytics");
+        window.analyticsData = data;
+
+        // Overall statistics
+        $("#historyTotal").textContent = data.total_scans;
+        $("#historyHigh").textContent = data.high_risk;
+        $("#historyMedium").textContent = data.medium_risk;
+        $("#historyLow").textContent = data.low_risk;
+
+        // AI analytics
+        $("#aiScanCount").textContent = data.ai_scans;
+        $("#avgConfidence").textContent =
+            `${data.average_consistency}%`;
+
+        // Risk insights
+        $("#highRiskCount").textContent = data.high_risk;
+        $("#mediumRiskCount").textContent = data.medium_risk;
+        $("#lowRiskCount").textContent = data.low_risk;
+
+        console.log("Advanced analytics loaded:", data);
+
+    } catch (error) {
+        console.error("Analytics Error:", error);
+    }
+}
 
     function renderHistoryStats(records) {
         const total = records.length;
@@ -1241,9 +1270,9 @@ loadRadarData();
         if (riskCanvas) {
             if (riskChart) riskChart.destroy();
 
-            const high = records.filter(r => r.risk === "High").length;
-            const medium = records.filter(r => r.risk === "Medium").length;
-            const low = records.filter(r => r.risk === "Low").length;
+            const high = Number(window.analyticsData?.high_risk) || 0;
+const medium = Number(window.analyticsData?.medium_risk) || 0;
+const low = Number(window.analyticsData?.low_risk) || 0;
 
             riskChart = new Chart(riskCanvas, {
                 type: "doughnut",
@@ -1270,21 +1299,7 @@ loadRadarData();
         if (activityCanvas) {
             if (activityChart) activityChart.destroy();
 
-            const last7Days = [];
-
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-
-                const key = date.toISOString().slice(0, 10);
-
-                last7Days.push({
-                    date: key,
-                    count: records.filter(record =>
-                        String(record.scanned_at || "").startsWith(key)
-                    ).length
-                });
-            }
+            const last7Days = window.analyticsData?.daily_activity || [];
 
             activityChart = new Chart(activityCanvas, {
                 type: "bar",
@@ -1584,11 +1599,12 @@ async function loadRecentActivity() {
     // ======================================
 
     async function refreshDashboard() {
-        await Promise.allSettled([
-            loadHistory(),
-            loadURLHistory()
-        ]);
-    }
+    await Promise.allSettled([
+        loadHistory(),
+        loadURLHistory(),
+        loadRadarData()
+    ]);
+}
 
     // ======================================
     // 16. INITIALIZATION

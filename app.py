@@ -5,7 +5,7 @@ import os
 import random
 import re
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
 from urllib.parse import parse_qs, urlparse
 
@@ -673,11 +673,15 @@ def get_history():
     } for row in rows])
 
 
+
 @app.route("/api/analytics", methods=["GET"])
 def get_analytics():
     conn = get_db()
+
+    # Overall message scan statistics
     row = conn.execute("""
         SELECT
+            COUNT(*),
             COUNT(CASE WHEN confidence > 0 THEN 1 END),
             COALESCE(ROUND(AVG(
                 CASE WHEN confidence > 0 THEN confidence END
@@ -687,15 +691,102 @@ def get_analytics():
             COUNT(CASE WHEN risk = 'Low' THEN 1 END)
         FROM scan_history
     """).fetchone()
+
+    # Daily message scan activity
+    daily_rows = conn.execute("""
+        SELECT
+            DATE(scanned_at) AS scan_date,
+            COUNT(*) AS scan_count
+        FROM scan_history
+        WHERE DATE(scanned_at) >= DATE('now', 'localtime', '-6 days')
+        GROUP BY DATE(scanned_at)
+        ORDER BY scan_date
+    """).fetchall()
+
     conn.close()
 
+    # Prepare the last 7 days, including days with zero scans
+    daily_activity = []
+
+    today = datetime.now().date()
+
+    daily_lookup = {
+        item["scan_date"]: item["scan_count"]
+        for item in daily_rows
+    }
+
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        date_key = day.strftime("%Y-%m-%d")
+
+        daily_activity.append({
+            "date": date_key,
+            "count": daily_lookup.get(date_key, 0)
+        })
+
     return jsonify({
-        "ai_scans": row[0],
-        "average_consistency": row[1],
-        "high_risk": row[2],
-        "medium_risk": row[3],
-        "low_risk": row[4],
+        "total_scans": row[0],
+        "ai_scans": row[1],
+        "average_consistency": row[2],
+        "high_risk": row[3],
+        "medium_risk": row[4],
+        "low_risk": row[5],
+        "daily_activity": daily_activity
     })
+
+# ==========================================
+# ALL-TIME THREAT RADAR ANALYTICS
+# ==========================================
+
+@app.route("/api/radar-analytics", methods=["GET"])
+def get_radar_analytics():
+    conn = get_db()
+
+    message_stats = conn.execute("""
+        SELECT
+            COUNT(*) AS total,
+            COUNT(CASE WHEN risk = 'High' THEN 1 END) AS high,
+            COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
+            COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
+        FROM scan_history
+    """).fetchone()
+
+    url_stats = conn.execute("""
+        SELECT
+            COUNT(*) AS total,
+            COUNT(CASE WHEN risk = 'High' THEN 1 END) AS high,
+            COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
+            COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
+        FROM url_scan_history
+    """).fetchone()
+
+    conn.close()
+
+    high = message_stats["high"] + url_stats["high"]
+    medium = message_stats["medium"] + url_stats["medium"]
+    low = message_stats["low"] + url_stats["low"]
+    total = message_stats["total"] + url_stats["total"]
+
+    threats = high + medium
+
+    risk_points = (high * 100) + (medium * 50)
+
+    score = (
+        round(100 - risk_points / total)
+        if total > 0 else 100
+    )
+
+    return jsonify({
+        "total": total,
+        "message_scans": message_stats["total"],
+        "url_scans": url_stats["total"],
+        "high": high,
+        "medium": medium,
+        "low": low,
+        "threats": threats,
+        "security_score": score
+    })
+
 
 
 @app.route("/api/history", methods=["DELETE"])
