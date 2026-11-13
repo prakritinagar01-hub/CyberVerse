@@ -14,6 +14,91 @@
     --pink: #fb7185;
     --green: #34d399;
     --orange: #fbbf24;
+/* =========================================
+   AI SECURITY LAB - LIGHT THEME POLISH
+========================================= */
+
+:root[data-theme="light"] #ai-security-lab .threat-card,
+:root[data-theme="light"] #ai-security-lab .analytics-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+}
+
+:root[data-theme="light"] #ai-security-lab .threat-card span {
+    color: #64748b;
+}
+
+:root[data-theme="light"] #ai-security-lab .threat-card strong {
+    color: #1e293b;
+}
+
+:root[data-theme="light"] #ai-security-lab .analytics-card h3,
+:root[data-theme="light"] #ai-security-lab .analytics-card h4 {
+    color: #172033;
+}
+
+:root[data-theme="light"] #ai-security-lab label {
+    color: #334155;
+}
+
+:root[data-theme="light"] #ai-security-lab .analytics-card p {
+    color: #475569;
+}
+
+:root[data-theme="light"] #ai-security-lab .analytics-card strong {
+    color: #172033;
+}
+
+:root[data-theme="light"] #ai-security-lab textarea {
+    color: #172033;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+}
+
+:root[data-theme="light"] #ai-security-lab textarea::placeholder {
+    color: #94a3b8;
+}
+
+:root[data-theme="light"] #ai-security-lab textarea:focus {
+    background: #ffffff;
+    border-color: #6366f1;
+}
+
+:root[data-theme="light"] #ai-security-lab .history-item {
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+:root[data-theme="light"] #ai-security-lab .history-item p,
+:root[data-theme="light"] #ai-security-lab .history-item strong {
+    color: #334155;
+}
+
+:root[data-theme="light"] #ai-security-lab .history-item small {
+    color: #64748b;
+}
+
+:root[data-theme="light"] #ai-security-lab .risk-badge.high {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+
+:root[data-theme="light"] #ai-security-lab .risk-badge.medium {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+:root[data-theme="light"] #ai-security-lab .risk-badge.low {
+    color: #047857;
+    background: #d1fae5;
+}
+
+:root[data-theme="light"] #ai-security-lab .notice {
+    color: #64748b;
+}
+
     --red: #fb4b65;
 
     --text: #f1f5ff;
@@ -3131,4 +3216,312 @@ input::placeholder {
     .url-history-controls button {
         grid-column: 1 / -1;
     }
+}
+
+/* ==========================================
+   AI SECURITY LAB
+========================================== */
+
+#ai-security-lab {
+    margin-top: 35px;
+}
+
+#ai-security-lab .dashboard-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+#ai-security-lab .dashboard-heading h2 {
+    font-size: 28px;
+    margin: 8px 0;
+}
+
+#ai-security-lab .dashboard-heading h2 span {
+    color: #9b8cff;
+}
+
+#ai-security-lab .dashboard-heading p {
+    opacity: 0.75;
+}
+
+#ai-security-lab .history-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+#ai-security-lab .threat-card,
+#ai-security-lab .analytics-card {
+    background: rgba(20, 25, 55, 0.72);
+    border: 1px solid rgba(155, 140, 255, 0.18);
+    border-radius: 16px;
+    padding: 22px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+#ai-security-lab .threat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#ai-security-lab .threat-card span {
+    color: #b7b8d1;
+    font-size: 13px;
+}
+
+#ai-security-lab .threat-card strong {
+    font-size: 30px;
+    color: #ffffff;
+}
+
+#ai-security-lab .analytics-card {
+    margin-bottom: 25px;
+}
+
+#ai-security-lab .analytics-card h3 {
+    margin-bottom: 20px;
+    font-size: 19px;
+}
+
+#ai-security-lab label {
+    display: block;
+    margin: 18px 0 9px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+#ai-security-lab textarea {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 100px;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(155, 140, 255, 0.3);
+    background: rgba(8, 12, 32, 0.8);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#ai-security-lab textarea:focus {
+    border-color: #9b8cff;
+    box-shadow: 0 0 0 3px rgba(155, 140, 255, 0.12);
+}
+
+#ai-security-lab textarea::placeholder {
+    color: #8588a8;
+}
+
+#ai-security-lab #runAiSecurityTest {
+    margin-top: 20px;
+}
+
+#ai-security-lab #runAiSecurityTest:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#ai-security-lab .ai-test-result,
+#ai-security-lab .history-item {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 12px;
+    background: rgba(10, 15, 38, 0.75);
+    border: 1px solid rgba(155, 140, 255, 0.2);
+    overflow-wrap: anywhere;
+}
+
+#ai-security-lab .ai-test-result h3,
+#ai-security-lab .ai-test-result h4 {
+    margin: 12px 0;
+}
+
+#ai-security-lab .ai-test-result p,
+#ai-security-lab .history-item p {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+#ai-security-lab .ai-test-result ul {
+    padding-left: 22px;
+}
+
+#ai-security-lab .history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+#ai-security-lab .risk-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#ai-security-lab .risk-badge.high {
+    color: #ff7777;
+    background: rgba(255, 65, 65, 0.13);
+}
+
+#ai-security-lab .risk-badge.medium {
+    color: #ffc66e;
+    background: rgba(255, 180, 50, 0.13);
+}
+
+#ai-security-lab .risk-badge.low {
+    color: #65e6a1;
+    background: rgba(40, 210, 130, 0.13);
+}
+
+#ai-security-lab .history-item small {
+    display: block;
+    margin-top: 12px;
+    opacity: 0.65;
+}
+
+#ai-security-lab .notice {
+    opacity: 0.7;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    #ai-security-lab .history-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    #ai-security-lab .history-stats {
+        grid-template-columns: 1fr;
+    }
+
+    #ai-security-lab .dashboard-heading h2 {
+        font-size: 23px;
+    }
+}
+
+/* AI SECURITY LAB - TEXT CONTRAST FIX */
+
+#ai-security-lab .analytics-card {
+    color: #f8faff;
+    background: #171d35;
+    border-color: rgba(155, 140, 255, 0.3);
+}
+
+#ai-security-lab .analytics-card h3,
+#ai-security-lab .analytics-card h4 {
+    color: #ffffff;
+}
+
+#ai-security-lab label {
+    color: #e5e9ff;
+}
+
+#ai-security-lab .analytics-card p {
+    color: #d4daf0;
+}
+
+#ai-security-lab .analytics-card strong {
+    color: #ffffff;
+}
+
+#ai-security-lab .history-item {
+    color: #f8faff;
+    background: #10162b;
+}
+
+#ai-security-lab .history-item p,
+#ai-security-lab .history-item strong {
+    color: #e5e9ff;
+}
+
+#ai-security-lab .history-item small {
+    color: #aeb9d5;
+}
+
+/* AI SECURITY LAB - TEXT CONTRAST FIX */
+
+#ai-security-lab .analytics-card {
+    color: #f8faff;
+    background: #171d35;
+    border-color: rgba(155, 140, 255, 0.3);
+}
+
+#ai-security-lab .analytics-card h3,
+#ai-security-lab .analytics-card h4 {
+    color: #ffffff;
+}
+
+#ai-security-lab label {
+    color: #e5e9ff;
+}
+
+#ai-security-lab .analytics-card p {
+    color: #d4daf0;
+}
+
+#ai-security-lab .analytics-card strong {
+    color: #ffffff;
+}
+
+#ai-security-lab .history-item {
+    color: #f8faff;
+    background: #10162b;
+}
+
+#ai-security-lab .history-item p,
+#ai-security-lab .history-item strong {
+    color: #e5e9ff;
+}
+
+#ai-security-lab .history-item small {
+    color: #aeb9d5;
+}
+
+/* AI SECURITY LAB LIGHT THEME FORCE FIX */
+
+html[data-theme="light"] #ai-security-lab .analytics-card,
+html[data-theme="light"] #ai-security-lab .threat-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+html[data-theme="light"] #ai-security-lab h3,
+html[data-theme="light"] #ai-security-lab h4,
+html[data-theme="light"] #ai-security-lab strong {
+    color: #172033 !important;
+}
+
+html[data-theme="light"] #ai-security-lab label {
+    color: #334155 !important;
+}
+
+html[data-theme="light"] #ai-security-lab p,
+html[data-theme="light"] #ai-security-lab span {
+    color: #475569 !important;
+}
+
+html[data-theme="light"] #ai-security-lab textarea {
+    color: #172033 !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+html[data-theme="light"] #ai-security-lab .history-item {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
 }

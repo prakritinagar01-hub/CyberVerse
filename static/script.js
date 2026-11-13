@@ -1706,3 +1706,303 @@ async function loadRecentActivity() {
 
     console.log("CyberVerse initialized successfully.");
 });
+
+
+
+// ==========================================
+// CYBERVERSE - AI SECURITY LAB
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const promptInput = document.getElementById("aiSecurityPrompt");
+    const responseInput = document.getElementById("aiSecurityResponse");
+    const testButton = document.getElementById("runAiSecurityTest");
+    const resultBox = document.getElementById("aiSecurityResult");
+    const historyBox = document.getElementById("aiSecurityHistory");
+    const refreshButton = document.getElementById("refreshAiHistory");
+
+    if (!responseInput || !testButton || !resultBox || !historyBox) {
+        return;
+    }
+
+    const escapeHTML = (value) => {
+        return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+    };
+
+    // ======================================
+    // LOAD AI SECURITY HISTORY
+    // ======================================
+
+    async function loadAISecurityHistory() {
+
+        try {
+            const response = await fetch("/api/ai-security-history");
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error("Unable to load test history.");
+            }
+
+            const history = data.history || [];
+
+            const aiStats = {
+                aiSecurityTotal: history.length,
+
+                aiSecurityHigh: history.filter(item =>
+                    ["High", "Critical"].includes(item.risk_level)
+                ).length,
+
+                aiSecurityMedium: history.filter(item =>
+                    item.risk_level === "Medium"
+                ).length,
+
+                aiSecurityLow: history.filter(item =>
+                    item.risk_level === "Low"
+                ).length
+            };
+
+            Object.entries(aiStats).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+
+                if (element) {
+                    element.textContent = value;
+                }
+            });
+
+            if (!history.length) {
+                historyBox.innerHTML = "<p>No AI security tests yet.</p>";
+                return;
+            }
+
+            historyBox.innerHTML = history.map(item => `
+                <div class="history-item">
+
+                    <div class="history-item-header">
+                        <strong>Test #${Number(item.id)}</strong>
+
+                        <span class="risk-badge ${escapeHTML(
+                            String(item.risk_level || "unknown").toLowerCase()
+                        )}">
+                            ${escapeHTML(item.risk_level || "Unknown")}
+                        </span>
+                    </div>
+
+                    <p>
+                        <strong>Risk Score:</strong>
+                        ${Number(item.risk_score) || 0}/100
+                    </p>
+
+                    <p>
+                        <strong>AI Response:</strong>
+                        ${escapeHTML(
+                            String(item.response || "").slice(0, 180)
+                        )}${String(item.response || "").length > 180 ? "..." : ""}
+                    </p>
+
+                    ${item.prompt ? `
+                        <p>
+                            <strong>Original Prompt:</strong>
+                            ${escapeHTML(String(item.prompt).slice(0, 150))}
+                        </p>
+                    ` : ""}
+
+                    <p>
+                        <strong>Findings:</strong>
+                        ${escapeHTML(
+                            (Array.isArray(item.findings) ? item.findings : []).join(", ")
+                        )}
+                    </p>
+
+                    <p>
+                        <strong>Recommendation:</strong>
+                        ${escapeHTML(item.recommendation || "Not available.")}
+                    </p>
+
+                    <small>${escapeHTML(item.tested_at || "")}</small>
+
+                </div>
+            `).join("");
+
+        } catch (error) {
+            historyBox.innerHTML =
+                "<p>Could not load AI security history.</p>";
+
+            console.error("AI Security History Error:", error);
+        }
+    }
+
+    // ======================================
+    // DISPLAY AI SECURITY RESULT
+    // ======================================
+
+    function renderAISecurityResult(data) {
+
+        const score = Number(data.risk_score) || 0;
+        const confidence = Number(data.confidence) || 0;
+        const risk = String(data.risk_level || "Unknown");
+
+        const findings = Array.isArray(data.findings)
+            ? data.findings
+            : [];
+
+        resultBox.innerHTML = `
+            <div class="ai-test-result">
+
+                <h3>AI Security Audit Report</h3>
+
+                <p>
+                    <strong>Test ID:</strong>
+                    ${Number(data.test_id)}
+                </p>
+
+                <h2>${score}/100</h2>
+
+                <p>
+                    <strong>Risk Level:</strong>
+                    <span class="risk-badge ${escapeHTML(risk.toLowerCase())}">
+                        ${escapeHTML(risk)}
+                    </span>
+                </p>
+
+                <p>
+                    <strong>AI Confidence:</strong>
+                    ${confidence}%
+                </p>
+
+                <h4>Analysis Explanation</h4>
+                <p>${escapeHTML(data.explanation || "Analysis completed.")}</p>
+
+                <h4>Security Findings</h4>
+
+                <ul>
+                    ${
+                        findings.length
+                            ? findings.map(item =>
+                                `<li>${escapeHTML(item)}</li>`
+                            ).join("")
+                            : "<li>No significant issues detected.</li>"
+                    }
+                </ul>
+
+                <h4>Recommendations</h4>
+                <p>
+                    ${escapeHTML(
+                        data.recommendation || "Continue monitoring AI outputs."
+                    )}
+                </p>
+
+                <small>
+                    Analysis method: ${escapeHTML(
+                        data.analysis_method || "AI Security Analysis"
+                    )}
+                </small>
+
+                <p class="notice">
+                    AI-based assessment only. This report does not guarantee
+                    that an AI system or response is completely safe.
+                </p>
+
+            </div>
+        `;
+
+        resultBox.style.display = "block";
+    }
+
+    // ======================================
+    // RUN AI RESPONSE SECURITY TEST
+    // ======================================
+
+    async function runAISecurityTest() {
+
+        const aiResponse = responseInput.value.trim();
+        const prompt = promptInput ? promptInput.value.trim() : "";
+
+        if (!aiResponse) {
+            resultBox.textContent =
+                "Please paste an AI-generated response first.";
+
+            responseInput.focus();
+            return;
+        }
+
+        if (aiResponse.length > 10000 || prompt.length > 10000) {
+            resultBox.textContent =
+                "Input must not exceed 10000 characters.";
+
+            return;
+        }
+
+        testButton.disabled = true;
+        testButton.textContent = "Analyzing with AI...";
+
+        resultBox.innerHTML = `
+            <p>Analyzing AI response...</p>
+            <p>Checking sensitive data, unsafe instructions and security risks.</p>
+        `;
+
+        try {
+
+            const response = await fetch("/api/ai-security-test", {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    prompt: prompt,
+                    response: aiResponse,
+                    test_type: "full"
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.error || "AI security analysis failed."
+                );
+            }
+
+            renderAISecurityResult(data);
+
+            await loadAISecurityHistory();
+
+            if (typeof showToast === "function") {
+                showToast("AI security analysis completed!");
+            }
+
+        } catch (error) {
+
+            resultBox.textContent = error.message;
+
+            console.error("AI Security Test Error:", error);
+
+        } finally {
+
+            testButton.disabled = false;
+            testButton.textContent = "Analyze AI Response →";
+
+        }
+    }
+
+    // ======================================
+    // EVENT LISTENERS
+    // ======================================
+
+    testButton.addEventListener("click", runAISecurityTest);
+
+    if (refreshButton) {
+        refreshButton.addEventListener("click", loadAISecurityHistory);
+    }
+
+    loadAISecurityHistory();
+
+});
