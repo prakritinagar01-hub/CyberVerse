@@ -1168,18 +1168,17 @@ input:focus {
 }
 
 /* =========================================
-   ACADEMY AND ACHIEVEMENTS
+   ACADEMY  LAYOUT
 ========================================= */
 
 .bottom-grid {
     margin-top: 22px;
     display: grid;
-    grid-template-columns: 1.1fr .9fr;
+    grid-template-columns: 1fr;
     gap: 19px;
 }
 
-.academy-card,
-.progress-card {
+.academy-card {
     min-width: 0;
     padding: 25px;
     border-radius: 20px;
@@ -1238,53 +1237,7 @@ input:focus {
     margin-top: 16px;
 }
 
-/* ACHIEVEMENTS */
 
-.achievement {
-    min-height: 68px;
-    padding: 12px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 1px solid rgba(139,153,255,.1);
-    transition: .25s ease;
-}
-
-.achievement:hover {
-    padding-left: 6px;
-}
-
-.achievement-icon {
-    width: 37px;
-    height: 37px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    color: var(--purple);
-    background: rgba(167,139,250,.1);
-    border-radius: 11px;
-    font-size: 16px;
-}
-
-.achievement strong {
-    font-size: 11px;
-}
-
-.achievement p {
-    margin-top: 4px;
-    color: var(--muted);
-    font-size: 9px;
-}
-
-.achievement-state {
-    margin-left: auto;
-    color: #75819e;
-    font: 8px 'Space Mono', monospace;
-}
-
-.progress-footer {
-    margin-top: 22px;
-}
 
 /* =========================================
    THREAT DASHBOARD
@@ -2111,8 +2064,7 @@ input:focus {
 
     .stat-card,
     .lab-card,
-    .academy-card,
-    .progress-card {
+    .academy-card {
         border-radius: 15px;
     }
 
@@ -2495,8 +2447,7 @@ body,
    ACADEMY & PROGRESS CARDS - THEME SUPPORT
 ========================================= */
 
-.academy-card,
-.progress-card {
+.academy-card {
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 20px;
@@ -2527,8 +2478,7 @@ body,
 
 /* Light mode */
 
-:root[data-theme="light"] .academy-card,
-:root[data-theme="light"] .progress-card {
+:root[data-theme="light"] .academy-card {
     background: #ffffff;
     border-color: #e5eaf2;
     box-shadow: 0 5px 20px rgba(15, 23, 42, 0.04);
@@ -3524,4 +3474,350 @@ html[data-theme="light"] #ai-security-lab textarea {
 html[data-theme="light"] #ai-security-lab .history-item {
     background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
+}
+
+
+/* =========================================
+   CYBERVERSE INTERACTIVE TERMINAL
+========================================= */
+
+.cyber-terminal {
+    margin-top: 22px;
+    padding: 25px;
+    border: 1px solid rgba(34, 211, 238, 0.18);
+    border-radius: 20px;
+    background: linear-gradient(145deg, #111a32, #0b1225);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+}
+
+.terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.terminal-header h2 {
+    margin-top: 5px;
+}
+
+.terminal-status {
+    color: #4ade80;
+    font: 10px "Space Mono", monospace;
+    white-space: nowrap;
+}
+
+.terminal-status i {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 5px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 10px #4ade80;
+}
+
+.terminal-window {
+    overflow: hidden;
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    border-radius: 13px;
+    background: #070b16;
+}
+
+.terminal-topbar {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 16px;
+    color: #8995ad;
+    background: #111a2d;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    font: 10px "Space Mono", monospace;
+}
+
+.terminal-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.terminal-dots span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #fb7185;
+}
+
+.terminal-dots span:nth-child(2) {
+    background: #fbbf24;
+}
+
+.terminal-dots span:nth-child(3) {
+    background: #4ade80;
+}
+
+.terminal-output {
+    min-height: 220px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 20px;
+    color: #a5b4cf;
+    font: 12px/1.9 "Space Mono", monospace;
+    overflow-wrap: anywhere;
+}
+
+.terminal-output p {
+    margin: 0 0 5px;
+}
+
+.terminal-welcome {
+    color: #22d3ee;
+    font-weight: 700;
+}
+
+.terminal-command {
+    color: #a78bfa;
+}
+
+.terminal-input-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid rgba(34, 211, 238, 0.12);
+    background: #0b1222;
+}
+
+.terminal-input-line label {
+    color: #4ade80;
+    font: 11px "Space Mono", monospace;
+    white-space: nowrap;
+}
+
+.terminal-input-line input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #22d3ee;
+    font: 12px "Space Mono", monospace;
+}
+
+.terminal-input-line input::placeholder {
+    color: #596780;
+}
+
+.cyber-terminal .notice {
+    margin-top: 13px;
+}
+
+@media (max-width: 600px) {
+    .cyber-terminal {
+        padding: 16px;
+    }
+
+    .terminal-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .terminal-output {
+        min-height: 190px;
+        padding: 14px;
+        font-size: 10px;
+    }
+
+    .terminal-input-line {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px;
+    }
+}
+
+/* =========================================
+   CYBER TERMINAL — PREMIUM UI ENHANCEMENTS
+========================================= */
+
+.cyber-terminal {
+    position: relative;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cyber-terminal:hover {
+    border-color: rgba(34, 211, 238, 0.42);
+    box-shadow: 0 12px 40px rgba(34, 211, 238, 0.08);
+}
+
+.terminal-window {
+    box-shadow: inset 0 0 25px rgba(34, 211, 238, 0.025);
+}
+
+.terminal-output {
+    height: 280px;
+    scrollbar-width: thin;
+    scrollbar-color: #334b70 #070b16;
+}
+
+.terminal-output::-webkit-scrollbar {
+    width: 6px;
+}
+
+.terminal-output::-webkit-scrollbar-thumb {
+    background: #334b70;
+    border-radius: 10px;
+}
+
+.terminal-output::-webkit-scrollbar-track {
+    background: #070b16;
+}
+
+.terminal-input-line {
+    transition: background 0.25s ease;
+}
+
+.terminal-input-line:focus-within {
+    background: #0e1930;
+    box-shadow: inset 0 1px 0 rgba(34, 211, 238, 0.25);
+}
+
+.terminal-input-line input:focus {
+    caret-color: #4ade80;
+}
+
+.terminal-input-line label {
+    text-shadow: 0 0 8px rgba(74, 222, 128, 0.35);
+}
+
+.terminal-status i {
+    animation: terminalPulse 1.8s infinite;
+}
+
+@keyframes terminalPulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 10px #4ade80;
+    }
+
+    50% {
+        opacity: 0.45;
+        box-shadow: 0 0 3px #4ade80;
+    }
+}
+
+@media (max-width: 600px) {
+    .terminal-output {
+        height: 240px;
+    }
+
+    .terminal-input-line input {
+        width: 100%;
+    }
+}
+/* =====================================
+   CYBER TERMINAL — HELP OUTPUT
+   DARK MODE
+===================================== */
+
+.cyber-terminal .terminal-category {
+    color: #22d3ee;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 10px;
+}
+
+.cyber-terminal .terminal-command-item {
+    color: #4ade80;
+    padding-left: 10px;
+    transition: color 0.2s ease;
+}
+
+.cyber-terminal .terminal-command-item:hover {
+    color: #22d3ee;
+}
+
+.cyber-terminal .terminal-tip {
+    color: #a78bfa;
+    border-top: 1px solid rgba(167, 139, 250, 0.25);
+    margin-top: 12px;
+    padding-top: 10px;
+    font-weight: 600;
+}
+
+/* =====================================
+   LIGHT MODE
+===================================== */
+
+html[data-theme="light"] .cyber-terminal .terminal-category {
+    color: #0369a1;
+}
+
+html[data-theme="light"] .cyber-terminal .terminal-command-item {
+    color: #15803d;
+}
+
+html[data-theme="light"] .cyber-terminal .terminal-command-item:hover {
+    color: #0369a1;
+}
+
+html[data-theme="light"] .cyber-terminal .terminal-tip {
+    color: #6d28d9;
+    border-top-color: rgba(109, 40, 217, 0.25);
+}
+/* =====================================
+   CYBERVERSE TERMINAL — LIGHT MODE
+===================================== */
+
+html[data-theme="light"] .cyber-terminal {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+html[data-theme="light"] .terminal-header {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+html[data-theme="light"] .terminal-window {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+html[data-theme="light"] .terminal-topbar {
+    background: #e2e8f0;
+    border-bottom-color: #cbd5e1;
+}
+
+html[data-theme="light"] .terminal-output {
+    background: #f8fafc;
+    color: #334155;
+}
+
+html[data-theme="light"] .terminal-output p {
+    color: #334155;
+}
+
+html[data-theme="light"] .terminal-output .terminal-welcome {
+    color: #0369a1;
+}
+
+html[data-theme="light"] .terminal-output .terminal-command {
+    color: #047857;
+}
+
+html[data-theme="light"] .terminal-input-line {
+    background: #f1f5f9;
+    border-top-color: #cbd5e1;
+    color: #047857;
+}
+
+html[data-theme="light"] #terminalInput {
+    color: #0f172a;
+    caret-color: #047857;
+}
+
+html[data-theme="light"] #terminalInput::placeholder {
+    color: #64748b;
 }

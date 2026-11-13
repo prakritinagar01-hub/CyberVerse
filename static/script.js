@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
         xp: Number(localStorage.getItem("cyberverseXP")) || 0,
         completed: Number(localStorage.getItem("cyberverseCompleted")) || 0,
         messages: Number(localStorage.getItem("cyberverseMessages")) || 0,
-        quizCorrect: JSON.parse(localStorage.getItem("cyberverseQuizCorrect") || "[]"),
+        
         activity: []
     };
 
@@ -69,10 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("cyberverseXP", state.xp);
         localStorage.setItem("cyberverseCompleted", state.completed);
         localStorage.setItem("cyberverseMessages", state.messages);
-        localStorage.setItem(
-            "cyberverseQuizCorrect",
-            JSON.stringify(state.quizCorrect)
-        );
+        
     }
 
     async function api(url, options = {}) {
@@ -168,60 +165,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ======================================
-    // 2. XP, LEVELS & ACHIEVEMENTS
-    // ======================================
+    
+// ======================================
+// 2. XP & LEVELS
+// ======================================
 
-    function updateProgress() {
-        const level = Math.floor(state.xp / 100) + 1;
-        const progress = state.xp % 100;
+function updateProgress() {
+    const level = Math.floor(state.xp / 100) + 1;
+    const progress = state.xp % 100;
 
-        const values = {
-            "#heroXP": state.xp,
-            "#totalXP": state.xp,
-            "#heroScans": state.messages,
-            "#completed": state.completed,
-            "#level": level,
-            "#nextLevel": 100 - progress,
-            "#progressLabel": `${progress}%`,
-            "#badges": getBadgeCount()
-        };
+    const values = {
+        "#heroXP": `${state.xp} XP`,
+        "#totalXP": state.xp,
+        "#heroScans": state.messages,
+        "#completed": state.completed,
+        "#level": level,
+        "#nextLevel": 100 - progress
+    };
 
-        Object.entries(values).forEach(([selector, value]) => {
-            const element = $(selector);
-            if (element) element.textContent = value;
-        });
+    Object.entries(values).forEach(([selector, value]) => {
+        const element = $(selector);
+        if (element) element.textContent = value;
+    });
+}
 
-        const bar = $("#progressBar");
-        if (bar) bar.style.width = `${progress}%`;
-
-        const first = $("#badgeFirst");
-        const analyst = $("#badgeAnalyst");
-        const scholar = $("#badgeScholar");
-
-        if (first) first.classList.toggle("unlocked", state.completed >= 1);
-        if (analyst) analyst.classList.toggle("unlocked", state.messages >= 5);
-        if (scholar) scholar.classList.toggle(
-            "unlocked",
-            state.quizCorrect.length >= 3
-        );
-
-        const hint = $("#badgeHint");
-        if (hint) {
-            hint.textContent =
-                state.completed === 0
-                    ? "Complete your first activity to unlock a badge."
-                    : "Keep learning to unlock more achievements!";
-        }
-    }
-
-    function getBadgeCount() {
-        return [
-            state.completed >= 1,
-            state.messages >= 5,
-            state.quizCorrect.length >= 3
-        ].filter(Boolean).length;
-    }
 
     // ======================================
     // 3. PHISHING MESSAGE SCANNER
@@ -543,91 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Passwords are checked only in the browser.
     // They are never sent to the Flask backend.
 
-    // ======================================
-    // 6. CYBER TERMINAL
-    // ======================================
-
-    const terminalForm = $("#terminalForm");
-    const terminalInput = $("#terminalInput");
-    const terminalOutput = $("#terminalOutput");
-
-    function terminalPrint(message) {
-        if (!terminalOutput) return;
-
-        const line = document.createElement("div");
-        line.textContent = message;
-        terminalOutput.appendChild(line);
-        terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    }
-
-    function runTerminalCommand(command) {
-        const input = String(command || "").trim().toLowerCase();
-
-        if (!input) return;
-
-        terminalPrint(`visitor@cyberverse:~$ ${input}`);
-
-        switch (input) {
-            case "help":
-                terminalPrint(
-                    "Commands: help, status, tips, whoami, scan demo, clear"
-                );
-                break;
-
-            case "status":
-                terminalPrint("CyberVerse system: ONLINE");
-                terminalPrint("Local Flask API: configured");
-                terminalPrint("Security modules: ACTIVE");
-                break;
-
-            case "tips":
-                terminalPrint("Never share OTP, passwords or PINs.");
-                terminalPrint("Check URLs before opening links.");
-                terminalPrint("Enable two-factor authentication.");
-                break;
-
-            case "whoami":
-                terminalPrint("You are a CyberVerse security learner.");
-                break;
-
-            case "scan demo":
-                terminalPrint("Loading demo phishing message...");
-                if (messageInput) {
-                    messageInput.value =
-                        "Congratulations! You won a prize. " +
-                        "Click here immediately and share your password.";
-                    if (charCount) {
-                        charCount.textContent = messageInput.value.length;
-                    }
-                    messageInput.scrollIntoView({ behavior: "smooth" });
-                    setTimeout(() => scanMessage(), 500);
-                }
-                break;
-
-            case "clear":
-                terminalOutput.innerHTML = "";
-                break;
-
-            default:
-                terminalPrint("Unknown command. Type 'help'.");
-        }
-    }
-
-    if (terminalForm) {
-        terminalForm.addEventListener("submit", event => {
-            event.preventDefault();
-
-            runTerminalCommand(terminalInput?.value);
-
-            if (terminalInput) terminalInput.value = "";
-        });
-    }
-
-    document.querySelectorAll("[data-command]").forEach(button => {
-        button.addEventListener("click", () => {
-            runTerminalCommand(button.dataset.command);
-        });
-    });
+    
 
    
 // ======================================
@@ -2004,5 +1887,219 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     loadAISecurityHistory();
+
+});
+
+
+/* =========================================
+   CYBERVERSE INTERACTIVE TERMINAL
+========================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const terminalForm = document.getElementById("terminalForm");
+    const terminalInput = document.getElementById("terminalInput");
+    const terminalOutput = document.getElementById("terminalOutput");
+
+    if (!terminalForm || !terminalInput || !terminalOutput) return;
+
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    function printLine(message, className = "") {
+    const line = document.createElement("p");
+    line.textContent = message;
+
+    if (className) {
+        line.className = className;
+    }
+
+    const text = String(message).trim();
+
+    if (
+        text.startsWith("[ SYSTEM") ||
+        text.startsWith("[ SECURITY") ||
+        text.startsWith("[ TERMINAL")
+    ) {
+        line.classList.add("terminal-category");
+    } else if (text.includes("→")) {
+        line.classList.add("terminal-command-item");
+    } else if (text.startsWith("TIP:")) {
+        line.classList.add("terminal-tip");
+    }
+
+    terminalOutput.appendChild(line);
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+}
+
+    function runCommand(command) {
+
+        const parts = command.trim().split(/\s+/);
+        const action = (parts[0] || "").toLowerCase();
+
+        switch (action) {
+
+            case "help":
+    printLine("╔══════════════════════════════════════╗", "terminal-welcome");
+    printLine("       CYBERVERSE COMMAND CENTER");
+    printLine("╚══════════════════════════════════════╝", "terminal-welcome");
+
+    printLine("");
+    printLine(" [ SYSTEM COMMANDS ]");
+    printLine(" help             → Show all commands");
+    printLine(" status           → View simulator status");
+    printLine(" whoami           → Display user identity");
+
+    printLine("");
+    printLine(" [ SECURITY TOOLS ]");
+    printLine(" network          → Network diagnostics");
+    printLine(" scan             → Run simulated security scan");
+    printLine(" password-check   → Password security tips");
+    printLine(" tips             → Security awareness tips");
+
+    printLine("");
+    printLine(" [ TERMINAL TOOLS ]");
+    printLine(" history          → View command history");
+    printLine(" clear            → Clear terminal output");
+
+    printLine("");
+    printLine(" TIP: Use ↑ and ↓ to navigate command history.");
+    break;
+                
+            case "status":
+    printLine("CyberVerse system: ONLINE (DEMO)");
+    printLine("Security modules: SIMULATED");
+    printLine("Environment: Safe training simulator");
+    break;
+
+case "tips":
+    printLine("Never share OTP, passwords or PINs.");
+    printLine("Always verify URLs before opening links.");
+    printLine("Enable two-factor authentication.");
+    printLine("Use unique, strong passwords.");
+    break;
+
+            case "whoami":
+                printLine("User: CyberVerse Visitor");
+                printLine("Role: Security Training Learner");
+                printLine("Environment: Safe Local Simulator");
+                break;
+
+            case "network":
+                printLine("NETWORK DIAGNOSTICS");
+                printLine("Connection: SIMULATED");
+                printLine("Firewall: ACTIVE (DEMO)");
+                printLine("Network status: SECURE (DEMO)");
+                printLine("No real network inspection performed.");
+                break;
+
+            case "scan":
+                printLine("Initializing simulated security scan...");
+                printLine("[OK] Checking demo firewall status");
+                printLine("[OK] Reviewing sample security settings");
+                printLine("[OK] Checking simulated network indicators");
+                printLine("Scan complete. No real system was scanned.", "terminal-welcome");
+                break;
+
+            case "password-check":
+                printLine("PASSWORD SECURITY TIPS");
+                printLine("1. Use at least 14 characters.");
+                printLine("2. Mix uppercase, lowercase, numbers and symbols.");
+                printLine("3. Never reuse passwords across accounts.");
+                printLine("4. Use a trusted password manager.");
+                printLine("Never enter your real password in this terminal.");
+                break;
+
+            case "history":
+                if (commandHistory.length === 0) {
+                    printLine("No previous commands.");
+                } else {
+                    commandHistory.forEach((item, index) => {
+                        printLine(`${index + 1}. ${item}`);
+                    });
+                }
+                break;
+
+            case "clear":
+                terminalOutput.innerHTML = "";
+                printLine("CyberVerse Terminal cleared.", "terminal-welcome");
+                break;
+
+            case "":
+                break;
+
+            default:
+                printLine(`Command not found: ${action}`);
+                printLine("Type 'help' to see available commands.");
+        }
+    }
+
+    terminalForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const command = terminalInput.value.trim();
+
+        if (!command) return;
+
+        printLine(`visitor@cyberverse:~$ ${command}`, "terminal-command");
+
+        commandHistory.push(command);
+        historyIndex = commandHistory.length;
+
+        runCommand(command);
+
+        terminalInput.value = "";
+    });
+
+    terminalInput.addEventListener("keydown", (event) => {
+
+        if (event.key === "ArrowUp") {
+            event.preventDefault();
+
+            if (historyIndex > 0) {
+                historyIndex--;
+                terminalInput.value = commandHistory[historyIndex];
+            }
+        }
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                terminalInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                terminalInput.value = "";
+            }
+        }
+        
+        });
+
+    // TERMINAL COMMAND AUTOCOMPLETE
+
+    const terminalCommands = [
+        "help",
+        "status",
+        "tips",
+        "whoami",
+        "network",
+        "scan",
+        "password-check",
+        "history",
+        "clear"
+    ];
+
+    const commandList = document.createElement("datalist");
+    commandList.id = "terminalCommands";
+
+    terminalCommands.forEach(command => {
+        const option = document.createElement("option");
+        option.value = command;
+        commandList.appendChild(option);
+    });
+
+    terminalOutput.parentElement.appendChild(commandList);
+    terminalInput.setAttribute("list", "terminalCommands");
 
 });

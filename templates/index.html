@@ -57,10 +57,7 @@
                 <span class="side-icon">◎</span>
                 <span>Threat Radar</span>
             </a>
-         <a href="#ai-security-tool" class="side-link">
-    <span class="side-icon">✧</span>
-    <span>AI Security Lab</span>
-</a>
+        
             <div class="sidebar-label">SECURITY RECORDS</div>
 
             <a href="#scan-history" class="side-link">
@@ -304,15 +301,7 @@
                     <span class="stat-symbol">◎</span>
                 </article>
 
-                <article class="stat-card panel">
-                    <div class="stat-icon orange">♜</div>
-                    <div>
-                        <p>Badges Unlocked</p>
-                        <strong id="badges">0</strong>
-                        <small id="badgeHint">Your first badge awaits</small>
-                    </div>
-                    <span class="stat-symbol">◇</span>
-                </article>
+                
 
             </section>
 
@@ -522,7 +511,7 @@
 </section>
 
 
-            <!-- LEARNING AND ACHIEVEMENTS -->
+            <!-- LEARNING SECTION  -->
             <section class="bottom-grid">
 
                 <!-- CYBER ACADEMY -->
@@ -570,67 +559,56 @@
     </button>
 
 </article>
+      <!-- CYBER TERMINAL -->
+<div class="cyber-terminal panel" id="cyber-terminal">
 
+    <div class="terminal-header">
+        <div>
+            <p class="eyebrow">HANDS-ON COMMAND LINE</p>
+            <h2>Cyber <span>Terminal</span></h2>
+        </div>
 
+        <span class="terminal-status">
+            <i></i> SIMULATION ACTIVE
+        </span>
+    </div>
 
-                <!-- ACHIEVEMENTS -->
-                <article class="panel progress-card">
+    <div class="terminal-window">
 
-                    <div class="section-heading compact">
+        <div class="terminal-topbar">
+            <div class="terminal-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span>cyberverse@terminal:~</span>
+        </div>
 
-                        <div>
-                            <p class="eyebrow">YOUR JOURNEY</p>
-                            <h2>Achievements</h2>
-                        </div>
+        <div class="terminal-output" id="terminalOutput" aria-live="polite">
+            <p class="terminal-welcome">Welcome to CyberVerse Terminal.</p>
+            <p>Safe cybersecurity command simulator initialized.</p>
+            <p>Type <span class="terminal-command">help</span> to view available commands.</p>
+        </div>
 
-                        <span class="lab-icon orange">♜</span>
+        <form class="terminal-input-line" id="terminalForm">
+            <label for="terminalInput">visitor@cyberverse:~$</label>
+            <input
+                type="text"
+                id="terminalInput"
+                placeholder="Enter a command..."
+                autocomplete="off"
+                spellcheck="false"
+                maxlength="100"
+            >
+        </form>
 
-                    </div>
+    </div>
 
-                    <div class="achievement" id="badgeFirst">
-                        <span class="achievement-icon">✦</span>
+    <p class="notice">
+        Educational simulation only. Commands do not execute on your real system.
+    </p>
 
-                        <div>
-                            <strong>First Steps</strong>
-                            <p>Complete your first lab</p>
-                        </div>
-
-                        <span class="achievement-state">LOCKED</span>
-                    </div>
-
-                    <div class="achievement" id="badgeAnalyst">
-                        <span class="achievement-icon">⌕</span>
-
-                        <div>
-                            <strong>Threat Analyst</strong>
-                            <p>Analyze 5 messages</p>
-                        </div>
-
-                        <span class="achievement-state">LOCKED</span>
-                    </div>
-
-                    <div class="achievement" id="badgeScholar">
-                        <span class="achievement-icon">◈</span>
-
-                        <div>
-                            <strong>Cyber Scholar</strong>
-                            <p>Answer 3 quiz questions correctly</p>
-                        </div>
-
-                        <span class="achievement-state">LOCKED</span>
-                    </div>
-
-                    <div class="progress-footer">
-                        <span>Progress to next level</span>
-                        <strong id="progressLabel">0%</strong>
-                    </div>
-
-                    <div class="progress-track">
-                        <span id="progressBar"></span>
-                    </div>
-
-                </article>
-
+</div>
             </section>
 
 
