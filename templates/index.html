@@ -52,6 +52,10 @@
                 <span class="side-icon">◇</span>
                 <span>Cyber Academy</span>
             </a>
+            <a href="#cyber-terminal" class="side-link">
+    <span class="side-icon">⌨</span>
+    <span>Terminal</span>
+</a>
 
             <a href="#threat-dashboard" class="side-link">
                 <span class="side-icon">◎</span>
@@ -923,10 +927,7 @@
                             <canvas id="riskChart"></canvas>
                         </div>
 
-                        <div class="analytics-card">
-                            <h3>Scan Activity</h3>
-                            <canvas id="activityChart"></canvas>
-                        </div>
+                        
 
                     </div>
 
@@ -934,6 +935,41 @@
 
 
                 <!-- MESSAGE HISTORY LIST -->
+
+<!-- MESSAGE HISTORY SEARCH AND FILTERS -->
+<div class="url-history-controls message-history-controls">
+
+    <input
+        type="search"
+        id="messageHistorySearch"
+        placeholder="Search messages..."
+        autocomplete="off"
+    >
+
+    <select id="messageRiskFilter">
+        <option value="all">All Risk Levels</option>
+        <option value="High">High Risk</option>
+        <option value="Medium">Medium Risk</option>
+        <option value="Low">Low Risk</option>
+    </select>
+
+    <select id="messageSortOrder">
+        <option value="newest">Latest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="highest">Highest Score</option>
+        <option value="lowest">Lowest Score</option>
+    </select>
+
+    <button
+        class="button secondary"
+        id="clearMessageFilters"
+        type="button"
+    >
+        Clear Filters
+    </button>
+
+</div>
+
                 <div id="historyList" class="history-list">
                     <p>Loading scan history...</p>
                 </div>
@@ -998,6 +1034,24 @@
                     </div>
 
                 </div>
+<!-- URL RISK DISTRIBUTION -->
+<div class="analytics-grid url-analytics-grid">
+
+    <div class="analytics-card">
+        <h3>Risk Distribution</h3>
+        <canvas id="urlRiskChart"></canvas>
+    </div>
+
+</div>
+
+
+    <div class="url-overall-status">
+    <div class="score-details">
+        <span class="score-dot"></span>
+        <span id="urlOverallStatus">No scans yet</span>
+    </div>
+</div>
+
 
                 
 <!-- URL HISTORY SEARCH AND FILTERS -->
@@ -1038,28 +1092,109 @@
 
             </section>
 
-           <!-- AI SECURITY TEST HISTORY -->
-<section class="scan-history-section" id="ai-security-lab">
+           
+<!-- AI SECURITY TEST HISTORY -->
+<section class="scan-history-section ai-history-section" id="ai-security-lab">
 
     <div class="dashboard-heading">
         <div>
             <p class="eyebrow">AI SECURITY RECORDS</p>
             <h2>AI Security Test <span>History</span></h2>
-            <p>Review your AI-generated response audits and their security findings.</p>
+            <p>Monitor, review and manage your AI security audits.</p>
+        </div>
+
+        <div class="history-actions">
+            <button class="button secondary" id="refreshAiHistory" type="button">
+                ↻ Refresh
+            </button>
         </div>
     </div>
 
-    <div class="analytics-card">
-        <div id="aiSecurityHistory">
-            <p>Loading test history...</p>
+    <!-- AI HISTORY STATISTICS -->
+    <div class="history-stats">
+
+        <div class="threat-card">
+            <span>Total AI Tests</span>
+            <strong id="aiSecurityTotal">0</strong>
         </div>
+
+        <div class="threat-card">
+            <span>High / Critical Risk</span>
+            <strong id="aiSecurityHigh">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>Medium Risk</span>
+            <strong id="aiSecurityMedium">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>Low Risk</span>
+            <strong id="aiSecurityLow">0</strong>
+        </div>
+
+    </div>
+    <!-- AI OVERALL SECURITY SCORE -->
+<!-- AI RISK DISTRIBUTION -->
+<div class="analytics-grid ai-analytics-grid">
+
+    <div class="analytics-card">
+        <h3>Risk Distribution</h3>
+        <canvas id="aiRiskChart"></canvas>
+    </div>
+
+</div>
+
+    <!-- HISTORY FILTERS -->
+    <div class="url-history-controls ai-history-controls">
+
+        <input
+            type="search"
+            id="aiHistorySearch"
+            placeholder="Search AI test history..."
+            autocomplete="off"
+        >
+
+        <select id="aiHistoryRiskFilter">
+            <option value="all">All Risk Levels</option>
+            <option value="Critical">Critical Risk</option>
+            <option value="High">High Risk</option>
+            <option value="Medium">Medium Risk</option>
+            <option value="Low">Low Risk</option>
+        </select>
+
+        <select id="aiHistorySort">
+            <option value="newest">Latest First</option>
+            <option value="oldest">Oldest First</option>
+        </select>
+
+    </div>
+
+    <!-- HISTORY RECORDS -->
+    <div class="analytics-card ai-history-container">
+
+        <div class="activity-heading">
+            <div>
+                <h3>Security Audit Records</h3>
+                <p>Your previously analyzed AI responses.</p>
+            </div>
+
+            <span class="activity-label">AI AUDIT LOGS</span>
+        </div>
+
+        <div id="aiSecurityHistory">
+            <p>Loading AI security history...</p>
+        </div>
+
     </div>
 
     <p class="notice">
-        AI-based assessment is not a security certification and may miss risks or flag harmless content.
+        AI-based assessment is not a security certification and may miss risks
+        or flag harmless content.
     </p>
 
 </section>
+
             <!-- SCAN DETAILS MODAL -->
             <div id="scanModal" class="scan-modal">
 

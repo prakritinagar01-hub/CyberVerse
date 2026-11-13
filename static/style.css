@@ -3,6 +3,10 @@
    CYBERVERSE 2.0 — MIDNIGHT CYBERPUNK UI
 ========================================= */
 
+/* =========================================
+   CYBERVERSE 2.0 — MIDNIGHT CYBERPUNK UI
+========================================= */
+
 :root {
     --bg: #080b18;
     --panel: #10172c;
@@ -14,8 +18,21 @@
     --pink: #fb7185;
     --green: #34d399;
     --orange: #fbbf24;
+    --red: #fb4b65;
+
+    --text: #f1f5ff;
+    --muted: #929dbb;
+    --line: rgba(139, 153, 255, 0.17);
+
+    --sidebar-width: 255px;
+    --radius: 18px;
+
+    --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    --glow: 0 0 25px rgba(34, 211, 238, 0.12);
+}
+
 /* =========================================
-   AI SECURITY LAB - LIGHT THEME POLISH
+   AI SECURITY LAB — LIGHT THEME
 ========================================= */
 
 :root[data-theme="light"] #ai-security-lab .threat-card,
@@ -29,12 +46,10 @@
     color: #64748b;
 }
 
-:root[data-theme="light"] #ai-security-lab .threat-card strong {
-    color: #1e293b;
-}
-
+:root[data-theme="light"] #ai-security-lab .threat-card strong,
 :root[data-theme="light"] #ai-security-lab .analytics-card h3,
-:root[data-theme="light"] #ai-security-lab .analytics-card h4 {
+:root[data-theme="light"] #ai-security-lab .analytics-card h4,
+:root[data-theme="light"] #ai-security-lab .analytics-card strong {
     color: #172033;
 }
 
@@ -44,10 +59,6 @@
 
 :root[data-theme="light"] #ai-security-lab .analytics-card p {
     color: #475569;
-}
-
-:root[data-theme="light"] #ai-security-lab .analytics-card strong {
-    color: #172033;
 }
 
 :root[data-theme="light"] #ai-security-lab textarea {
@@ -99,21 +110,6 @@
     color: #64748b;
 }
 
-    --red: #fb4b65;
-
-    --text: #f1f5ff;
-    --muted: #929dbb;
-    --line: rgba(139, 153, 255, 0.17);
-
-    --sidebar-width: 255px;
-    --radius: 18px;
-
-    --shadow:
-        0 18px 50px rgba(0, 0, 0, 0.28);
-
-    --glow:
-        0 0 25px rgba(34, 211, 238, 0.12);
-}
 
 * {
     margin: 0;
@@ -248,7 +244,7 @@ a {
 .brand {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 11px;   
     font-size: 22px;
     font-weight: 850;
     letter-spacing: -1px;
@@ -303,7 +299,7 @@ a {
     border-radius: 11px;
     transition: .25s ease;
 }
-
+    
 .side-icon {
     width: 23px;
     text-align: center;
@@ -1754,8 +1750,9 @@ input:focus {
 
 .analytics-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 16px;
+    width: 100%;
 }
 
 .analytics-grid canvas {
@@ -1906,11 +1903,11 @@ input:focus {
 
     .stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+}
 
     .hero h1 {
         font-size: 42px;
-    }
+}
 }
 
 /* =========================================
@@ -2247,7 +2244,7 @@ textarea:focus-visible {
 :root[data-theme="light"] .sidebar {
     background: rgba(255, 255, 255, 0.96);
     border-right: 1px solid var(--line);
-}
+    }
 
 :root[data-theme="light"] .topbar {
     background: rgba(255, 255, 255, 0.90);
@@ -2294,11 +2291,11 @@ body,
 
 /* TOPBAR */
 
-.topbar {
+    .topbar {
     background: var(--bg);
     background: color-mix(in srgb, var(--bg) 92%, transparent);
     border-bottom: 1px solid var(--line);
-}
+    }
 
 /* PANELS */
 
@@ -2314,24 +2311,24 @@ body,
 .side-link {
     border-radius: 12px;
     transition: all 0.2s ease;
-}
+    }
 
 .side-link:hover {
     transform: translateX(2px);
-}
+    }
 
 .side-link.active {
     box-shadow: inset 3px 0 var(--cyan);
-}
+    }
 
 /* HERO */
 
 .hero {
     border-radius: 22px;
     overflow: hidden;
-}
+    }
 
-.hero-description {
+    .hero-description {
     color: var(--muted);
 }
 
@@ -2340,7 +2337,7 @@ body,
 .section-heading {
     margin-top: 48px;
     margin-bottom: 22px;
-}
+    }
 
 /* THEME TOGGLE */
 
@@ -2348,7 +2345,7 @@ body,
     border-radius: 12px;
     background: var(--panel);
     border: 1px solid var(--line);
-}
+    }
 
 .theme-toggle:hover {
     background: var(--panel-hover);
@@ -2360,7 +2357,7 @@ body,
     background: #ffffff;
     border-color: #e5eaf2;
     box-shadow: 0 8px 28px rgba(15, 23, 42, 0.045);
-}
+    }
 
 :root[data-theme="light"] .hero-description {
     color: #64748b;
@@ -2371,7 +2368,7 @@ body,
     color: #2563eb;
     border-color: #dbeafe;
     box-shadow: inset 3px 0 #3b82f6;
-}
+    }
 
 :root[data-theme="light"] .side-link.active .side-icon {
     color: #2563eb;
@@ -2404,14 +2401,14 @@ body,
     transform: translateY(-4px);
     border-color: var(--cyan);
     box-shadow: 0 12px 28px rgba(34, 211, 238, 0.09);
-}
+    }
 
 .stat-icon {
     width: 48px;
     height: 48px;
     flex-shrink: 0;
     border-radius: 14px;
-}
+    }
 
 .stat-card p {
     font-size: 12px;
@@ -2429,7 +2426,7 @@ body,
 .stat-card small {
     color: var(--muted);
     font-size: 10px;
-}
+    }
 
 /* LIGHT MODE */
 
@@ -2455,7 +2452,7 @@ body,
     transition: background 0.25s ease,
                 border-color 0.25s ease,
                 box-shadow 0.25s ease;
-}
+    }
 
 .quiz-question {
     color: var(--text);
@@ -2482,7 +2479,7 @@ body,
     background: #ffffff;
     border-color: #e5eaf2;
     box-shadow: 0 5px 20px rgba(15, 23, 42, 0.04);
-}
+    }
 
 :root[data-theme="light"] .quiz-options button {
     background: #f8fafc;
@@ -2504,7 +2501,7 @@ input {
     color: var(--text);
     border: 1px solid var(--line);
     border-radius: 12px;
-}
+    }
 
 textarea:focus,
 input:focus {
@@ -3014,9 +3011,9 @@ input::placeholder {
 
 .academy-card .quiz-options {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
     gap: 13px;
-}
+    }
 
 .academy-card .quiz-options button {
     min-height: 65px;
@@ -3129,9 +3126,9 @@ input::placeholder {
     gap: 12px;
     margin: 18px 0;
     align-items: center;
-}
+    }
 
-.url-history-controls input,
+    .url-history-controls input,
 .url-history-controls select {
     width: 100%;
     min-width: 0;
@@ -3150,7 +3147,7 @@ input::placeholder {
     box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.12);
 }
 
-.url-history-controls button {
+    .url-history-controls button {
     white-space: nowrap;
 }
 
@@ -3174,7 +3171,7 @@ input::placeholder {
 
 #ai-security-lab {
     margin-top: 35px;
-}
+    }
 
 #ai-security-lab .dashboard-heading {
     display: flex;
@@ -3506,7 +3503,7 @@ html[data-theme="light"] #ai-security-lab .history-item {
     color: #4ade80;
     font: 10px "Space Mono", monospace;
     white-space: nowrap;
-}
+    }
 
 .terminal-status i {
     display: inline-block;
@@ -3820,4 +3817,582 @@ html[data-theme="light"] #terminalInput {
 
 html[data-theme="light"] #terminalInput::placeholder {
     color: #64748b;
+}
+
+/* =========================================
+   CIRCULAR SCORE - URL & AI SECURITY HISTORY
+========================================= */
+
+.url-history-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.url-history-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.circular-score {
+    --score: 0;
+    width: 76px;
+    height: 76px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: conic-gradient(
+        var(--score-color, #22d3ee) calc(var(--score) * 1%),
+        rgba(128, 128, 128, 0.18) 0
+    );
+    position: relative;
+}
+
+.circular-score::before {
+    content: "";
+    position: absolute;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: var(--panel, #10172c);
+}
+
+.circular-score-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.circular-score-inner strong {
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.circular-score-inner small {
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.circular-score.low {
+    --score-color: #22c55e;
+}
+
+.circular-score.medium {
+    --score-color: #f59e0b;
+}
+
+.circular-score.high,
+.circular-score.critical {
+    --score-color: #ef4444;
+}
+
+/* Light theme */
+html[data-theme="light"] .circular-score::before {
+    background: var(--panel, #ffffff);
+}
+
+@media (max-width: 600px) {
+    .url-history-card {
+        gap: 12px;
+    }
+
+    .circular-score {
+        width: 64px;
+        height: 64px;
+    }
+
+    .circular-score::before {
+        width: 52px;
+        height: 52px;
+    }
+}
+
+/* MESSAGE HISTORY — SIDE-BY-SIDE SCORE LAYOUT */
+
+.message-history-controls ~ #historyList .history-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.message-history-controls ~ #historyList .history-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.message-history-controls ~ #historyList .history-card-score {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.message-history-controls ~ #historyList .circular-score {
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .message-history-controls ~ #historyList .history-card {
+        gap: 12px;
+    }
+
+    .message-history-controls ~ #historyList .history-card-score {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+
+/* =========================================
+   OVERVIEW — MAIN CONTENT OVERLAP FIX
+========================================= */
+
+.hero {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+}
+
+.hero-copy,
+.hero-art {
+    min-width: 0;
+}
+
+.hero h1 {
+    overflow-wrap: break-word;
+}
+
+.hero-art {
+    width: 100%;
+    overflow: hidden;
+}
+
+.float-card {
+    max-width: 45%;
+    box-sizing: border-box;
+}
+
+.stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.stat-card {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-art {
+        min-height: 290px;
+    }
+}
+
+@media (max-width: 520px) {
+    .stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .float-card {
+        max-width: 42%;
+    }
+}
+/* =========================================
+   OVERVIEW — MAIN CONTENT OVERLAP FIX
+========================================= */
+
+.hero {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+}
+
+.hero-copy,
+.hero-art {
+    min-width: 0;
+}
+
+.hero h1 {
+    overflow-wrap: break-word;
+}
+
+.hero-art {
+    width: 100%;
+    overflow: hidden;
+}
+
+.float-card {
+    max-width: 45%;
+    box-sizing: border-box;
+}
+
+.stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.stat-card {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-art {
+        min-height: 290px;
+    }
+}
+
+@media (max-width: 520px) {
+    .stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .float-card {
+        max-width: 42%;
+    }
+}
+
+/* =========================================
+   CYBERVERSE — FINAL GLOBAL LAYOUT FIX
+   Add at the VERY END of style.css
+========================================= */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+.app,
+.app-layout,
+.dashboard-layout {
+    width: 100%;
+    min-width: 0;
+}
+
+.app-main,
+.main-content,
+.dashboard-content {
+    min-width: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.container,
+.content-wrapper {
+    width: 100%;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    min-width: 0;
+}
+
+/* MAIN SECTIONS */
+main > section,
+.app-main > section,
+.main-content > section,
+.dashboard-content > section {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: auto;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    clear: both;
+}
+
+/* HERO */
+.hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+    align-items: center;
+    gap: 25px;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    margin: 0 0 25px;
+}
+
+.hero-copy,
+.hero-art {
+    position: relative;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* STATISTICS */
+.stats-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+    margin: 24px 0;
+}
+
+.stat-card {
+    position: relative;
+    min-width: 0;
+    width: 100%;
+}
+
+/* DASHBOARD GRIDS */
+.dashboard-grid,
+.analytics-grid,
+.content-grid,
+.bottom-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+    margin: 24px 0;
+}
+
+.dashboard-grid > *,
+.analytics-grid > *,
+.content-grid > *,
+.bottom-grid > * {
+    position: relative;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* HISTORY — ALWAYS BELOW PREVIOUS CONTENT */
+.history-section,
+.history-card,
+#history {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: auto;
+    margin: 28px 0 24px;
+    clear: both;
+    z-index: 1;
+}
+
+/* REMOVE UNWANTED ABSOLUTE POSITIONING
+   FROM MAIN CONTENT CARDS */
+.stats-grid > *,
+.dashboard-grid > *,
+.analytics-grid > *,
+.content-grid > *,
+.bottom-grid > *,
+.history-section,
+.history-card {
+    float: none;
+}
+
+/* IMAGES AND CANVASES */
+img,
+canvas,
+svg {
+    max-width: 100%;
+}
+
+canvas {
+    height: auto;
+}
+
+/* TABLES */
+table {
+    max-width: 100%;
+}
+
+.table-wrapper,
+.table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* TABLET */
+@media (max-width: 1000px) {
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-grid,
+    .analytics-grid,
+    .content-grid,
+    .bottom-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+    .app-main,
+    .main-content,
+    .dashboard-content {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .hero {
+        gap: 15px;
+    }
+
+    .stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .dashboard-grid,
+    .analytics-grid,
+    .content-grid,
+    .bottom-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 15px;
+    }
+
+    .history-section,
+    .history-card,
+    #history {
+        margin-top: 20px;
+    }
+}
+
+/* =========================================
+   CYBERVERSE — CLEAN LAYOUT OVERRIDE
+   Preserves existing visual styling
+========================================= */
+
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1600px;
+    min-width: 0;
+    margin-inline: auto;
+}
+
+.container > section {
+    position: relative;
+    flex-shrink: 0;
+    width: 100%;
+    min-width: 0;
+    margin-block: 22px;
+}
+
+.container > .hero {
+    margin-top: 0;
+}
+
+.container > .section-heading {
+    margin-block: 28px 18px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.lab-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.bottom-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 22px;
+}
+
+.threat-dashboard,
+.scan-history-section {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    clear: both;
+}
+
+.history-stats,
+.threat-stats,
+.ai-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.stat-card,
+.lab-card,
+.analytics-card,
+.threat-card {
+    min-width: 0;
+}
+
+.history-list {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 1000px) {
+    .history-stats,
+    .threat-stats,
+    .ai-metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .lab-grid,
+    .bottom-grid,
+    .analytics-grid,
+    .stats-grid,
+    .history-stats,
+    .threat-stats,
+    .ai-metrics-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }

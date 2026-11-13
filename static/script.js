@@ -6,6 +6,7 @@
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
+    let aiRiskChart = null;
 
     // ======================================
     // 1. HELPERS & APP STATE
@@ -62,7 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     let riskChart = null;
-    let activityChart = null;
+    let urlRiskChart = null;
+    
     let currentHistory = [];
 
     function saveState() {
@@ -1023,43 +1025,126 @@ loadRadarData();
 
     const historyList = $("#historyList");
 
-    function renderHistory(records) {
-        if (!historyList) return;
+const messageHistorySearch = $("#messageHistorySearch");
+const messageRiskFilter = $("#messageRiskFilter");
+const messageSortOrder = $("#messageSortOrder");
+const clearMessageFilters = $("#clearMessageFilters");
 
-        currentHistory = records || [];
 
-        if (!currentHistory.length) {
-            historyList.innerHTML = "<p>No message scans yet.</p>";
-            return;
+    
+function renderHistory(records) {
+    if (!historyList) return;
+
+    currentHistory = records || [];
+    applyMessageHistoryFilters();
+}
+
+function applyMessageHistoryFilters() {
+    if (!historyList) return;
+
+    let filteredRecords = [...currentHistory];
+
+    // SEARCH FILTER
+    const searchTerm = messageHistorySearch?.value
+        .trim()
+        .toLowerCase() || "";
+
+    if (searchTerm) {
+        filteredRecords = filteredRecords.filter(record =>
+            String(record.message || "")
+                .toLowerCase()
+                .includes(searchTerm)
+        );
+    }
+
+    // RISK FILTER
+    const selectedRisk = messageRiskFilter?.value || "all";
+
+    if (selectedRisk !== "all") {
+        filteredRecords = filteredRecords.filter(record =>
+            String(record.risk || "").toLowerCase() ===
+            selectedRisk.toLowerCase()
+        );
+    }
+
+    // SORTING
+    const sortOrder = messageSortOrder?.value || "newest";
+
+    filteredRecords.sort((a, b) => {
+        if (sortOrder === "highest") {
+            return (Number(b.score) || 0) - (Number(a.score) || 0);
         }
 
-        historyList.innerHTML = currentHistory.map(record => `
-            <div class="history-card">
-                <div>
-                    <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
-                    <p>${escapeHTML(String(record.message || "").slice(0, 100))}</p>
-                    <small>${escapeHTML(record.scanned_at || "")}</small>
-                </div>
+        if (sortOrder === "lowest") {
+            return (Number(a.score) || 0) - (Number(b.score) || 0);
+        }
 
-                <div>
-                    <strong>${Number(record.score) || 0}/100</strong>
-                    <button
-                        type="button"
-                        class="history-details"
-                        data-id="${Number(record.id)}"
-                    >
-                        Details
-                    </button>
-                </div>
-            </div>
-        `).join("");
+        const dateA = new Date(a.scanned_at || 0).getTime() || 0;
+        const dateB = new Date(b.scanned_at || 0).getTime() || 0;
 
-        historyList.querySelectorAll(".history-details").forEach(button => {
-            button.addEventListener("click", () => {
-                openHistoryDetails(button.dataset.id);
-            });
-        });
+        return sortOrder === "oldest"
+            ? dateA - dateB
+            : dateB - dateA;
+    });
+
+    // EMPTY STATE
+    if (!filteredRecords.length) {
+        historyList.innerHTML =
+            "<p>No matching message scans found.</p>";
+        return;
     }
+
+    
+// RENDER RECORDS
+historyList.innerHTML = filteredRecords.map(record => {
+    const score = Math.min(100, Math.max(0, Number(record.score) || 0));
+    const riskClass = String(record.risk || "low").toLowerCase();
+
+    return `
+        <div class="history-card">
+
+            <div class="history-card-info">
+                <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
+
+                <p>${escapeHTML(String(record.message || "").slice(0, 120))}</p>
+
+                <small>${escapeHTML(record.scanned_at || "")}</small>
+            </div>
+
+            <div class="history-card-score">
+
+                <div class="circular-score ${escapeHTML(riskClass)}"
+                     style="--score: ${score}">
+
+                    <div class="circular-score-inner">
+                        <strong>${score}</strong>
+                        <small>/100</small>
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="history-details"
+                    data-id="${Number(record.id)}"
+                >
+                    View Details
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}).join("");
+
+
+    historyList.querySelectorAll(".history-details").forEach(button => {
+        button.addEventListener("click", () => {
+            openHistoryDetails(button.dataset.id);
+        });
+    });
+}
+
 
     async function loadHistory() {
         try {
@@ -1148,7 +1233,7 @@ async function loadAnalytics() {
         if (typeof Chart === "undefined") return;
 
         const riskCanvas = $("#riskChart");
-        const activityCanvas = $("#activityChart");
+        
 
         if (riskCanvas) {
             if (riskChart) riskChart.destroy();
@@ -1178,38 +1263,9 @@ const low = Number(window.analyticsData?.low_risk) || 0;
                 }
             });
         }
-
-        if (activityCanvas) {
-            if (activityChart) activityChart.destroy();
-
-            const last7Days = window.analyticsData?.daily_activity || [];
-
-            activityChart = new Chart(activityCanvas, {
-                type: "bar",
-                data: {
-                    labels: last7Days.map(day => day.date.slice(5)),
-                    datasets: [{
-                        label: "Message Scans",
-                        data: last7Days.map(day => day.count),
-                        backgroundColor: "#7867f7",
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            }
-                        }
-                    }
-                }
-            });
-        }
     }
+
+        
 
     // ======================================
     // 11. HISTORY DETAILS MODAL
@@ -1280,6 +1336,22 @@ const low = Number(window.analyticsData?.low_risk) || 0;
     // ======================================
 
     const refreshHistory = $("#refreshHistory");
+    
+// MESSAGE HISTORY FILTER EVENTS
+messageHistorySearch?.addEventListener("input", applyMessageHistoryFilters);
+
+messageRiskFilter?.addEventListener("change", applyMessageHistoryFilters);
+
+messageSortOrder?.addEventListener("change", applyMessageHistoryFilters);
+
+clearMessageFilters?.addEventListener("click", () => {
+    if (messageHistorySearch) messageHistorySearch.value = "";
+    if (messageRiskFilter) messageRiskFilter.value = "all";
+    if (messageSortOrder) messageSortOrder.value = "newest";
+
+    applyMessageHistoryFilters();
+});
+
     const deleteHistory = $("#deleteHistory");
     const exportHistory = $("#exportHistory");
 
@@ -1364,15 +1436,57 @@ function renderURLHistory(records) {
     }
 
     urlHistoryList.innerHTML = filteredRecords.map(record => `
-        <div class="history-card">
-            <div>
-                <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
-                <p>${escapeHTML(record.url || "")}</p>
-                <small>${escapeHTML(record.scanned_at || "")}</small>
-            </div>
-            <strong>${Number(record.score) || 0}/100</strong>
+       <div class="history-card url-history-card">
+    <div class="url-history-info">
+        <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
+        <p>${escapeHTML(record.url || "")}</p>
+        <small>${escapeHTML(record.scanned_at || "")}</small>
+    </div>
+
+    <div class="circular-score ${escapeHTML(
+        String(record.risk || "low").toLowerCase()
+    )}"
+    style="--score: ${Math.min(100, Math.max(0, Number(record.score) || 0))}">
+        <div class="circular-score-inner">
+            <strong>${Number(record.score) || 0}</strong>
+            <small>/100</small>
         </div>
+    </div>
+</div>
     `).join("");
+}
+function renderURLRiskChart(stats) {
+    if (typeof Chart === "undefined") return;
+
+    const canvas = $("#urlRiskChart");
+    if (!canvas) return;
+
+    if (urlRiskChart) urlRiskChart.destroy();
+
+    const high = Number(stats.high) || 0;
+    const medium = Number(stats.medium) || 0;
+    const low = Number(stats.low) || 0;
+
+    urlRiskChart = new Chart(canvas, {
+        type: "doughnut",
+        data: {
+            labels: ["High", "Medium", "Low"],
+            datasets: [{
+                data: [high, medium, low],
+                backgroundColor: ["#ef4444", "#f59e0b", "#22c55e"],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
 }
 
 async function loadURLHistory() {
@@ -1384,10 +1498,44 @@ async function loadURLHistory() {
         allURLRecords = records;
 
         if (!Array.isArray(records)) return;
+        // URL OVERALL AVERAGE RISK SCORE
+const urlScores = records.map(record =>
+    Math.min(100, Math.max(0, Number(record.score) || 0))
+);
+
+const averageURLScore = urlScores.length
+    ? Math.round(
+        urlScores.reduce((sum, score) => sum + score, 0) / urlScores.length
+    )
+    : 0;
+
+const urlScoreElement = $("#urlOverallScore");
+const urlMeter = $("#urlOverallMeter");
+const urlStatus = $("#urlOverallStatus");
+
+if (urlScoreElement) {
+    urlScoreElement.textContent = averageURLScore;
+}
+
+if (urlMeter) {
+    urlMeter.style.background = `
+        conic-gradient(
+            #22d3ee ${averageURLScore}%,
+            rgba(128, 128, 128, 0.18) ${averageURLScore}%
+        )
+    `;
+}
+
+if (urlStatus) {
+    urlStatus.textContent = records.length
+        ? `Average risk across ${records.length} URL scans`
+        : "No scans yet";
+}
 
         const high = Number(stats.high) || 0;
         const medium = Number(stats.medium) || 0;
         const low = Number(stats.low) || 0;
+        renderURLRiskChart({ high, medium, low });
 
         const values = {
             "#urlHistoryTotal": records.length,
@@ -1604,6 +1752,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultBox = document.getElementById("aiSecurityResult");
     const historyBox = document.getElementById("aiSecurityHistory");
     const refreshButton = document.getElementById("refreshAiHistory");
+    // AI HISTORY FILTER CONTROLS
+const aiHistorySearch = document.getElementById("aiHistorySearch");
+const aiHistoryRiskFilter = document.getElementById("aiHistoryRiskFilter");
+const aiHistorySort = document.getElementById("aiHistorySort");
+
+let allAISecurityHistory = [];
 
     if (!responseInput || !testButton || !resultBox || !historyBox) {
         return;
@@ -1619,10 +1773,141 @@ document.addEventListener("DOMContentLoaded", () => {
         })[char]);
     };
 
+    // RENDER AI SECURITY HISTORY
+function renderAISecurityHistory() {
+    let filteredHistory = [...allAISecurityHistory];
+
+    // SEARCH FILTER
+    const searchText = (aiHistorySearch?.value || "").toLowerCase().trim();
+
+    if (searchText) {
+        filteredHistory = filteredHistory.filter(item => {
+            const searchableText = [
+                item.prompt,
+                item.response,
+                item.risk_level,
+                item.recommendation,
+                ...(Array.isArray(item.findings) ? item.findings : [])
+            ].join(" ").toLowerCase();
+
+            return searchableText.includes(searchText);
+        });
+    }
+
+    // RISK FILTER
+    const selectedRisk = aiHistoryRiskFilter?.value || "all";
+
+    if (selectedRisk !== "all") {
+        filteredHistory = filteredHistory.filter(item =>
+            String(item.risk_level || "").toLowerCase() === selectedRisk.toLowerCase()
+        );
+    }
+
+    // SORTING
+    if (aiHistorySort?.value === "oldest") {
+        filteredHistory.reverse();
+    }
+
+    if (!filteredHistory.length) {
+        historyBox.innerHTML = "<p>No matching AI security tests found.</p>";
+        return;
+    }
+
+    // Existing history card design
+    historyBox.innerHTML = filteredHistory.map(item => `
+    <div class="history-item url-history-card">
+        <div class="url-history-info">
+            <div class="history-item-header">
+                <strong>Test #${Number(item.id)}</strong>
+                <span class="risk-badge ${escapeHTML(
+                    String(item.risk_level || "unknown").toLowerCase()
+                )}">
+                    ${escapeHTML(item.risk_level || "Unknown")}
+                </span>
+            </div>
+
+            <p><strong>AI Response:</strong>
+                ${escapeHTML(String(item.response || "").slice(0, 180))}
+                ${String(item.response || "").length > 180 ? "..." : ""}
+            </p>
+
+            ${item.prompt ? `
+                <p><strong>Original Prompt:</strong>
+                    ${escapeHTML(String(item.prompt).slice(0, 150))}
+                </p>
+            ` : ""}
+
+            <p><strong>Findings:</strong>
+                ${escapeHTML(
+                    (Array.isArray(item.findings) ? item.findings : []).join(", ")
+                )}
+            </p>
+
+            <p><strong>Recommendation:</strong>
+                ${escapeHTML(item.recommendation || "Not available.")}
+            </p>
+
+            <small>${escapeHTML(item.tested_at || "")}</small>
+        </div>
+
+        <div class="circular-score ${escapeHTML(
+            String(item.risk_level || "low").toLowerCase()
+        )}"
+        style="--score: ${Math.min(100, Math.max(0, Number(item.risk_score) || 0))}">
+            <div class="circular-score-inner">
+                <strong>${Number(item.risk_score) || 0}</strong>
+                <small>/100</small>
+            </div>
+        </div>
+    </div>
+`).join("");
+}
     // ======================================
     // LOAD AI SECURITY HISTORY
     // ======================================
+    function renderAIRiskChart(history) {
+    if (typeof Chart === "undefined") return;
 
+    const canvas = document.getElementById("aiRiskChart");
+    if (!canvas) return;
+
+    if (aiRiskChart) aiRiskChart.destroy();
+
+    const high = history.filter(item =>
+        ["high", "critical"].includes(
+            String(item.risk_level || "").trim().toLowerCase()
+        )
+    ).length;
+
+    const medium = history.filter(item =>
+        String(item.risk_level || "").trim().toLowerCase() === "medium"
+    ).length;
+
+    const low = history.filter(item =>
+        String(item.risk_level || "").trim().toLowerCase() === "low"
+    ).length;
+
+    aiRiskChart = new Chart(canvas, {
+        type: "doughnut",
+        data: {
+            labels: ["High", "Medium", "Low"],
+            datasets: [{
+                data: [high, medium, low],
+                backgroundColor: ["#ef4444", "#f59e0b", "#22c55e"],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+}
     async function loadAISecurityHistory() {
 
         try {
@@ -1634,6 +1919,39 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const history = data.history || [];
+            // AI OVERALL AVERAGE RISK SCORE
+const aiScores = history.map(item =>
+    Math.min(100, Math.max(0, Number(item.risk_score) || 0))
+);
+
+const averageAIScore = aiScores.length
+    ? Math.round(
+        aiScores.reduce((sum, score) => sum + score, 0) / aiScores.length
+    )
+    : 0;
+
+const aiScoreElement = document.getElementById("aiOverallScore");
+const aiMeter = document.getElementById("aiOverallMeter");
+const aiStatus = document.getElementById("aiOverallStatus");
+
+if (aiScoreElement) {
+    aiScoreElement.textContent = averageAIScore;
+}
+
+if (aiMeter) {
+    aiMeter.style.background = `
+        conic-gradient(
+            #a78bfa ${averageAIScore}%,
+            rgba(128, 128, 128, 0.18) ${averageAIScore}%
+        )
+    `;
+}
+
+if (aiStatus) {
+    aiStatus.textContent = history.length
+        ? `Average risk across ${history.length} AI tests`
+        : "No tests yet";
+}
 
             const aiStats = {
                 aiSecurityTotal: history.length,
@@ -1659,59 +1977,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            if (!history.length) {
-                historyBox.innerHTML = "<p>No AI security tests yet.</p>";
-                return;
-            }
-
-            historyBox.innerHTML = history.map(item => `
-                <div class="history-item">
-
-                    <div class="history-item-header">
-                        <strong>Test #${Number(item.id)}</strong>
-
-                        <span class="risk-badge ${escapeHTML(
-                            String(item.risk_level || "unknown").toLowerCase()
-                        )}">
-                            ${escapeHTML(item.risk_level || "Unknown")}
-                        </span>
-                    </div>
-
-                    <p>
-                        <strong>Risk Score:</strong>
-                        ${Number(item.risk_score) || 0}/100
-                    </p>
-
-                    <p>
-                        <strong>AI Response:</strong>
-                        ${escapeHTML(
-                            String(item.response || "").slice(0, 180)
-                        )}${String(item.response || "").length > 180 ? "..." : ""}
-                    </p>
-
-                    ${item.prompt ? `
-                        <p>
-                            <strong>Original Prompt:</strong>
-                            ${escapeHTML(String(item.prompt).slice(0, 150))}
-                        </p>
-                    ` : ""}
-
-                    <p>
-                        <strong>Findings:</strong>
-                        ${escapeHTML(
-                            (Array.isArray(item.findings) ? item.findings : []).join(", ")
-                        )}
-                    </p>
-
-                    <p>
-                        <strong>Recommendation:</strong>
-                        ${escapeHTML(item.recommendation || "Not available.")}
-                    </p>
-
-                    <small>${escapeHTML(item.tested_at || "")}</small>
-
-                </div>
-            `).join("");
+            allAISecurityHistory = history;
+            renderAIRiskChart(history);
+renderAISecurityHistory();
 
         } catch (error) {
             historyBox.innerHTML =
@@ -1885,6 +2153,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (refreshButton) {
         refreshButton.addEventListener("click", loadAISecurityHistory);
     }
+    // AI HISTORY SEARCH
+if (aiHistorySearch) {
+    aiHistorySearch.addEventListener("input", renderAISecurityHistory);
+}
+
+// AI HISTORY RISK FILTER
+if (aiHistoryRiskFilter) {
+    aiHistoryRiskFilter.addEventListener("change", renderAISecurityHistory);
+}
+
+// AI HISTORY SORT
+if (aiHistorySort) {
+    aiHistorySort.addEventListener("change", renderAISecurityHistory);
+}
 
     loadAISecurityHistory();
 
