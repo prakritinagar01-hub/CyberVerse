@@ -2871,4 +2871,3 @@ case "tips":
     terminalInput.setAttribute("list", "terminalCommands");
 
 });
-loadAISecurityHistory();
