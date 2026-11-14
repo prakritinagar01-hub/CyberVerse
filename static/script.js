@@ -6,7 +6,6 @@
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
-    let aiRiskChart = null;
 
     // ======================================
     // 1. HELPERS & APP STATE
@@ -1229,41 +1228,127 @@ async function loadAnalytics() {
     // 10. ANALYTICS CHARTS
     // ======================================
 
-    function renderCharts(records) {
-        if (typeof Chart === "undefined") return;
+    
+// ======================================
+// 10. ANALYTICS CHARTS
+// ======================================
 
-        const riskCanvas = $("#riskChart");
-        
+function renderCharts(records) {
+    if (typeof Chart === "undefined") return;
 
-        if (riskCanvas) {
-            if (riskChart) riskChart.destroy();
+    const riskCanvas = $("#riskChart");
 
-            const high = Number(window.analyticsData?.high_risk) || 0;
-const medium = Number(window.analyticsData?.medium_risk) || 0;
-const low = Number(window.analyticsData?.low_risk) || 0;
+    if (!riskCanvas) return;
 
-            riskChart = new Chart(riskCanvas, {
-                type: "doughnut",
-                data: {
-                    labels: ["High", "Medium", "Low"],
-                    datasets: [{
-                        data: [high, medium, low],
-                        backgroundColor: ["#ef4444", "#f59e0b", "#22c55e"],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "bottom"
-                        }
-                    }
-                }
-            });
-        }
+    if (riskChart) {
+        riskChart.destroy();
     }
+
+    const high = Number(window.analyticsData?.high_risk) || 0;
+    const medium = Number(window.analyticsData?.medium_risk) || 0;
+    const low = Number(window.analyticsData?.low_risk) || 0;
+
+    // Total message scans
+    const totalScans =
+        Number(window.analyticsData?.total_scans) ||
+        (Array.isArray(records) ? records.length : 0);
+
+    // Theme-aware center text
+    const isLight =
+        document.documentElement.dataset.theme === "light";
+
+    const centerTextColor = isLight ? "#172033" : "#f8fafc";
+    const centerLabelColor = isLight ? "#64748b" : "#aab4cc";
+
+    // Plugin for center text
+    const centerTextPlugin = {
+        id: "messageChartCenterText",
+
+        afterDraw(chart) {
+            const { ctx, chartArea } = chart;
+
+            if (!chartArea) return;
+
+            const centerX =
+                (chartArea.left + chartArea.right) / 2;
+
+            const centerY =
+                (chartArea.top + chartArea.bottom) / 2;
+
+            ctx.save();
+
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            // Total number
+            ctx.font = "800 30px Inter, sans-serif";
+            ctx.fillStyle = centerTextColor;
+
+            ctx.fillText(
+                totalScans.toLocaleString(),
+                centerX,
+                centerY - 10
+            );
+
+            // Label
+            ctx.font = "600 11px Inter, sans-serif";
+            ctx.fillStyle = centerLabelColor;
+
+            ctx.fillText(
+                "TOTAL SCANS",
+                centerX,
+                centerY + 17
+            );
+
+            ctx.restore();
+        }
+    };
+
+    riskChart = new Chart(riskCanvas, {
+        type: "doughnut",
+
+        data: {
+            labels: ["High", "Medium", "Low"],
+
+            datasets: [{
+                data: [high, medium, low],
+
+                backgroundColor: [
+                    "#ef4444",
+                    "#f59e0b",
+                    "#22c55e"
+                ],
+
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            cutout: "72%",
+
+            plugins: {
+                legend: {
+                    position: "bottom",
+
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+
+                tooltip: {
+                    enabled: true
+                }
+            }
+        },
+
+        plugins: [centerTextPlugin]
+    });
+}
 
         
 
@@ -1394,40 +1479,207 @@ const urlRiskFilter = $("#urlRiskFilter");
 const urlSortOrder = $("#urlSortOrder");
 const clearUrlFilters = $("#clearUrlFilters");
 
+const refreshUrlHistory = $("#refreshUrlHistory");
+const exportUrlHistory = $("#exportUrlHistory");
+const deleteUrlHistory = $("#deleteUrlHistory");
 let allURLRecords = [];
 
-function renderURLHistory(records) {
+// ======================================
+// URL RISK DISTRIBUTION CHART
+// ======================================
 
+function renderURLRiskChart(records) {
+
+    if (typeof Chart === "undefined") return;
+
+    const canvas = document.getElementById("urlRiskChart");
+
+    if (!canvas) return;
+
+    if (urlRiskChart) {
+        urlRiskChart.destroy();
+    }
+
+    const high = records.filter(record =>
+        String(record.risk || "").toLowerCase() === "high"
+    ).length;
+
+    const medium = records.filter(record =>
+        String(record.risk || "").toLowerCase() === "medium"
+    ).length;
+
+    const low = records.filter(record =>
+        String(record.risk || "").toLowerCase() === "low"
+    ).length;
+
+    const isLight =
+        document.documentElement.dataset.theme === "light";
+
+    const textColor = isLight ? "#172033" : "#f8fafc";
+
+    const centerTextPlugin = {
+        id: "urlChartCenterText",
+
+        afterDraw(chart) {
+
+            const { ctx, chartArea } = chart;
+
+            if (!chartArea) return;
+
+            const centerX =
+                (chartArea.left + chartArea.right) / 2;
+
+            const centerY =
+                (chartArea.top + chartArea.bottom) / 2;
+
+            ctx.save();
+
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = textColor;
+
+            ctx.font = "800 30px Inter, sans-serif";
+            ctx.fillText(records.length, centerX, centerY - 10);
+
+            ctx.font = "600 11px Inter, sans-serif";
+            ctx.fillText("TOTAL URL SCANS", centerX, centerY + 17);
+
+            ctx.restore();
+        }
+    };
+
+    urlRiskChart = new Chart(canvas, {
+
+        type: "doughnut",
+
+        data: {
+            labels: ["High", "Medium", "Low"],
+
+            datasets: [{
+                data: [high, medium, low],
+
+                backgroundColor: [
+                    "#ef4444",
+                    "#f59e0b",
+                    "#22c55e"
+                ],
+
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "72%",
+
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        color: textColor
+                    }
+                }
+            }
+        },
+
+        plugins: [centerTextPlugin]
+    });
+}
+
+async function loadURLHistory() {
     if (!urlHistoryList) return;
 
-    const searchText = urlHistorySearch?.value.trim().toLowerCase() || "";
-    const selectedRisk = urlRiskFilter?.value.toLowerCase() || "all";
+    try {
+        const data = await api("/api/url-history");
+
+        const records = Array.isArray(data)
+            ? data
+            : (data.history || data.records || []);
+
+        allURLRecords = records;
+        // UPDATE URL HISTORY STATISTICS
+
+const total = records.length;
+
+const high = records.filter(record =>
+    String(record.risk || "").trim().toLowerCase() === "high"
+).length;
+
+const medium = records.filter(record =>
+    String(record.risk || "").trim().toLowerCase() === "medium"
+).length;
+
+const low = records.filter(record =>
+    String(record.risk || "").trim().toLowerCase() === "low"
+).length;
+
+document.getElementById("urlHistoryTotal").textContent = total;
+document.getElementById("urlHistoryHigh").textContent = high;
+document.getElementById("urlHistoryMedium").textContent = medium;
+document.getElementById("urlHistoryLow").textContent = low;
+        renderURLRiskChart(allURLRecords);
+        renderURLHistory(allURLRecords);
+
+    } catch (error) {
+        console.error("URL History Error:", error);
+        urlHistoryList.innerHTML =
+            "<p>Could not load URL history.</p>";
+    }
+}
+
+
+function renderURLHistory(records) {
+    if (!urlHistoryList) return;
+
+    let filteredRecords = [...(records || [])];
+
+    const searchText =
+        urlHistorySearch?.value.trim().toLowerCase() || "";
+
+    const selectedRisk =
+        urlRiskFilter?.value.toLowerCase() || "all";
+
     const sortOrder = urlSortOrder?.value || "newest";
 
-    let filteredRecords = [...records];
-
-    // Search by URL
+    // SEARCH
     if (searchText) {
         filteredRecords = filteredRecords.filter(record =>
-            String(record.url || "").toLowerCase().includes(searchText)
+            String(record.url || "")
+                .toLowerCase()
+                .includes(searchText)
         );
     }
 
-    // Filter by risk level
+    // RISK FILTER
     if (selectedRisk !== "all") {
         filteredRecords = filteredRecords.filter(record =>
             String(record.risk || "").toLowerCase() === selectedRisk
         );
     }
 
-    // Sort records
+    // SORT
     filteredRecords.sort((a, b) => {
-        const idA = Number(a.id) || 0;
-        const idB = Number(b.id) || 0;
+        if (sortOrder === "highest") {
+            return Number(b.score || 0) - Number(a.score || 0);
+        }
 
-        return sortOrder === "oldest" ? idA - idB : idB - idA;
+        if (sortOrder === "lowest") {
+            return Number(a.score || 0) - Number(b.score || 0);
+        }
+
+        const dateA = new Date(a.scanned_at || 0).getTime() || 0;
+        const dateB = new Date(b.scanned_at || 0).getTime() || 0;
+
+        return sortOrder === "oldest"
+            ? dateA - dateB
+            : dateB - dateA;
     });
 
+    // EMPTY STATE
     if (!filteredRecords.length) {
         urlHistoryList.innerHTML = records.length
             ? "<p>No URL scans match your filters.</p>"
@@ -1435,184 +1687,183 @@ function renderURLHistory(records) {
         return;
     }
 
-    urlHistoryList.innerHTML = filteredRecords.map(record => `
-       <div class="history-card url-history-card">
-    <div class="url-history-info">
-        <strong>${escapeHTML(record.risk || "Unknown")} Risk</strong>
-        <p>${escapeHTML(record.url || "")}</p>
-        <small>${escapeHTML(record.scanned_at || "")}</small>
-    </div>
+    // HISTORY CARDS
+    urlHistoryList.innerHTML = filteredRecords.map(record => {
+        const score = Math.min(
+            100,
+            Math.max(0, Number(record.score) || 0)
+        );
 
-    <div class="circular-score ${escapeHTML(
-        String(record.risk || "low").toLowerCase()
-    )}"
-    style="--score: ${Math.min(100, Math.max(0, Number(record.score) || 0))}">
-        <div class="circular-score-inner">
-            <strong>${Number(record.score) || 0}</strong>
-            <small>/100</small>
-        </div>
-    </div>
-</div>
-    `).join("");
-}
-function renderURLRiskChart(stats) {
-    if (typeof Chart === "undefined") return;
+        const risk = String(record.risk || "Unknown");
+        const riskClass = risk.toLowerCase();
 
-    const canvas = $("#urlRiskChart");
-    if (!canvas) return;
+        return `
+            <div class="history-card url-history-card">
 
-    if (urlRiskChart) urlRiskChart.destroy();
+                <div class="history-card-info">
+                    <strong>${escapeHTML(risk)} Risk</strong>
 
-    const high = Number(stats.high) || 0;
-    const medium = Number(stats.medium) || 0;
-    const low = Number(stats.low) || 0;
+                    <p>${escapeHTML(record.url || "URL unavailable")}</p>
 
-    urlRiskChart = new Chart(canvas, {
-        type: "doughnut",
-        data: {
-            labels: ["High", "Medium", "Low"],
-            datasets: [{
-                data: [high, medium, low],
-                backgroundColor: ["#ef4444", "#f59e0b", "#22c55e"],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: "bottom"
-                }
-            }
-        }
+                    <small>${escapeHTML(record.scanned_at || "")}</small>
+                </div>
+
+                <div class="history-card-score">
+
+                    <div class="circular-score ${escapeHTML(riskClass)}"
+                         style="--score: ${score}">
+
+                        <div class="circular-score-inner">
+                            <strong>${score}</strong>
+                            <small>/100</small>
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="history-details url-view-details"
+                        data-id="${Number(record.id)}">
+                        View Details
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+    }).join("");
+
+    // OPEN URL DETAILS IN SHARED MODAL
+    urlHistoryList.querySelectorAll(".url-view-details").forEach(button => {
+        button.addEventListener("click", () => {
+
+            const record = allURLRecords.find(
+                item => String(item.id) === button.dataset.id
+            );
+
+            if (!record || !modalDetails || !scanModal) return;
+
+            const score = Math.min(
+                100,
+                Math.max(0, Number(record.score) || 0)
+            );
+
+            const risk = String(record.risk || "Unknown");
+
+            const warnings = Array.isArray(record.warnings)
+                ? record.warnings
+                : record.warnings
+                    ? [record.warnings]
+                    : [];
+
+            modalDetails.innerHTML = `
+                <div class="url-scan-report">
+
+                    <h2>URL Security Report</h2>
+
+                    <h3>${escapeHTML(risk)} Risk</h3>
+
+                    <h2>${score}/100</h2>
+
+                    <h4>Scanned URL</h4>
+                    <p>${escapeHTML(record.url || "Not available.")}</p>
+
+                    <h4>Risk Level</h4>
+                    <p>${escapeHTML(risk)}</p>
+
+                    <h4>Security Warnings</h4>
+                    <ul>
+                        ${
+                            warnings.length
+                                ? warnings.map(warning =>
+                                    `<li>${escapeHTML(warning)}</li>`
+                                ).join("")
+                                : "<li>No warnings recorded.</li>"
+                        }
+                    </ul>
+
+                    <h4>Recommendation</h4>
+                    <p>${escapeHTML(record.advice || "Not available.")}</p>
+
+                    <h4>Scan Date</h4>
+                    <p>${escapeHTML(record.scanned_at || "Not available.")}</p>
+
+                    <small>
+                        Heuristic analysis only. This does not verify live
+                        malware or website reputation.
+                    </small>
+
+                </div>
+            `;
+
+            scanModal.style.display = "flex";
+        });
     });
 }
+// ======================================
+// URL HISTORY FILTER EVENTS
+// ======================================
 
-async function loadURLHistory() {
+urlHistorySearch?.addEventListener("input", () => {
+    renderURLHistory(allURLRecords);
+});
+
+urlRiskFilter?.addEventListener("change", () => {
+    renderURLHistory(allURLRecords);
+});
+
+urlSortOrder?.addEventListener("change", () => {
+    renderURLHistory(allURLRecords);
+});
+
+clearUrlFilters?.addEventListener("click", () => {
+    if (urlHistorySearch) urlHistorySearch.value = "";
+    if (urlRiskFilter) urlRiskFilter.value = "all";
+    if (urlSortOrder) urlSortOrder.value = "newest";
+
+    renderURLHistory(allURLRecords);
+});
+
+// ======================================
+// URL HISTORY BUTTON EVENTS
+// ======================================
+
+// REFRESH URL HISTORY
+refreshUrlHistory?.addEventListener("click", async () => {
+    await loadURLHistory();
+    showToast("URL history refreshed.");
+});
+
+// EXPORT URL HISTORY AS CSV
+exportUrlHistory?.addEventListener("click", () => {
+    window.location.href = "/api/export-url-history";
+});
+
+// DELETE URL HISTORY
+deleteUrlHistory?.addEventListener("click", async () => {
+
+    const confirmed = confirm(
+        "Are you sure you want to delete all URL scan history?"
+    );
+
+    if (!confirmed) return;
+
     try {
-        const data = await api("/api/url-history");
-        const stats = await api("/api/url-history-analytics");
-
-        const records = data.history || data.records || data;
-        allURLRecords = records;
-
-        if (!Array.isArray(records)) return;
-        // URL OVERALL AVERAGE RISK SCORE
-const urlScores = records.map(record =>
-    Math.min(100, Math.max(0, Number(record.score) || 0))
-);
-
-const averageURLScore = urlScores.length
-    ? Math.round(
-        urlScores.reduce((sum, score) => sum + score, 0) / urlScores.length
-    )
-    : 0;
-
-const urlScoreElement = $("#urlOverallScore");
-const urlMeter = $("#urlOverallMeter");
-const urlStatus = $("#urlOverallStatus");
-
-if (urlScoreElement) {
-    urlScoreElement.textContent = averageURLScore;
-}
-
-if (urlMeter) {
-    urlMeter.style.background = `
-        conic-gradient(
-            #22d3ee ${averageURLScore}%,
-            rgba(128, 128, 128, 0.18) ${averageURLScore}%
-        )
-    `;
-}
-
-if (urlStatus) {
-    urlStatus.textContent = records.length
-        ? `Average risk across ${records.length} URL scans`
-        : "No scans yet";
-}
-
-        const high = Number(stats.high) || 0;
-        const medium = Number(stats.medium) || 0;
-        const low = Number(stats.low) || 0;
-        renderURLRiskChart({ high, medium, low });
-
-        const values = {
-            "#urlHistoryTotal": records.length,
-            "#urlHistoryHigh": high,
-            "#urlHistoryMedium": medium,
-            "#urlHistoryLow": low
-        };
-
-        Object.entries(values).forEach(([selector, value]) => {
-            const element = $(selector);
-            if (element) element.textContent = value;
+        await api("/api/url-history", {
+            method: "DELETE"
         });
 
-        renderURLHistory(allURLRecords);
+        showToast("URL history deleted successfully.");
+
+        await refreshDashboard();
+        await loadRecentActivity();
+
     } catch (error) {
-        if (urlHistoryList) {
-            urlHistoryList.textContent = "Could not load URL history.";
-        }
+        console.error("URL History Delete Error:", error);
+        showToast("Could not delete URL history.");
     }
-}
-    // URL HISTORY FILTER EVENTS
+});
 
-if (urlHistorySearch) {
-    urlHistorySearch.addEventListener("input", () => {
-        renderURLHistory(allURLRecords);
-    });
-}
-
-if (urlRiskFilter) {
-    urlRiskFilter.addEventListener("change", () => {
-        renderURLHistory(allURLRecords);
-    });
-}
-
-if (urlSortOrder) {
-    urlSortOrder.addEventListener("change", () => {
-        renderURLHistory(allURLRecords);
-    });
-}
-
-if (clearUrlFilters) {
-    clearUrlFilters.addEventListener("click", () => {
-
-        urlHistorySearch.value = "";
-        urlRiskFilter.value = "all";
-        urlSortOrder.value = "newest";
-
-        renderURLHistory(allURLRecords);
-    });
-}
-    const refreshURLHistory = $("#refreshUrlHistory");
-    const deleteURLHistory = $("#deleteUrlHistory");
-    const exportURLHistory = $("#exportUrlHistory");
-
-    if (refreshURLHistory) {
-        refreshURLHistory.addEventListener("click", loadURLHistory);
-    }
-    if (exportURLHistory) {
-    exportURLHistory.addEventListener("click", () => {
-        window.location.href = "/api/export-url-history";
-        showToast("Downloading URL scan report...");
-    });
-}
-
-    if (deleteURLHistory) {
-        deleteURLHistory.addEventListener("click", async () => {
-            if (!confirm("Delete all URL scan history?")) return;
-
-            try {
-                await api("/api/url-history", { method: "DELETE" });
-                showToast("URL history deleted.");
-                await loadURLHistory();
-            } catch (error) {
-                showToast("Could not delete URL history.");
-            }
-        });
-    }
 
 
 // ======================================
@@ -1745,14 +1996,19 @@ async function loadRecentActivity() {
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
+    let aiRiskChart = null;
 
     const promptInput = document.getElementById("aiSecurityPrompt");
-    const responseInput = document.getElementById("aiSecurityResponse");
-    const testButton = document.getElementById("runAiSecurityTest");
-    const resultBox = document.getElementById("aiSecurityResult");
-    const historyBox = document.getElementById("aiSecurityHistory");
-    const refreshButton = document.getElementById("refreshAiHistory");
-    // AI HISTORY FILTER CONTROLS
+const responseInput = document.getElementById("aiSecurityResponse");
+const testButton = document.getElementById("runAiSecurityTest");
+const resultBox = document.getElementById("aiSecurityResult");
+const historyBox = document.getElementById("aiSecurityHistory");
+
+const refreshButton = document.getElementById("refreshAiHistory");
+const exportButton = document.getElementById("exportAiHistory");
+const deleteButton = document.getElementById("deleteAiHistory");
+
+// AI HISTORY FILTER CONTROLS
 const aiHistorySearch = document.getElementById("aiHistorySearch");
 const aiHistoryRiskFilter = document.getElementById("aiHistoryRiskFilter");
 const aiHistorySort = document.getElementById("aiHistorySort");
@@ -1773,25 +2029,28 @@ let allAISecurityHistory = [];
         })[char]);
     };
 
-    // RENDER AI SECURITY HISTORY
+// ======================================
+// RENDER AI SECURITY HISTORY
+// ======================================
+
 function renderAISecurityHistory() {
+    if (!historyBox) return;
+
     let filteredHistory = [...allAISecurityHistory];
 
-    // SEARCH FILTER
-    const searchText = (aiHistorySearch?.value || "").toLowerCase().trim();
+    // SEARCH
+    const searchText = (aiHistorySearch?.value || "")
+        .toLowerCase().trim();
 
     if (searchText) {
-        filteredHistory = filteredHistory.filter(item => {
-            const searchableText = [
+        filteredHistory = filteredHistory.filter(item =>
+            [
                 item.prompt,
                 item.response,
                 item.risk_level,
-                item.recommendation,
-                ...(Array.isArray(item.findings) ? item.findings : [])
-            ].join(" ").toLowerCase();
-
-            return searchableText.includes(searchText);
-        });
+                item.id
+            ].join(" ").toLowerCase().includes(searchText)
+        );
     }
 
     // RISK FILTER
@@ -1799,195 +2058,386 @@ function renderAISecurityHistory() {
 
     if (selectedRisk !== "all") {
         filteredHistory = filteredHistory.filter(item =>
-            String(item.risk_level || "").toLowerCase() === selectedRisk.toLowerCase()
+            String(item.risk_level || "").toLowerCase() ===
+            selectedRisk.toLowerCase()
         );
     }
 
-    // SORTING
-    if (aiHistorySort?.value === "oldest") {
-        filteredHistory.reverse();
-    }
+    // SORT
+    const sortOrder = aiHistorySort?.value || "newest";
 
+    filteredHistory.sort((a, b) => {
+        if (sortOrder === "highest") {
+            return Number(b.risk_score || 0) -
+                   Number(a.risk_score || 0);
+        }
+
+        if (sortOrder === "lowest") {
+            return Number(a.risk_score || 0) -
+                   Number(b.risk_score || 0);
+        }
+
+        return sortOrder === "oldest"
+            ? Number(a.id || 0) - Number(b.id || 0)
+            : Number(b.id || 0) - Number(a.id || 0);
+    });
+
+    // EMPTY STATE
     if (!filteredHistory.length) {
-        historyBox.innerHTML = "<p>No matching AI security tests found.</p>";
+        historyBox.innerHTML =
+            "<p>No matching AI security tests found.</p>";
         return;
     }
 
-    // Existing history card design
-    historyBox.innerHTML = filteredHistory.map(item => `
-    <div class="history-item url-history-card">
-        <div class="url-history-info">
-            <div class="history-item-header">
-                <strong>Test #${Number(item.id)}</strong>
-                <span class="risk-badge ${escapeHTML(
-                    String(item.risk_level || "unknown").toLowerCase()
-                )}">
-                    ${escapeHTML(item.risk_level || "Unknown")}
+    // MESSAGE HISTORY STYLE CARDS
+    historyBox.innerHTML = filteredHistory.map(item => {
+        const score = Math.min(
+            100,
+            Math.max(0, Number(item.risk_score) || 0)
+        );
+
+        const risk = String(item.risk_level || "Unknown");
+        const riskClass = risk.toLowerCase();
+        const preview = item.prompt || item.response || "AI security test";
+
+        return `
+            <div class="history-card ai-history-card">
+
+                <div class="history-card-info">
+
+                    <strong>${escapeHTML(risk)} Risk</strong>
+
+                    <p>${escapeHTML(String(preview).slice(0, 120))}</p>
+
+                    <small>${escapeHTML(item.tested_at || "")}</small>
+
+                </div>
+
+                <div class="history-card-score">
+
+                    <div class="circular-score ${escapeHTML(riskClass)}"
+                         style="--score: ${score}">
+
+                        <div class="circular-score-inner">
+                            <strong>${score}</strong>
+                            <small>/100</small>
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="history-details ai-view-details"
+                        data-id="${Number(item.id)}">
+                        View Details
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+    }).join("");
+
+    // VIEW DETAILS
+    historyBox.querySelectorAll(".ai-view-details").forEach(button => {
+        button.addEventListener("click", () => {
+            const item = allAISecurityHistory.find(
+                record => String(record.id) === button.dataset.id
+            );
+
+            if (item) {
+                showAISecurityDetails(item);
+            }
+        });
+    });
+}
+
+// ======================================
+// SHOW COMPLETE AI SECURITY REPORT
+// ======================================
+
+function showAISecurityDetails(item) {
+
+    const modal = document.getElementById("scanModal");
+    const modalContent = document.getElementById("modalScanDetails");
+
+    if (!modal || !modalContent) {
+        console.error("AI Security details modal not found.");
+        return;
+    }
+
+    const score = Math.min(
+        100,
+        Math.max(0, Number(item.risk_score) || 0)
+    );
+
+    const risk = String(item.risk_level || "Unknown");
+
+    const findings = Array.isArray(item.findings)
+        ? item.findings
+        : [];
+
+    modalContent.innerHTML = `
+        <div class="ai-audit-report">
+
+            <h2>AI Security Audit Report</h2>
+
+            <h3>Test #${Number(item.id)}</h3>
+
+            <h2>${score}/100</h2>
+
+            <p>
+                <strong>Risk Level:</strong>
+                <span class="risk-badge ${escapeHTML(risk.toLowerCase())}">
+                    ${escapeHTML(risk)}
                 </span>
-            </div>
-
-            <p><strong>AI Response:</strong>
-                ${escapeHTML(String(item.response || "").slice(0, 180))}
-                ${String(item.response || "").length > 180 ? "..." : ""}
             </p>
 
-            ${item.prompt ? `
-                <p><strong>Original Prompt:</strong>
-                    ${escapeHTML(String(item.prompt).slice(0, 150))}
-                </p>
-            ` : ""}
+            <h4>Original Prompt</h4>
+            <p>${escapeHTML(item.prompt || "Not available.")}</p>
 
-            <p><strong>Findings:</strong>
-                ${escapeHTML(
-                    (Array.isArray(item.findings) ? item.findings : []).join(", ")
-                )}
-            </p>
+            <h4>Complete AI Response</h4>
+            <p>${escapeHTML(item.response || "Not available.")}</p>
 
-            <p><strong>Recommendation:</strong>
-                ${escapeHTML(item.recommendation || "Not available.")}
-            </p>
+            <h4>Security Findings</h4>
+            <ul>
+                ${
+                    findings.length
+                        ? findings.map(finding =>
+                            `<li>${escapeHTML(finding)}</li>`
+                        ).join("")
+                        : "<li>No findings recorded.</li>"
+                }
+            </ul>
 
-            <small>${escapeHTML(item.tested_at || "")}</small>
+            <h4>Recommendation</h4>
+            <p>${escapeHTML(item.recommendation || "Not available.")}</p>
+
+            <h4>Explanation</h4>
+            <p>${escapeHTML(item.explanation || "Not available.")}</p>
+
+            <h4>Test Date</h4>
+            <p>${escapeHTML(item.tested_at || "Not available.")}</p>
+
         </div>
+    `;
 
-        <div class="circular-score ${escapeHTML(
-            String(item.risk_level || "low").toLowerCase()
-        )}"
-        style="--score: ${Math.min(100, Math.max(0, Number(item.risk_score) || 0))}">
-            <div class="circular-score-inner">
-                <strong>${Number(item.risk_score) || 0}</strong>
-                <small>/100</small>
-            </div>
-        </div>
-    </div>
-`).join("");
+    modal.style.display = "flex";
 }
     // ======================================
     // LOAD AI SECURITY HISTORY
     // ======================================
-    function renderAIRiskChart(history) {
+   
+function renderAIRiskChart(history) {
     if (typeof Chart === "undefined") return;
 
     const canvas = document.getElementById("aiRiskChart");
     if (!canvas) return;
 
-    if (aiRiskChart) aiRiskChart.destroy();
+    if (aiRiskChart) {
+        aiRiskChart.destroy();
+        aiRiskChart = null;
+    }
 
-    const high = history.filter(item =>
-        ["high", "critical"].includes(
-            String(item.risk_level || "").trim().toLowerCase()
-        )
-    ).length;
+    const records = Array.isArray(history) ? history : [];
 
-    const medium = history.filter(item =>
-        String(item.risk_level || "").trim().toLowerCase() === "medium"
-    ).length;
+    const counts = {
+        High: 0,
+        Medium: 0,
+        Low: 0
+    };
 
-    const low = history.filter(item =>
-        String(item.risk_level || "").trim().toLowerCase() === "low"
-    ).length;
+    records.forEach(item => {
+        const risk = String(item.risk_level || "")
+            .trim()
+            .toLowerCase();
+
+        if (risk === "high" || risk === "critical") {
+            counts.High++;
+        } else if (risk === "medium") {
+            counts.Medium++;
+        } else if (risk === "low") {
+            counts.Low++;
+        }
+    });
+
+    const totalScans = records.length;
+
+    // Theme-aware center text
+    const isLight =
+        document.documentElement.dataset.theme === "light";
+
+    const centerTextColor = isLight ? "#172033" : "#f8fafc";
+    const centerLabelColor = isLight ? "#64748b" : "#aab4cc";
+
+    // Center text plugin
+    const centerTextPlugin = {
+        id: "aiRiskChartCenterText",
+
+        afterDraw(chart) {
+            const { ctx, chartArea } = chart;
+
+            if (!chartArea) return;
+
+            const centerX =
+                (chartArea.left + chartArea.right) / 2;
+
+            const centerY =
+                (chartArea.top + chartArea.bottom) / 2;
+
+            ctx.save();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            // Total AI tests
+            ctx.font = "800 30px Inter, sans-serif";
+            ctx.fillStyle = centerTextColor;
+
+            ctx.fillText(
+                totalScans.toLocaleString(),
+                centerX,
+                centerY - 10
+            );
+
+            // Center label
+            ctx.font = "600 11px Inter, sans-serif";
+            ctx.fillStyle = centerLabelColor;
+
+            ctx.fillText(
+                "TOTAL SCANS",
+                centerX,
+                centerY + 17
+            );
+
+            ctx.restore();
+        }
+    };
 
     aiRiskChart = new Chart(canvas, {
         type: "doughnut",
+
         data: {
             labels: ["High", "Medium", "Low"],
+
             datasets: [{
-                data: [high, medium, low],
-                backgroundColor: ["#ef4444", "#f59e0b", "#22c55e"],
-                borderWidth: 0
+                data: [
+                    counts.High,
+                    counts.Medium,
+                    counts.Low
+                ],
+
+                backgroundColor: [
+                    "#ef4444",
+                    "#f59e0b",
+                    "#22c55e"
+                ],
+
+                borderColor: [
+                    "#ef4444",
+                    "#f59e0b",
+                    "#22c55e"
+                ],
+
+                borderWidth: 2,
+                hoverOffset: 8
             }]
         },
+
         options: {
             responsive: true,
             maintainAspectRatio: false,
+
+            cutout: "65%",
+
             plugins: {
                 legend: {
+                    display: true,
                     position: "bottom"
+                },
+
+                tooltip: {
+                    enabled: true
                 }
             }
-        }
+        },
+
+        plugins: [centerTextPlugin]
     });
 }
-    async function loadAISecurityHistory() {
 
-        try {
-            const response = await fetch("/api/ai-security-history");
-            const data = await response.json();
 
-            if (!response.ok || !data.success) {
-                throw new Error("Unable to load test history.");
-            }
+// ======================================
+// LOAD AI SECURITY HISTORY
+// ======================================
 
-            const history = data.history || [];
-            // AI OVERALL AVERAGE RISK SCORE
-const aiScores = history.map(item =>
-    Math.min(100, Math.max(0, Number(item.risk_score) || 0))
-);
+async function loadAISecurityHistory() {
+    if (!historyBox) return;
 
-const averageAIScore = aiScores.length
-    ? Math.round(
-        aiScores.reduce((sum, score) => sum + score, 0) / aiScores.length
-    )
-    : 0;
+    try {
+        historyBox.innerHTML = "<p>Loading AI security history...</p>";
 
-const aiScoreElement = document.getElementById("aiOverallScore");
-const aiMeter = document.getElementById("aiOverallMeter");
-const aiStatus = document.getElementById("aiOverallStatus");
+        const data = await fetch("/api/ai-security-history");
 
-if (aiScoreElement) {
-    aiScoreElement.textContent = averageAIScore;
-}
-
-if (aiMeter) {
-    aiMeter.style.background = `
-        conic-gradient(
-            #a78bfa ${averageAIScore}%,
-            rgba(128, 128, 128, 0.18) ${averageAIScore}%
-        )
-    `;
-}
-
-if (aiStatus) {
-    aiStatus.textContent = history.length
-        ? `Average risk across ${history.length} AI tests`
-        : "No tests yet";
-}
-
-            const aiStats = {
-                aiSecurityTotal: history.length,
-
-                aiSecurityHigh: history.filter(item =>
-                    ["High", "Critical"].includes(item.risk_level)
-                ).length,
-
-                aiSecurityMedium: history.filter(item =>
-                    item.risk_level === "Medium"
-                ).length,
-
-                aiSecurityLow: history.filter(item =>
-                    item.risk_level === "Low"
-                ).length
-            };
-
-            Object.entries(aiStats).forEach(([id, value]) => {
-                const element = document.getElementById(id);
-
-                if (element) {
-                    element.textContent = value;
-                }
-            });
-
-            allAISecurityHistory = history;
-            renderAIRiskChart(history);
-renderAISecurityHistory();
-
-        } catch (error) {
-            historyBox.innerHTML =
-                "<p>Could not load AI security history.</p>";
-
-            console.error("AI Security History Error:", error);
+        if (!data.ok) {
+            throw new Error("Unable to fetch AI security history.");
         }
+
+        const result = await data.json();
+
+        // Support different API response formats
+        const records = Array.isArray(result)
+            ? result
+            : (result.history || result.records || []);
+
+        allAISecurityHistory = records;
+
+        // Calculate statistics
+        const total = records.length;
+
+        const high = records.filter(item =>
+            ["high", "critical"].includes(
+                String(item.risk_level || "").trim().toLowerCase()
+            )
+        ).length;
+
+        const medium = records.filter(item =>
+            String(item.risk_level || "").trim().toLowerCase() === "medium"
+        ).length;
+
+        const low = records.filter(item =>
+            String(item.risk_level || "").trim().toLowerCase() === "low"
+        ).length;
+
+        // Update dashboard statistics
+        const stats = {
+            aiSecurityTotal: total,
+            aiSecurityHigh: high,
+            aiSecurityMedium: medium,
+            aiSecurityLow: low
+        };
+
+        Object.entries(stats).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+
+            if (element) {
+                element.textContent = value;
+            }
+        });
+
+        // Update chart and history records
+        renderAIRiskChart(records);
+        renderAISecurityHistory();
+
+        console.log("AI Security History loaded:", records);
+
+    } catch (error) {
+        console.error("AI Security History Error:", error);
+
+        historyBox.innerHTML =
+            "<p>Could not load AI security history. Please refresh.</p>";
     }
+}
+
 
     // ======================================
     // DISPLAY AI SECURITY RESULT
@@ -2149,6 +2599,42 @@ renderAISecurityHistory();
     // ======================================
 
     testButton.addEventListener("click", runAISecurityTest);
+    // EXPORT AI SECURITY HISTORY
+if (exportButton) {
+    exportButton.addEventListener("click", () => {
+        window.location.href = "/api/export-ai-security-history";
+    });
+}
+
+
+// DELETE AI SECURITY HISTORY
+if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+
+        const confirmed = confirm(
+            "Are you sure you want to delete all AI Security history?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const data = await api("/api/ai-security-history", {
+                method: "DELETE"
+            });
+
+            if (data.success) {
+                alert("AI Security history deleted successfully!");
+                await loadAISecurityHistory();
+            } else {
+                alert(data.message || "Unable to delete history.");
+            }
+
+        } catch (error) {
+            console.error("Delete AI History Error:", error);
+            alert("Something went wrong while deleting history.");
+        }
+    });
+}
 
     if (refreshButton) {
         refreshButton.addEventListener("click", loadAISecurityHistory);
@@ -2385,3 +2871,4 @@ case "tips":
     terminalInput.setAttribute("list", "terminalCommands");
 
 });
+loadAISecurityHistory();

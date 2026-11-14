@@ -8,6 +8,7 @@ import sqlite3
 from datetime import datetime, timedelta
 from io import StringIO
 from urllib.parse import parse_qs, urlparse
+import io
 
 import requests
 from dotenv import load_dotenv
@@ -1472,6 +1473,83 @@ def get_ai_security_history():
             "total": len(history),
             "history": history
         })
+
+    finally:
+        conn.close()
+
+# ==========================================
+# EXPORT AI SECURITY HISTORY
+# ==========================================
+
+@app.route("/api/export-ai-security-history", methods=["GET"])
+def export_ai_security_history():
+    conn = get_db()
+
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT *
+            FROM ai_security_history
+            ORDER BY id DESC
+        """)
+
+        rows = cursor.fetchall()
+
+        output = io.StringIO()
+
+        if rows:
+            fieldnames = rows[0].keys()
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+
+            writer.writeheader()
+
+            for row in rows:
+                writer.writerow(dict(row))
+
+        return app.response_class(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition":
+                "attachment; filename=ai_security_history.csv"
+            }
+        )
+
+    finally:
+        conn.close()
+
+
+# ==========================================
+# DELETE AI SECURITY HISTORY
+# ==========================================
+
+@app.route("/api/ai-security-history", methods=["DELETE"])
+def delete_ai_security_history():
+    conn = get_db()
+
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM ai_security_history")
+
+        deleted_count = cursor.rowcount
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "AI Security history deleted successfully.",
+            "deleted": deleted_count
+        })
+
+    except Exception as e:
+        conn.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 
     finally:
         conn.close()

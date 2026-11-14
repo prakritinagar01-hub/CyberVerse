@@ -516,6 +516,16 @@
 
 
             <!-- LEARNING SECTION  -->
+             <section class="section-heading academy-main-heading">
+    <div>
+        <p class="eyebrow">LEARN • PRACTICE • IMPROVE</p>
+        <h2>Cyber <span>Academy</span></h2>
+        <p class="section-note">
+            Test your knowledge and practice cybersecurity commands.
+        </p>
+    </div>
+    <span class="tag">LEARNING CENTER</span>
+</section>
             <section class="bottom-grid">
 
                 <!-- CYBER ACADEMY -->
@@ -526,7 +536,7 @@
     <div class="section-heading compact">
         <div>
             <p class="eyebrow">KNOWLEDGE CHECK</p>
-            <h2>Cyber <span>Academy</span></h2>
+            <h2>Cyber <span>Quiz</span></h2>
         </div>
 
         <span class="tag">QUIZ MODE</span>
@@ -569,7 +579,7 @@
     <div class="terminal-header">
         <div>
             <p class="eyebrow">HANDS-ON COMMAND LINE</p>
-            <h2>Cyber <span>Terminal</span></h2>
+            <h2>Terminal <span>Simulator</span></h2>
         </div>
 
         <span class="terminal-status">
@@ -860,65 +870,6 @@
                 </div>
 
 
-                <!-- ANALYTICS -->
-                <section class="analytics-section">
-
-                    <div class="dashboard-heading">
-
-                        <div>
-                            <p class="eyebrow">DATA INSIGHTS</p>
-                            <h2>Scan <span>Analytics</span></h2>
-                            <p>Visual insights from your message scan history.</p>
-                        </div>
-
-                    </div>
-
-
-                    <!-- AI METRICS -->
-                    <div class="ai-metrics-grid">
-
-                        <div class="analytics-card">
-                            <p>Total AI Scans</p>
-                            <h2 id="aiScanCount">0</h2>
-                            <small>Scans with AI analysis</small>
-                        </div>
-
-                        <div class="analytics-card">
-                            <p>Average Scanner Consistency</p>
-                            <h2 id="avgConfidence">0%</h2>
-                            <small>
-                                Average agreement between AI and rule-based scanner
-                            </small>
-                        </div>
-
-                    </div>
-
-
-                    <h3 class="section-subtitle">AI Risk Insights</h3>
-
-                    <div class="ai-metrics-grid">
-
-                        <div class="analytics-card">
-                            <p>High Risk Scans</p>
-                            <h2 id="highRiskCount">0</h2>
-                            <small>Potentially dangerous messages</small>
-                        </div>
-
-                        <div class="analytics-card">
-                            <p>Medium Risk Scans</p>
-                            <h2 id="mediumRiskCount">0</h2>
-                            <small>Messages needing caution</small>
-                        </div>
-
-                        <div class="analytics-card">
-                            <p>Low Risk Scans</p>
-                            <h2 id="lowRiskCount">0</h2>
-                            <small>Lower-risk messages</small>
-                        </div>
-
-                    </div>
-
-
                     <!-- CHARTS -->
                     <div class="analytics-grid">
 
@@ -1104,10 +1055,20 @@
         </div>
 
         <div class="history-actions">
-            <button class="button secondary" id="refreshAiHistory" type="button">
-                ↻ Refresh
-            </button>
-        </div>
+
+    <button class="button secondary" id="refreshAiHistory" type="button">
+        ↻ Refresh
+    </button>
+
+    <button class="button secondary" id="exportAiHistory" type="button">
+        ↓ Export CSV
+    </button>
+
+    <button class="button secondary" id="deleteAiHistory" type="button">
+        Delete History
+    </button>
+
+</div>
     </div>
 
     <!-- AI HISTORY STATISTICS -->
