@@ -8,10 +8,10 @@
 ========================================= */
 
 :root {
-    --bg: #080b18;
-    --panel: #10172c;
-    --panel-light: #151f3b;
-    --panel-hover: #192544;
+    --bg: #08090d;
+    --panel: #101217;
+    --panel-light: #171a21;
+    --panel-hover: #20242d;
 
     --cyan: #22d3ee;
     --purple: #a78bfa;
@@ -20,15 +20,40 @@
     --orange: #fbbf24;
     --red: #fb4b65;
 
-    --text: #f1f5ff;
-    --muted: #929dbb;
-    --line: rgba(139, 153, 255, 0.17);
+    --text: #f1f5f9;
+    --muted: #9299a8;
+    --line: rgba(148, 163, 184, 0.13);
 
     --sidebar-width: 255px;
     --radius: 18px;
 
-    --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
-    --glow: 0 0 25px rgba(34, 211, 238, 0.12);
+    --shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+    --glow: 0 0 25px rgba(34, 211, 238, 0.10);
+}
+
+/* =========================================
+   CYBERVERSE — GLOBAL LIGHT THEME TOKENS
+========================================= */
+
+:root[data-theme="light"] {
+    --bg: #f4f6fa;
+    --panel: #ffffff;
+    --panel-light: #f8fafc;
+    --panel-hover: #eef2f7;
+
+    --text: #172033;
+    --muted: #64748b;
+    --line: #e2e8f0;
+
+    --cyan: #087e9b;
+    --purple: #7054c7;
+    --pink: #db5475;
+    --green: #16845d;
+    --orange: #b7791f;
+    --red: #dc3545;
+
+    --shadow: 0 8px 25px rgba(15, 23, 42, 0.06);
+    --glow: none;
 }
 
 /* =========================================
@@ -126,10 +151,8 @@ body {
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
     color: var(--text);
-    background:
-        radial-gradient(ellipse at 10% 5%, rgba(124, 58, 237, .15), transparent 38%),
-        radial-gradient(ellipse at 90% 30%, rgba(6, 182, 212, .09), transparent 35%),
-        var(--bg);
+    background: var(--bg);
+        
     overflow-x: hidden;
 }
 
@@ -869,6 +892,28 @@ a {
     color: rgba(255,255,255,.09);
     font-size: 22px;
 }
+/* =========================================
+   STAT CARDS — LIGHT THEME
+========================================= */
+
+:root[data-theme="light"] .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+}
+
+:root[data-theme="light"] .stat-card:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="light"] .stat-card small {
+    color: var(--muted);
+}
+
+:root[data-theme="light"] .stat-symbol {
+    color: rgba(23, 32, 51, 0.07);
+}
 
 /* =========================================
    SECURITY LABS
@@ -988,6 +1033,41 @@ input:focus {
     color: #7f8ba9;
     font-size: 9px;
     line-height: 1.6;
+}
+/* =========================================
+   LAB CARDS — LIGHT THEME
+========================================= */
+
+:root[data-theme="light"] .lab-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+}
+
+:root[data-theme="light"] .lab-card:hover {
+    border-color: var(--purple);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+:root[data-theme="light"] .lab-card label {
+    color: var(--text);
+}
+
+:root[data-theme="light"] .lab-card textarea,
+:root[data-theme="light"] .lab-card input {
+    color: var(--text);
+    background: #f8fafc;
+    border-color: var(--line);
+}
+
+:root[data-theme="light"] .lab-card textarea::placeholder,
+:root[data-theme="light"] .lab-card input::placeholder {
+    color: #94a3b8;
+}
+
+:root[data-theme="light"] .lab-card .field-meta,
+:root[data-theme="light"] .lab-card .notice {
+    color: var(--muted);
 }
 
 /* RESULT BOX */
@@ -4966,3 +5046,511 @@ html[data-theme="light"] .url-history-card .history-details:hover {
 
 
 
+
+/* =========================================
+   CYBERVERSE — DEEP BLACK DARK MODE
+========================================= */
+
+:root:not([data-theme="light"]) .hero {
+    background:
+        radial-gradient(
+            circle at 80% 50%,
+            rgba(34, 211, 238, 0.07),
+            transparent 32%
+        ),
+        linear-gradient(135deg, #15171d, #090a0e 75%);
+}
+
+:root:not([data-theme="light"]) .lab-card {
+    background: linear-gradient(145deg, #15171d, #0d0f14);
+}
+
+:root:not([data-theme="light"]) .terminal-head {
+    background: #151820;
+}
+
+:root:not([data-theme="light"]) .scan-modal-content {
+    background: linear-gradient(145deg, #171a22, #090a0e);
+}
+/* =========================================
+   CYBERVERSE — BLACKISH DARK MODE
+========================================= */
+
+html[data-theme="dark"] {
+    --bg: #0b0d12;
+    --background: #0b0d12;
+    --panel: #151922;
+    --card-bg: #151922;
+    --text: #f1f5f9;
+    --text-secondary: #a1a1aa;
+    --border: #292e38;
+    --border-color: #292e38;
+}
+
+/* Main background */
+html[data-theme="dark"] body {
+    background: #0b0d12;
+}
+
+/* Main cards and panels */
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .lab-card,
+html[data-theme="dark"] .analytics-card,
+html[data-theme="dark"] .threat-card,
+html[data-theme="dark"] .overview-stat-card,
+html[data-theme="dark"] .overview-quick-access,
+html[data-theme="dark"] .overview-recent-activity,
+html[data-theme="dark"] .history-card,
+html[data-theme="dark"] .ai-history-container {
+    background: #151922;
+    border-color: #292e38;
+}
+
+/* Academy */
+html[data-theme="dark"] .academy-card {
+    background: linear-gradient(145deg, #151922, #101319);
+    border-color: #303541;
+}
+
+/* AI Security Lab */
+html[data-theme="dark"] #ai-security-lab .analytics-card,
+html[data-theme="dark"] #ai-security-lab .threat-card {
+    background: #151922;
+    border-color: #303541;
+}
+
+html[data-theme="dark"] #ai-security-lab .history-item {
+    background: #101319;
+    border-color: #303541;
+}
+
+/* Terminal */
+html[data-theme="dark"] .cyber-terminal {
+    background: linear-gradient(145deg, #151922, #0e1117);
+    border-color: #303541;
+}
+
+/* Keep terminal inner window dark */
+html[data-theme="dark"] .terminal-window {
+    background: #080a0e;
+}
+
+html[data-theme="dark"] .terminal-topbar {
+    background: #141820;
+}
+
+/* Inputs */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+    background-color: #101319;
+    border-color: #303541;
+}
+
+/* History details */
+html[data-theme="dark"] .url-history-details,
+html[data-theme="dark"] .ai-history-details {
+    background: #101319;
+}
+
+/* Subtle borders */
+html[data-theme="dark"] .overview-activity-item {
+    background: #11151c;
+    border-color: #292e38;
+}
+
+/* =========================================
+   PREMIUM OVERVIEW DASHBOARD
+========================================= */
+
+.overview-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.overview-dashboard .dashboard-heading {
+    margin-bottom: 4px;
+}
+
+.overview-dashboard .dashboard-heading h2 {
+    font-size: clamp(25px, 3vw, 32px);
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.overview-dashboard .dashboard-heading h2 span {
+    color: var(--cyan);
+}
+
+.overview-dashboard .dashboard-heading p:not(.eyebrow) {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+.overview-dashboard .tag {
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 9px 13px;
+    border: 1px solid var(--line);
+    border-radius: 30px;
+}
+
+/* =========================================
+   OVERVIEW STATISTIC CARDS
+========================================= */
+
+.overview-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.overview-stat-card {
+    position: relative;
+    overflow: hidden;
+    padding: 24px;
+    min-height: 165px;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    transition: transform .25s ease, border-color .25s ease,
+                box-shadow .25s ease;
+}
+
+.overview-stat-card::after {
+    content: "";
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    right: -45px;
+    top: -45px;
+    border-radius: 50%;
+    background: var(--cyan);
+    opacity: .055;
+    filter: blur(5px);
+    pointer-events: none;
+}
+
+.overview-stat-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(34, 211, 238, .35);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
+}
+
+.overview-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 43px;
+    height: 43px;
+    margin-bottom: 17px;
+    border-radius: 13px;
+    background: rgba(34, 211, 238, .09);
+    font-size: 21px;
+}
+
+.overview-stat-card p {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 9px;
+}
+
+.overview-stat-card strong {
+    display: block;
+    font-size: 29px;
+    font-weight: 800;
+    letter-spacing: -.8px;
+    color: var(--text);
+}
+
+.overview-stat-card small {
+    display: block;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* =========================================
+   PREMIUM QUICK ACCESS
+========================================= */
+
+.overview-quick-access {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    padding: 27px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+}
+
+.overview-quick-access h3 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 7px 0;
+    color: var(--text);
+}
+
+.overview-quick-access p:not(.eyebrow) {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.overview-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 11px;
+}
+
+.overview-actions .button {
+    min-height: 42px;
+    padding: 0 17px;
+    font-size: 12px;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.overview-actions .button:hover {
+    transform: translateY(-3px);
+}
+
+/* =========================================
+   PREMIUM RECENT SECURITY ACTIVITY
+========================================= */
+
+.overview-recent-activity {
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+}
+
+.overview-recent-activity .activity-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+.overview-recent-activity .activity-heading h3 {
+    font-size: 19px;
+    font-weight: 800;
+    margin: 7px 0;
+    color: var(--text);
+}
+
+.overview-recent-activity .activity-heading p:not(.eyebrow) {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+#overviewRecentActivity {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#overviewRecentActivity .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: var(--panel-light);
+    transition: border-color .2s ease, transform .2s ease;
+}
+
+#overviewRecentActivity .activity-item:hover {
+    transform: translateX(4px);
+    border-color: rgba(34, 211, 238, .3);
+}
+
+#overviewRecentActivity .activity-icon {
+    width: 39px;
+    height: 39px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 11px;
+    background: rgba(34, 211, 238, .09);
+    font-size: 18px;
+}
+
+#overviewRecentActivity .activity-item strong {
+    color: var(--text);
+    font-size: 12px;
+}
+
+#overviewRecentActivity .activity-item p {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+/* =========================================
+   OVERVIEW RESPONSIVE DESIGN
+========================================= */
+
+@media (max-width: 1100px) {
+    .overview-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .overview-quick-access {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .overview-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+    .overview-stats {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    .overview-stat-card {
+        min-height: auto;
+        padding: 20px;
+    }
+
+    .overview-quick-access,
+    .overview-recent-activity {
+        padding: 19px;
+    }
+
+    .overview-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .overview-actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .overview-recent-activity .activity-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+/* =========================================
+   OVERVIEW ENTRANCE ANIMATIONS
+========================================= */
+
+@keyframes overviewFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.overview-dashboard > .dashboard-heading {
+    animation: overviewFadeUp .5s ease both;
+}
+
+.overview-stat-card {
+    animation: overviewFadeUp .55s ease both;
+}
+
+.overview-stat-card:nth-child(2) {
+    animation-delay: .08s;
+}
+
+.overview-stat-card:nth-child(3) {
+    animation-delay: .16s;
+}
+
+.overview-stat-card:nth-child(4) {
+    animation-delay: .24s;
+}
+
+.overview-quick-access,
+.overview-recent-activity {
+    animation: overviewFadeUp .6s ease both;
+    animation-delay: .2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .overview-dashboard *,
+    .overview-dashboard *::before,
+    .overview-dashboard *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* =========================================
+   STAT CARD ACCENT DETAILS
+========================================= */
+
+.overview-stat-card:nth-child(1) {
+    border-top: 2px solid #22d3ee;
+}
+
+.overview-stat-card:nth-child(2) {
+    border-top: 2px solid #a78bfa;
+}
+
+.overview-stat-card:nth-child(3) {
+    border-top: 2px solid #34d399;
+}
+
+.overview-stat-card:nth-child(4) {
+    border-top: 2px solid #fbbf24;
+}
+
+.overview-stat-card:nth-child(1) .overview-stat-icon {
+    background: rgba(34, 211, 238, .12);
+}
+
+.overview-stat-card:nth-child(2) .overview-stat-icon {
+    background: rgba(167, 139, 250, .12);
+}
+
+.overview-stat-card:nth-child(3) .overview-stat-icon {
+    background: rgba(52, 211, 153, .12);
+}
+
+.overview-stat-card:nth-child(4) .overview-stat-icon {
+    background: rgba(251, 191, 36, .12);
+}
+
+/* =========================================
+   QUICK ACCESS BUTTON POLISH
+========================================= */
+
+.overview-actions .button.primary {
+    box-shadow: 0 5px 18px rgba(34, 211, 238, .12);
+}
+
+.overview-actions .button.primary:hover {
+    box-shadow: 0 8px 25px rgba(34, 211, 238, .22);
+}
+
+.overview-actions .button.secondary {
+    border: 1px solid var(--line);
+    background: var(--panel-light);
+    color: var(--text);
+}
+
+.overview-actions .button.secondary:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: var(--panel-hover);
+}
