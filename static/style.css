@@ -5554,3 +5554,57 @@ html[data-theme="dark"] .overview-activity-item {
     color: var(--cyan);
     background: var(--panel-hover);
 }
+/* =========================================
+   SCAN DETAILS MODAL — LIGHT MODE
+========================================= */
+
+html[data-theme="light"] .scan-modal {
+    background: rgba(226, 232, 240, 0.75);
+}
+
+html[data-theme="light"] .scan-modal-content {
+    background: linear-gradient(145deg, #ffffff, #f1f5ff);
+    color: #172554;
+    border: 1px solid #bfdbfe;
+    box-shadow: 0 25px 70px rgba(30, 64, 175, 0.15);
+}
+
+html[data-theme="light"] .scan-modal-content h2 {
+    color: #172554;
+}
+
+html[data-theme="light"] .scan-modal-content h2 span {
+    color: #2563eb;
+}
+
+html[data-theme="light"] .scan-modal-content .eyebrow {
+    color: #2563eb;
+}
+
+html[data-theme="light"] .modal-close {
+    color: #334155;
+    background: #eff6ff;
+    border-color: #cbd5e1;
+}
+
+html[data-theme="light"] .modal-close:hover {
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+/* Modal details text */
+html[data-theme="light"] #modalScanDetails {
+    color: #334155;
+}
+
+html[data-theme="light"] #modalScanDetails h3,
+html[data-theme="light"] #modalScanDetails h4,
+html[data-theme="light"] #modalScanDetails strong {
+    color: #172554;
+}
+
+html[data-theme="light"] #modalScanDetails p,
+html[data-theme="light"] #modalScanDetails li,
+html[data-theme="light"] #modalScanDetails span {
+    color: #475569;
+}

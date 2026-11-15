@@ -1406,7 +1406,8 @@ function renderCharts(records) {
                 <small>${escapeHTML(record.scanned_at || "")}</small>
             `;
 
-            scanModal.style.display = "flex";
+            scanModal.classList.add("active");
+
 
         } catch (error) {
             showToast("Could not load scan details.");
@@ -1415,13 +1416,13 @@ function renderCharts(records) {
 
     if (closeModal && scanModal) {
         closeModal.addEventListener("click", () => {
-            scanModal.style.display = "none";
+            scanModal.classList.remove("active");
         });
 
         scanModal.addEventListener("click", event => {
             if (event.target === scanModal) {
-                scanModal.style.display = "none";
-            }
+    scanModal.classList.remove("active");
+}
         });
     }
 
@@ -1759,6 +1760,8 @@ function renderURLHistory(records) {
             const record = allURLRecords.find(
                 item => String(item.id) === button.dataset.id
             );
+            console.log("URL BUTTON ID:", button.dataset.id);
+console.log("URL RECORDS:", allURLRecords);
 
             if (!record || !modalDetails || !scanModal) return;
 
@@ -1815,7 +1818,7 @@ function renderURLHistory(records) {
                 </div>
             `;
 
-            scanModal.style.display = "flex";
+            scanModal.classList.add("active");
         });
     });
 }
@@ -2263,7 +2266,7 @@ function showAISecurityDetails(item) {
         </div>
     `;
 
-    modal.style.display = "flex";
+    modal.classList.add("active");
 }
     // ======================================
     // LOAD AI SECURITY HISTORY
