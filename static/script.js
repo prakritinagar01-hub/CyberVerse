@@ -293,7 +293,7 @@ function updateProgress() {
             );
 
             await refreshDashboard();
-            await loadRecentActivity();
+            await loadOverviewRecentActivity();
 
         } catch (error) {
             messageResult.textContent = error.message;
@@ -307,22 +307,7 @@ function updateProgress() {
     if (scanButton) {
         scanButton.addEventListener("click", scanMessage);
     }
-
-    const demoButton = $("#demoButton");
-
-    if (demoButton && messageInput) {
-        demoButton.addEventListener("click", () => {
-            messageInput.value =
-                "URGENT! Your bank account will be blocked. " +
-                "Verify your account immediately and share your OTP.";
-
-            if (charCount) {
-                charCount.textContent = messageInput.value.length;
-            }
-
-            scanMessage();
-        });
-    }
+   
 
     // ======================================
     // 4. URL SECURITY SCANNER
@@ -411,7 +396,7 @@ function updateProgress() {
 
             await loadURLHistory();
             await refreshDashboard();
-            await loadRecentActivity();
+            await loadOverviewRecentActivity();
 
         } catch (error) {
             urlResult.textContent = error.message;
@@ -914,6 +899,25 @@ const threats = Number(stats.threats) || 0;
         // Security score
        const score = Number(stats.security_score) || 0;
 
+// UPDATE OVERVIEW DASHBOARD STATISTICS
+
+const overviewMessageScans = document.getElementById("overviewMessageScans");
+const overviewUrlScans = document.getElementById("overviewUrlScans");
+const overviewSecurityScore = document.getElementById("overviewSecurityScore");
+
+if (overviewMessageScans) {
+    overviewMessageScans.textContent = messages.length;
+}
+
+if (overviewUrlScans) {
+    overviewUrlScans.textContent = urls.length;
+}
+
+if (overviewSecurityScore) {
+    overviewSecurityScore.textContent = `${score}/100`;
+}
+
+
         // System health estimate
         const health = score;
 
@@ -1191,6 +1195,7 @@ async function loadAnalytics() {
 
     function renderHistoryStats(records) {
         const total = records.length;
+        
         const high = records.filter(r => r.risk === "High").length;
         const medium = records.filter(r => r.risk === "Medium").length;
         const low = records.filter(r => r.risk === "Low").length;
@@ -1870,98 +1875,119 @@ deleteUrlHistory?.addEventListener("click", async () => {
 // 14. LIVE ACTIVITY FEED
 // ======================================
 
-async function loadRecentActivity() {
-    const feed = $("#activity-feed");
-    if (!feed) return;
+// ======================================
+// OVERVIEW - RECENT SECURITY ACTIVITY
+// ======================================
+
+async function loadOverviewRecentActivity() {
+    console.log("Overview Recent Activity function started");
+    const container = document.getElementById("overviewRecentActivity");
+    if (!container) return;
 
     try {
-        const data = await api("/api/recent-activity");
+        const [activityData, aiData] = await Promise.all([
+            api("/api/recent-activity"),
+            api("/api/ai-security-history")
+        ]);
 
-        const records = data.activity || data.records || data.history || data;
+        const activityRecords =
+            activityData.activity ||
+            activityData.records ||
+            activityData.history ||
+            activityData;
 
-        if (!Array.isArray(records)) {
+        const aiRecords = Array.isArray(aiData)
+            ? aiData
+            : (aiData.history || aiData.records || []);
+
+        if (!Array.isArray(activityRecords) || !Array.isArray(aiRecords)) {
             throw new Error("Invalid activity data.");
         }
 
-        // Newest scans first
+        const records = [
+            ...activityRecords.map(item => ({
+                ...item,
+                activityType: item.url ? "url" : "message",
+                activityDate: item.scanned_at
+            })),
+            ...aiRecords.map(item => ({
+                ...item,
+                activityType: "ai",
+                activityDate: item.tested_at
+            }))
+        ];
+
         records.sort((a, b) =>
-            new Date(String(b.scanned_at || "").replace(" ", "T")) -
-            new Date(String(a.scanned_at || "").replace(" ", "T"))
+            new Date(String(b.activityDate || "").replace(" ", "T")) -
+            new Date(String(a.activityDate || "").replace(" ", "T"))
         );
 
-        // Remove old static and duplicate activity items
-        feed.innerHTML = "";
-        feed.querySelectorAll(".activity-item").forEach(item => {
-    item.remove();
-});
-        if (records.length === 0) {
-            const empty = document.createElement("p");
-            empty.className = "activity-empty";
-            empty.textContent = "No scans yet. Complete your first security scan!";
-            feed.appendChild(empty);
+        container.innerHTML = "";
+
+        if (!records.length) {
+            container.textContent =
+                "No security activity yet. Complete your first scan!";
             return;
         }
 
-        records.slice(0, 8).forEach(record => {
-
-            const isURL = Boolean(record.url);
-            const risk = String(record.risk || "Unknown");
-            const riskClass = risk.toLowerCase();
+        records.slice(0, 5).forEach(record => {
+            const isAI = record.activityType === "ai";
+            const isURL = record.activityType === "url";
 
             const item = document.createElement("div");
-            item.className = "activity-item";
+            item.className = "overview-activity-item";
 
             const icon = document.createElement("span");
-            icon.className = "activity-icon";
-            icon.textContent = isURL ? "🌐" : "🛡️";
+            icon.className = "overview-activity-icon";
+            icon.textContent = isAI ? "🤖" : isURL ? "🌐" : "🛡️";
 
-            const content = document.createElement("div");
-            content.className = "activity-content";
+            const info = document.createElement("div");
+            info.className = "overview-activity-info";
 
             const title = document.createElement("strong");
-            title.textContent = isURL
-                ? "URL Security Scan"
-                : "Message Security Scan";
+            title.textContent = isAI
+                ? "AI Security Test"
+                : isURL
+                    ? "URL Security Scan"
+                    : "Message Security Scan";
 
-            const description = document.createElement("p");
-
-            const scannedValue = isURL
-                ? record.url
-                : record.message;
+            const description = document.createElement("small");
+            const preview = isAI
+                ? record.prompt || record.response
+                : isURL
+                    ? record.url
+                    : (record.message || record.target);
 
             description.textContent =
-                String(scannedValue || "Scan completed").slice(0, 75);
+                String(preview || "Security scan completed").slice(0, 65);
 
-            const details = document.createElement("small");
-            details.textContent =
-                `Score: ${Number(record.score) || 0}/100`;
+            info.append(title, description);
 
-            content.append(title, description, details);
-
-            const badge = document.createElement("span");
-            badge.className = `activity-risk ${riskClass}`;
-            badge.textContent = risk;
-
-            const time = document.createElement("span");
-            time.className = "activity-time";
-
-            const date = new Date(
-                String(record.scanned_at || "").replace(" ", "T")
+            const risk = document.createElement("span");
+            risk.className = "overview-activity-risk";
+            risk.textContent = String(
+                record.risk_level || record.risk || "Unknown"
             );
 
-            time.textContent = Number.isNaN(date.getTime())
-                ? "Recently"
-                : date.toLocaleString();
+            const date = document.createElement("small");
+            const parsedDate = new Date(
+                String(record.activityDate || "").replace(" ", "T")
+            );
 
-            item.append(icon, content, badge, time);
-            feed.appendChild(item);
+            date.textContent = Number.isNaN(parsedDate.getTime())
+                ? "Recently"
+                : parsedDate.toLocaleDateString();
+
+            item.append(icon, info, risk, date);
+            container.appendChild(item);
         });
 
     } catch (error) {
-        console.error("Activity Feed Error:", error);
-        feed.textContent = "Could not load recent activity.";
+        console.error("Overview Activity Error:", error);
+        container.textContent = "Could not load recent activity.";
     }
 }
+
 
     // ======================================
     // 15. DASHBOARD REFRESH
@@ -1984,7 +2010,8 @@ async function loadRecentActivity() {
 
     loadHistory();
     loadURLHistory();
-    loadRecentActivity();
+    console.log("Calling Overview Recent Activity...");
+    loadOverviewRecentActivity();
 
     console.log("CyberVerse initialized successfully.");
 });
@@ -2393,6 +2420,11 @@ async function loadAISecurityHistory() {
 
         // Calculate statistics
         const total = records.length;
+        const overviewAiTests = document.getElementById("overviewAiTests");
+
+if (overviewAiTests) {
+    overviewAiTests.textContent = total;
+}
 
         const high = records.filter(item =>
             ["high", "critical"].includes(
@@ -2575,6 +2607,7 @@ async function loadAISecurityHistory() {
             renderAISecurityResult(data);
 
             await loadAISecurityHistory();
+            await loadOverviewRecentActivity();
 
             if (typeof showToast === "function") {
                 showToast("AI security analysis completed!");
