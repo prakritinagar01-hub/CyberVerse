@@ -1171,21 +1171,25 @@ async function loadAnalytics() {
         window.analyticsData = data;
 
         // Overall statistics
-        $("#historyTotal").textContent = data.total_scans;
-        $("#historyHigh").textContent = data.high_risk;
-        $("#historyMedium").textContent = data.medium_risk;
-        $("#historyLow").textContent = data.low_risk;
+const analyticsValues = {
+    historyTotal: data.total_scans,
+    historyHigh: data.high_risk,
+    historyMedium: data.medium_risk,
+    historyLow: data.low_risk,
+    aiScanCount: data.ai_scans,
+    avgConfidence: `${data.average_consistency}%`,
+    highRiskCount: data.high_risk,
+    mediumRiskCount: data.medium_risk,
+    lowRiskCount: data.low_risk
+};
 
-        // AI analytics
-        $("#aiScanCount").textContent = data.ai_scans;
-        $("#avgConfidence").textContent =
-            `${data.average_consistency}%`;
+Object.entries(analyticsValues).forEach(([id, value]) => {
+    const element = document.getElementById(id);
 
-        // Risk insights
-        $("#highRiskCount").textContent = data.high_risk;
-        $("#mediumRiskCount").textContent = data.medium_risk;
-        $("#lowRiskCount").textContent = data.low_risk;
-
+    if (element) {
+        element.textContent = value;
+    }
+});
         console.log("Advanced analytics loaded:", data);
 
     } catch (error) {
@@ -1622,10 +1626,20 @@ const low = records.filter(record =>
     String(record.risk || "").trim().toLowerCase() === "low"
 ).length;
 
-document.getElementById("urlHistoryTotal").textContent = total;
-document.getElementById("urlHistoryHigh").textContent = high;
-document.getElementById("urlHistoryMedium").textContent = medium;
-document.getElementById("urlHistoryLow").textContent = low;
+const urlStats = {
+    urlHistoryTotal: total,
+    urlHistoryHigh: high,
+    urlHistoryMedium: medium,
+    urlHistoryLow: low
+};
+
+Object.entries(urlStats).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+
+    if (element) {
+        element.textContent = value;
+    }
+});
         renderURLRiskChart(allURLRecords);
         renderURLHistory(allURLRecords);
 
