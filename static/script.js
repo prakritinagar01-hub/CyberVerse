@@ -294,6 +294,15 @@ function updateProgress() {
 
             await refreshDashboard();
             await loadOverviewRecentActivity();
+           if (typeof window.addCyberNotification === "function") {
+    window.addCyberNotification(
+        "Message Scan Completed",
+        `${data.risk || "Unknown"} Risk — Score: ${Number(data.score) || 0}/100`,
+        "🛡️",
+        data.risk || "Info",
+        `Scanned Message: ${String(data.message || "").slice(0, 100)}`
+    );
+}
 
         } catch (error) {
             messageResult.textContent = error.message;
@@ -397,6 +406,15 @@ function updateProgress() {
             await loadURLHistory();
             await refreshDashboard();
             await loadOverviewRecentActivity();
+            if (typeof window.addCyberNotification === "function") {
+    window.addCyberNotification(
+        "URL Scan Completed",
+        `${data.risk || "Unknown"} Risk — Score: ${Number(data.score) || 0}/100`,
+        "🌐",
+        data.risk || "Info",
+        `Scanned URL: ${String(url).slice(0, 100)}`
+    );
+}
 
         } catch (error) {
             urlResult.textContent = error.message;
@@ -1743,7 +1761,7 @@ function renderURLHistory(records) {
                     <button
                         type="button"
                         class="history-details url-view-details"
-                        data-id="${Number(record.id)}">
+                        data-id="${escapeHTML(String(record.id ?? record.url_id ?? ""))}">
                         View Details
                     </button>
 
@@ -1757,9 +1775,9 @@ function renderURLHistory(records) {
     urlHistoryList.querySelectorAll(".url-view-details").forEach(button => {
         button.addEventListener("click", () => {
 
-            const record = allURLRecords.find(
-                item => String(item.id) === button.dataset.id
-            );
+            const record = allURLRecords.find(item =>
+    String(item.id ?? item.url_id ?? "") === button.dataset.id
+);
             console.log("URL BUTTON ID:", button.dataset.id);
 console.log("URL RECORDS:", allURLRecords);
 
@@ -2004,6 +2022,8 @@ async function loadOverviewRecentActivity() {
         container.textContent = "Could not load recent activity.";
     }
 }
+window.loadOverviewRecentActivity = loadOverviewRecentActivity;
+window.showCyberToast = showToast;
 
 
     // ======================================
@@ -2624,11 +2644,21 @@ if (overviewAiTests) {
             renderAISecurityResult(data);
 
             await loadAISecurityHistory();
-            await loadOverviewRecentActivity();
+            if (typeof window.loadOverviewRecentActivity === "function") {
+    await window.loadOverviewRecentActivity();
+}
 
-            if (typeof showToast === "function") {
-                showToast("AI security analysis completed!");
-            }
+           if (typeof window.showCyberToast === "function") {
+    window.showCyberToast("AI security analysis completed!");
+}
+
+if (typeof window.addCyberNotification === "function") {
+    window.addCyberNotification(
+        "AI Security Test Completed",
+        "Your AI response security report is ready.",
+        "🤖"
+    );
+}
 
         } catch (error) {
 
@@ -2921,3 +2951,228 @@ case "tips":
     terminalInput.setAttribute("list", "terminalCommands");
 
 });
+
+// ==========================================
+// CYBERVERSE NOTIFICATION CENTER
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const notificationBtn = document.getElementById("notificationBtn");
+    const notificationDropdown = document.getElementById("notificationDropdown");
+    const notificationCount = document.getElementById("notificationCount");
+    const notificationList = document.getElementById("notificationList");
+    const notificationSubtitle = document.getElementById("notificationSubtitle");
+    const markAllRead = document.getElementById("markAllRead");
+
+    if (
+        !notificationBtn ||
+        !notificationDropdown ||
+        !notificationList ||
+        !notificationCount
+    ) return;
+
+    let notifications = [];
+
+    try {
+        notifications = JSON.parse(
+            localStorage.getItem("cyberverseNotifications") || "[]"
+        );
+
+        if (!Array.isArray(notifications)) notifications = [];
+    } catch {
+        notifications = [];
+    }
+
+    function saveNotifications() {
+        localStorage.setItem(
+            "cyberverseNotifications",
+            JSON.stringify(notifications)
+        );
+    }
+
+    
+function renderNotifications() {
+
+    const unread = notifications.filter(item => !item.read).length;
+
+    notificationCount.textContent = unread > 99 ? "99+" : unread;
+    notificationCount.style.display = unread ? "flex" : "none";
+
+    notificationSubtitle.textContent = unread
+        ? `${unread} unread notification${unread === 1 ? "" : "s"}`
+        : "You're all caught up.";
+
+    notificationList.innerHTML = "";
+
+    if (!notifications.length) {
+        notificationList.innerHTML = `
+            <div class="notification-empty">
+                <span>🛡️</span>
+                <p>No notifications yet</p>
+                <small>Your security updates will appear here.</small>
+            </div>
+        `;
+        return;
+    }
+
+    notifications.forEach(item => {
+
+        const card = document.createElement("div");
+        card.className = "notification-item";
+
+        if (!item.read) card.classList.add("unread");
+
+        const icon = document.createElement("span");
+        icon.className = "notification-item-icon";
+        icon.textContent = item.icon || "🛡️";
+
+        const content = document.createElement("div");
+        content.className = "notification-item-content";
+
+        const title = document.createElement("strong");
+        title.textContent = item.title;
+
+        const message = document.createElement("p");
+        message.textContent = item.message;
+
+        const risk = document.createElement("small");
+        risk.className = "notification-risk-badge";
+        risk.textContent = `Risk: ${item.risk || "Info"}`;
+        risk.dataset.risk = String(item.risk || "Info").toLowerCase();
+
+        const details = document.createElement("p");
+        details.className = "notification-details";
+        details.textContent = item.details || "";
+
+        const time = document.createElement("small");
+        time.className = "notification-time";
+        time.textContent = item.time || "Recently";
+
+        content.append(title, message, risk);
+
+        if (item.details) {
+            content.appendChild(details);
+        }
+
+        content.appendChild(time);
+
+        card.append(icon, content);
+
+        card.addEventListener("click", () => {
+            item.read = true;
+            saveNotifications();
+            renderNotifications();
+        });
+
+        const deleteBtn = document.createElement("button");
+deleteBtn.className = "notification-delete-btn";
+deleteBtn.type = "button";
+deleteBtn.textContent = "×";
+deleteBtn.title = "Delete notification";
+
+deleteBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+
+    notifications = notifications.filter(
+        notification => notification.id !== item.id
+    );
+
+    saveNotifications();
+    renderNotifications();
+});
+
+card.appendChild(deleteBtn);
+        notificationList.appendChild(card);
+
+    });
+}
+
+// OPEN / CLOSE NOTIFICATION DROPDOWN
+
+notificationBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    notificationDropdown.classList.toggle("active");
+});
+
+// CLOSE WHEN CLICKING OUTSIDE
+
+notificationDropdown.addEventListener("click", (event) => {
+    event.stopPropagation();
+});
+
+document.addEventListener("click", () => {
+    notificationDropdown.classList.remove("active");
+});
+
+// CLOSE WITH ESCAPE KEY
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        notificationDropdown.classList.remove("active");
+    }
+});
+// MARK ALL NOTIFICATIONS AS READ
+
+if (markAllRead) {
+    markAllRead.addEventListener("click", () => {
+        notifications.forEach(item => {
+            item.read = true;
+        });
+
+        saveNotifications();
+        renderNotifications();
+    });
+}
+// CLEAR ALL NOTIFICATIONS
+
+const clearAllNotifications = document.getElementById("clearAllNotifications");
+
+if (clearAllNotifications) {
+    clearAllNotifications.addEventListener("click", () => {
+
+        if (!notifications.length) return;
+
+        const confirmClear = confirm(
+            "Are you sure you want to delete all notifications?"
+        );
+
+        if (!confirmClear) return;
+
+        notifications = [];
+
+        saveNotifications();
+        renderNotifications();
+    });
+}
+
+    // Public function for adding security notifications
+window.addCyberNotification = function(
+    title,
+    message,
+    icon = "🛡️",
+    risk = "Info",
+    details = ""
+)
+ {
+
+    notifications.unshift({
+        id: Date.now(),
+        title,
+        message,
+        icon,
+        risk,
+        details,
+        time: new Date().toLocaleString(),
+        read: false
+    });
+
+    notifications = notifications.slice(0, 50);
+
+    saveNotifications();
+    renderNotifications();
+};
+renderNotifications();
+
+});
+
