@@ -54,12 +54,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const state = {
-        xp: Number(localStorage.getItem("cyberverseXP")) || 0,
-        completed: Number(localStorage.getItem("cyberverseCompleted")) || 0,
-        messages: Number(localStorage.getItem("cyberverseMessages")) || 0,
-        
-        activity: []
-    };
+    messages: Number(localStorage.getItem("cyberverseMessages")) || 0,
+    activity: []
+};
 
     let riskChart = null;
     let urlRiskChart = null;
@@ -67,8 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentHistory = [];
 
     function saveState() {
-        localStorage.setItem("cyberverseXP", state.xp);
-        localStorage.setItem("cyberverseCompleted", state.completed);
         localStorage.setItem("cyberverseMessages", state.messages);
         
     }
@@ -132,13 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 2800);
     }
 
-    function addXP(amount, reason = "Activity completed") {
-        state.xp += amount;
-        state.completed++;
-        saveState();
-        updateProgress();
-        showToast(`+${amount} XP — ${reason}`);
-    }
+    
 
     function addActivity(message, type = "info") {
         const feed = $("#activity-feed");
@@ -165,32 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
             feed.lastElementChild.remove();
         }
     }
-
-    
-// ======================================
-// 2. XP & LEVELS
-// ======================================
-
-function updateProgress() {
-    const level = Math.floor(state.xp / 100) + 1;
-    const progress = state.xp % 100;
-
-    const values = {
-        "#heroXP": `${state.xp} XP`,
-        "#totalXP": state.xp,
-        "#heroScans": state.messages,
-        "#completed": state.completed,
-        "#level": level,
-        "#nextLevel": 100 - progress
-    };
-
-    Object.entries(values).forEach(([selector, value]) => {
-        const element = $(selector);
-        if (element) element.textContent = value;
-    });
-}
-
-
     // ======================================
     // 3. PHISHING MESSAGE SCANNER
     // ======================================
@@ -286,7 +249,7 @@ function updateProgress() {
             renderMessageResult(data);
 
             state.messages++;
-            addXP(15, "Message scanned");
+            
             addActivity(
                 `Message scan completed — ${data.risk || "Unknown"} risk`,
                 data.risk === "High" ? "danger" : "success"
@@ -300,7 +263,8 @@ function updateProgress() {
         `${data.risk || "Unknown"} Risk — Score: ${Number(data.score) || 0}/100`,
         "🛡️",
         data.risk || "Info",
-        `Scanned Message: ${String(data.message || "").slice(0, 100)}`
+        `Scanned Message: ${String(data.message || "").slice(0, 100)}`,
+        "message"
     );
 }
 
@@ -397,7 +361,7 @@ function updateProgress() {
 
             renderURLResult(data);
 
-            addXP(10, "URL checked");
+            
             addActivity(
                 `URL checked — ${data.risk || "Unknown"} risk`,
                 data.risk === "High" ? "danger" : "success"
@@ -412,7 +376,8 @@ function updateProgress() {
         `${data.risk || "Unknown"} Risk — Score: ${Number(data.score) || 0}/100`,
         "🌐",
         data.risk || "Info",
-        `Scanned URL: ${String(url).slice(0, 100)}`
+        `Scanned URL: ${String(url).slice(0, 100)}`,
+        "url"
     );
 }
 
@@ -681,13 +646,7 @@ function renderQuiz() {
 
                 button.classList.add("correct");
 
-                if (!quizSessionCorrect.has(quizIndex)) {
-
-                    quizSessionCorrect.add(quizIndex);
-
-                    addXP(20, "Correct AI quiz answer");
-
-                }
+                
 
                 if (quizFeedback) {
                     quizFeedback.textContent =
@@ -709,7 +668,7 @@ function renderQuiz() {
 
             // Update progress and save
             saveState();
-            updateProgress();
+            
 
             // Enable next button
             if (nextQuestion) {
@@ -2041,8 +2000,6 @@ window.showCyberToast = showToast;
     // ======================================
     // 16. INITIALIZATION
     // ======================================
-
-    updateProgress();
     checkPassword();
 
     loadHistory();
@@ -2656,7 +2613,10 @@ if (typeof window.addCyberNotification === "function") {
     window.addCyberNotification(
         "AI Security Test Completed",
         "Your AI response security report is ready.",
-        "🤖"
+        "🤖",
+        "Info",
+        "",
+        "ai"
     );
 }
 
@@ -3146,15 +3106,39 @@ if (clearAllNotifications) {
     });
 }
 
-    // Public function for adding security notifications
+// Public function for adding security notifications
 window.addCyberNotification = function(
     title,
     message,
     icon = "🛡️",
     risk = "Info",
-    details = ""
-)
- {
+    details = "",
+    category = ""
+) {
+
+    // Load notification preferences
+    let settings = {
+        message: true,
+        url: true,
+        ai: true
+    };
+
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem("cyberverseNotificationSettings")
+        );
+
+        if (saved && typeof saved === "object") {
+            settings = { ...settings, ...saved };
+        }
+    } catch (error) {
+        console.warn("Notification settings error:", error);
+    }
+
+    // Skip notification if its category is disabled
+    if (category && settings[category] === false) {
+        return;
+    }
 
     notifications.unshift({
         id: Date.now(),
@@ -3172,7 +3156,101 @@ window.addCyberNotification = function(
     saveNotifications();
     renderNotifications();
 };
-renderNotifications();
 
 });
+// ======================================
+// NOTIFICATION SETTINGS CONTROLS
+// ======================================
 
+document.addEventListener("DOMContentLoaded", () => {
+
+    const settingsBtn = document.getElementById("notificationSettingsBtn");
+    const settingsPanel = document.getElementById("notificationSettingsPanel");
+    const closeSettingsBtn = document.getElementById("closeNotificationSettings");
+
+    if (!settingsBtn || !settingsPanel || !closeSettingsBtn) {
+        console.error("Notification Settings elements not found.");
+        return;
+    }
+
+    settingsBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        settingsPanel.classList.toggle("active");
+    });
+
+    closeSettingsBtn.addEventListener("click", () => {
+        settingsPanel.classList.remove("active");
+    });
+
+    settingsPanel.addEventListener("click", (event) => {
+        event.stopPropagation();
+    });
+
+    document.addEventListener("click", () => {
+        settingsPanel.classList.remove("active");
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            settingsPanel.classList.remove("active");
+        }
+    });
+
+});
+// ======================================
+// SAVE NOTIFICATION PREFERENCES
+// ======================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const messageToggle = document.getElementById("messageNotificationToggle");
+    const urlToggle = document.getElementById("urlNotificationToggle");
+    const aiToggle = document.getElementById("aiNotificationToggle");
+
+    if (!messageToggle || !urlToggle || !aiToggle) return;
+
+    const defaultSettings = {
+        message: true,
+        url: true,
+        ai: true
+    };
+
+    let settings = { ...defaultSettings };
+
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem("cyberverseNotificationSettings")
+        );
+
+        if (saved && typeof saved === "object") {
+            settings = { ...defaultSettings, ...saved };
+        }
+    } catch (error) {
+        console.warn("Settings loading error:", error);
+    }
+
+    messageToggle.checked = settings.message !== false;
+    urlToggle.checked = settings.url !== false;
+    aiToggle.checked = settings.ai !== false;
+
+    function saveNotificationSettings() {
+
+        const updatedSettings = {
+            message: messageToggle.checked,
+            url: urlToggle.checked,
+            ai: aiToggle.checked
+        };
+
+        localStorage.setItem(
+            "cyberverseNotificationSettings",
+            JSON.stringify(updatedSettings)
+        );
+
+        console.log("Notification settings saved:", updatedSettings);
+    }
+
+    messageToggle.addEventListener("change", saveNotificationSettings);
+    urlToggle.addEventListener("change", saveNotificationSettings);
+    aiToggle.addEventListener("change", saveNotificationSettings);
+
+});

@@ -495,7 +495,12 @@ def generate_quiz():
             "Rules: exactly 10 questions, exactly 4 non-empty options,\n"
             "answer must be integer 0 to 3, explanations must be strings.\n"
         )
-        raw = groq_generate(prompt, temperature=0.3, max_tokens=3000, timeout=90)
+        raw = groq_generate(
+    prompt,
+    temperature=0.3,
+    max_tokens=1800,
+    timeout=90
+)
         questions = json.loads(raw).get("questions", [])
         # Remove duplicate questions
         if isinstance(questions, list):
@@ -521,10 +526,39 @@ def generate_quiz():
 
             questions = unique_questions
 
-        if not isinstance(questions, list) or len(questions) < 10:
-            raise ValueError("AI must generate at least 10 unique questions.")
-                             
-                             
+        # Fill missing questions from the local question bank
+        if not isinstance(questions, list):
+            questions = []
+
+        seen_questions = {
+            re.sub(r"[^a-z0-9]+", " ", q["question"].lower()).strip()
+            for q in questions
+            if isinstance(q, dict)
+            and isinstance(q.get("question"), str)
+        }
+
+        for question, options, answer, explanation in QUESTION_BANK[difficulty]:
+            normalized = re.sub(
+                r"[^a-z0-9]+",
+                " ",
+                question.lower()
+            ).strip()
+
+            if normalized not in seen_questions:
+                questions.append({
+                    "question": question,
+                    "options": options,
+                    "answer": answer,
+                    "explanation": explanation
+                })
+                seen_questions.add(normalized)
+
+            if len(questions) >= 10:
+                break
+
+        if len(questions) < 10:
+            raise ValueError("Unable to prepare 10 unique questions.")
+
         questions = questions[:10]
 
         for question in questions:

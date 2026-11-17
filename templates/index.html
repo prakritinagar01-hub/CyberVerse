@@ -193,7 +193,58 @@
 </div>
 
 
+<button
+    class="notification-settings-btn"
+    id="notificationSettingsBtn"
+    type="button"
+    title="Notification Settings"
+    aria-label="Notification Settings"
+>
+    ⚙
+</button>
+<!-- NOTIFICATION SETTINGS PANEL -->
+<div class="notification-settings-panel" id="notificationSettingsPanel">
 
+    <div class="notification-settings-header">
+        <div>
+            <h3>Notification Settings</h3>
+            <p>Manage your security alerts</p>
+        </div>
+
+        <button
+            type="button"
+            id="closeNotificationSettings"
+            aria-label="Close settings"
+        >
+            ×
+        </button>
+    </div>
+
+    <div class="notification-setting-item">
+        <div>
+            <strong>Message Scan</strong>
+            <small>Alerts after message analysis</small>
+        </div>
+        <input type="checkbox" id="messageNotificationToggle" checked>
+    </div>
+
+    <div class="notification-setting-item">
+        <div>
+            <strong>URL Scanner</strong>
+            <small>Alerts after URL analysis</small>
+        </div>
+        <input type="checkbox" id="urlNotificationToggle" checked>
+    </div>
+
+    <div class="notification-setting-item">
+        <div>
+            <strong>AI Security Lab</strong>
+            <small>Alerts after AI security tests</small>
+        </div>
+        <input type="checkbox" id="aiNotificationToggle" checked>
+    </div>
+
+</div>
 
 <div class="avatar">P</div>
 
