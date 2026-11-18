@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CyberVerse | My Profile</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <main class="container">
+
+        <div class="history-page-actions">
+            <a href="{{ url_for('home') }}" class="button secondary">
+                ← Back to Dashboard
+            </a>
+        </div>
+
+        <section class="scan-history-section">
+
+            <div class="dashboard-heading">
+                <div>
+                    <p class="eyebrow">ACCOUNT MANAGEMENT</p>
+                    <h2>My <span>Profile</span></h2>
+                    <p>View your CyberVerse account information.</p>
+                </div>
+
+                <span class="tag">PERSONAL ACCOUNT</span>
+            </div>
+
+            <div class="analytics-card profile-card">
+
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profileAvatar">P</div>
+
+
+                    <div>
+                        <h3 id="profileUsername">Loading...</h3>
+                        <p id="profileEmail">Loading account details...</p>
+                    </div>
+
+                </div>
+                <div class="profile-edit-actions">
+    <button type="button" class="button" id="editProfileBtn">
+        ✏️ Edit Profile
+    </button>
+</div>
+
+                <div class="profile-details">
+
+                    <div class="profile-detail-item">
+                        <span>User ID</span>
+                        <strong id="profileUserId">—</strong>
+                    </div>
+
+                    <div class="profile-detail-item">
+                        <span>Account Created</span>
+                        <strong id="profileCreatedAt">—</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+<!-- SECURITY OVERVIEW -->
+<section class="profile-security-overview">
+
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">YOUR SECURITY ACTIVITY</p>
+            <h2>Security <span>Overview</span></h2>
+            <p>Your CyberVerse protection statistics at a glance.</p>
+        </div>
+        <span class="tag">LIVE STATISTICS</span>
+    </div>
+
+    <div class="profile-stats-grid">
+
+        <div class="analytics-card profile-stat-card">
+            <div class="profile-stat-icon">🛡️</div>
+            <span>Total Security Scans</span>
+            <h3 id="profileTotalScans">0</h3>
+            <p>Across all security tools</p>
+        </div>
+
+        <div class="analytics-card profile-stat-card">
+            <div class="profile-stat-icon">⚠️</div>
+            <span>Threats Detected</span>
+            <h3 id="profileThreats">0</h3>
+            <p>High and medium risk scans</p>
+        </div>
+
+        <div class="analytics-card profile-stat-card">
+            <div class="profile-stat-icon">🔐</div>
+            <span>Security Score</span>
+            <h3 id="profileSecurityScore">100%</h3>
+            <p>Based on your scan history</p>
+        </div>
+
+    </div>
+
+</section>
+
+
+            <div class="profile-edit-form hidden" id="profileEditForm">
+
+    <h3>Edit Account Information</h3>
+
+    <form id="editProfileForm">
+
+        <label for="editUsername">Username</label>
+        <input
+            type="text"
+            id="editUsername"
+            required
+            minlength="3"
+            maxlength="30"
+        >
+
+        <label for="editEmail">Email Address</label>
+        <input
+            type="email"
+            id="editEmail"
+            required
+        >
+
+        <div class="profile-edit-buttons">
+            <button type="submit" class="button">
+                Save Changes
+            </button>
+
+            <button type="button" class="button secondary" id="cancelEditBtn">
+                Cancel
+            </button>
+        </div>
+
+        <p id="profileEditMessage"></p>
+
+    </form>
+</div>
+
+        </section>
+
+    </main>
+
+    
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+
+    // Theme
+    const savedTheme = localStorage.getItem("cyberverseTheme");
+    document.documentElement.dataset.theme =
+        savedTheme === "light" ? "light" : "dark";
+
+    // Elements
+    const editBtn = document.getElementById("editProfileBtn");
+    const editForm = document.getElementById("profileEditForm");
+    const cancelBtn = document.getElementById("cancelEditBtn");
+    const form = document.getElementById("editProfileForm");
+    const message = document.getElementById("profileEditMessage");
+
+    let currentUser = null;
+
+    // Open edit form
+    editBtn.addEventListener("click", () => {
+        document.getElementById("editUsername").value =
+            currentUser?.username || "";
+
+        document.getElementById("editEmail").value =
+            currentUser?.email || "";
+
+        editForm.classList.remove("hidden");
+        message.textContent = "";
+    });
+
+    // Cancel editing
+    cancelBtn.addEventListener("click", () => {
+        editForm.classList.add("hidden");
+        message.textContent = "";
+    });
+
+    // Load profile
+    try {
+        const response = await fetch("/api/me");
+        const data = await response.json();
+
+        if (!response.ok || !data.authenticated || !data.user) {
+            window.location.href = "/";
+            return;
+        }
+
+        currentUser = data.user;
+
+        document.getElementById("profileAvatar").textContent =
+            currentUser.username?.charAt(0).toUpperCase() || "U";
+
+        document.getElementById("profileUsername").textContent =
+            currentUser.username || "User";
+
+        document.getElementById("profileEmail").textContent =
+            currentUser.email || "Not available";
+
+        document.getElementById("profileUserId").textContent =
+            currentUser.user_id || currentUser.id || "Not available";
+
+        document.getElementById("profileCreatedAt").textContent =
+            currentUser.created_at || "Not available";
+
+    } catch (error) {
+        console.error("Profile loading error:", error);
+        document.getElementById("profileUsername").textContent =
+            "Unable to load profile";
+        return;
+    }
+
+    // Save updated profile
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const username =
+            document.getElementById("editUsername").value.trim();
+
+        const email =
+            document.getElementById("editEmail").value.trim();
+
+        const saveBtn = form.querySelector('button[type="submit"]');
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+        message.textContent = "";
+
+        try {
+            const response = await fetch("/api/update-profile", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, email })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "Profile update failed.");
+            }
+
+            currentUser = data.user;
+
+            document.getElementById("profileAvatar").textContent =
+                currentUser.username.charAt(0).toUpperCase();
+
+            document.getElementById("profileUsername").textContent =
+                currentUser.username;
+
+            document.getElementById("profileEmail").textContent =
+                currentUser.email;
+
+            document.getElementById("profileUserId").textContent =
+                currentUser.user_id;
+
+            document.getElementById("editUsername").value =
+                currentUser.username;
+
+            document.getElementById("editEmail").value =
+                currentUser.email;
+
+            message.style.color = "#22c55e";
+            message.textContent = "Profile updated successfully!";
+
+            setTimeout(() => {
+                editForm.classList.add("hidden");
+                message.textContent = "";
+            }, 1500);
+
+        } catch (error) {
+            message.style.color = "#ef4444";
+            message.textContent = error.message;
+
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save Changes";
+        }
+    });
+
+});
+</script>
+
+<script>
+async function loadProfileStatistics() {
+    try {
+        const response = await fetch("/api/radar-analytics");
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error("Unable to load statistics");
+        }
+
+        document.getElementById("profileTotalScans").textContent =
+            data.total;
+
+        document.getElementById("profileThreats").textContent =
+            data.threats;
+
+        document.getElementById("profileSecurityScore").textContent =
+            data.security_score + "%";
+
+    } catch (error) {
+        console.error("Profile statistics error:", error);
+    }
+}
+
+loadProfileStatistics();
+</script>
+</body>
+</html>

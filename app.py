@@ -49,11 +49,14 @@ def groq_generate(prompt, temperature=0.2, max_tokens=3000, timeout=120):
             "model": GROQ_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature,
-            "max_completion_tokens": max_tokens,
-            "response_format": {"type": "json_object"},
+            "max_completion_tokens": 6000,
+"reasoning_effort": "low",
+"response_format": {"type": "json_object"},
         },
         timeout=timeout,
     )
+    print("GROQ STATUS:", response.status_code)
+    print("GROQ RESPONSE:", response.text)
     response.raise_for_status()
     result = response.json()
     return result["choices"][0]["message"]["content"]
@@ -798,10 +801,18 @@ def message_history_page():
 @login_required
 def url_history_page():
     return render_template("url-history.html")
+# AI SECURITY HISTORY PAGE
 @app.route("/ai-history")
 @login_required
 def ai_history_page():
     return render_template("ai-history.html")
+
+
+# USER PROFILE PAGE
+@app.route("/profile")
+@login_required
+def profile_page():
+    return render_template("profile.html")
 
 
 

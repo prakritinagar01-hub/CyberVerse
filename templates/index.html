@@ -136,7 +136,7 @@
     <span class="side-icon">✧</span>
     <span>AI Security Lab History</span>
 </a>
-<a href="#profile" class="side-link">
+<a href="{{ url_for('profile_page') }}" class="side-link">
     <span class="side-icon">👤</span>
     <span>My Profile</span>
 </a>
@@ -1093,6 +1093,45 @@
         AI-based assessment is not a security certification and may miss risks
         or flag harmless content.
     </p>
+
+</section>
+<!-- MY PROFILE SECTION -->
+<section class="scan-history-section" id="profile">
+
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">ACCOUNT MANAGEMENT</p>
+            <h2>My <span>Profile</span></h2>
+            <p>View your CyberVerse account information.</p>
+        </div>
+        <span class="tag">PERSONAL ACCOUNT</span>
+    </div>
+
+    <div class="analytics-card profile-card">
+
+        <div class="profile-header">
+            <div class="profile-avatar" id="profileAvatar">P</div>
+            <div>
+                <h3 id="profileUsername">Loading...</h3>
+                <p id="profileEmail">Loading account details...</p>
+            </div>
+        </div>
+
+        <div class="profile-details">
+
+            <div class="profile-detail-item">
+                <span>User ID</span>
+                <strong id="profileUserId">—</strong>
+            </div>
+
+            <div class="profile-detail-item">
+                <span>Account Created</span>
+                <strong id="profileCreatedAt">—</strong>
+            </div>
+
+        </div>
+
+    </div>
 
 </section>
 
