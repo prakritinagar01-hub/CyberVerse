@@ -63,6 +63,31 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (data.authenticated) {
+                window.currentUser = data.user;
+                if (data.user) {
+    const user = data.user;
+
+    document.getElementById("profileAvatar").textContent =
+        user.username.charAt(0).toUpperCase();
+
+    document.getElementById("profileUsername").textContent =
+        user.username;
+
+    document.getElementById("profileEmail").textContent =
+        user.email;
+
+    document.getElementById("profileUserId").textContent =
+        user.user_id;
+
+    document.getElementById("profileUsernameInfo").textContent =
+        user.username;
+
+    document.getElementById("profileEmailInfo").textContent =
+        user.email;
+
+    document.getElementById("profileCreatedAt").textContent =
+        user.created_at;
+}
                 authScreen.classList.add("hidden");
                 appShell.classList.remove("hidden");
             } else {
@@ -3401,5 +3426,177 @@ document.addEventListener("DOMContentLoaded", () => {
     messageToggle.addEventListener("change", saveNotificationSettings);
     urlToggle.addEventListener("change", saveNotificationSettings);
     aiToggle.addEventListener("change", saveNotificationSettings);
+
+});
+// =====================================
+// CYBERVERSE PAGE NAVIGATION
+// =====================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const dashboardPage = document.querySelector(
+        ".app-main main.container"
+    );
+
+    const profilePage = document.getElementById("profilePage");
+
+    const sidebarLinks = document.querySelectorAll(
+        ".sidebar-nav a.side-link"
+    );
+
+    if (!dashboardPage || !profilePage) return;
+
+    sidebarLinks.forEach(link => {
+
+        link.addEventListener("click", () => {
+
+            if (link.getAttribute("href") === "#profile") {
+
+                dashboardPage.style.display = "none";
+                profilePage.style.display = "block";
+
+            } else {
+
+                profilePage.style.display = "none";
+                dashboardPage.style.display = "block";
+
+            }
+
+        });
+
+    });
+
+});
+// =====================================
+// COPY PROFILE USER ID
+// =====================================
+// ==========================================
+// EDIT PROFILE FUNCTIONALITY
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const editBtn = document.getElementById("editProfileBtn");
+    const editForm = document.getElementById("editProfileForm");
+    const saveBtn = document.getElementById("saveProfileBtn");
+    const cancelBtn = document.getElementById("cancelProfileBtn");
+
+    const usernameInput = document.getElementById("editUsername");
+    const emailInput = document.getElementById("editEmail");
+    const message = document.getElementById("profileEditMessage");
+
+    if (!editBtn || !editForm || !saveBtn || !cancelBtn) return;
+
+    editBtn.addEventListener("click", () => {
+
+        if (window.currentUser) {
+            usernameInput.value = window.currentUser.username;
+            emailInput.value = window.currentUser.email;
+        }
+
+        message.textContent = "";
+        editForm.classList.remove("hidden");
+    });
+
+    cancelBtn.addEventListener("click", () => {
+        editForm.classList.add("hidden");
+        message.textContent = "";
+    });
+
+    saveBtn.addEventListener("click", async () => {
+
+        const username = usernameInput.value.trim();
+        const email = emailInput.value.trim();
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+
+        try {
+
+            const response = await fetch("/api/update-profile", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "Profile update failed.");
+            }
+
+            window.currentUser = data.user;
+
+            document.getElementById("profileAvatar").textContent =
+                data.user.username.charAt(0).toUpperCase();
+
+            document.getElementById("profileUsername").textContent =
+                data.user.username;
+
+            document.getElementById("profileEmail").textContent =
+                data.user.email;
+
+            document.getElementById("profileUsernameInfo").textContent =
+                data.user.username;
+
+            document.getElementById("profileEmailInfo").textContent =
+                data.user.email;
+
+            document.getElementById("profileUserId").textContent =
+                data.user.user_id;
+
+            document.getElementById("profileCreatedAt").textContent =
+                data.user.created_at;
+
+            message.textContent = "Profile updated successfully!";
+            message.style.color = "#22c55e";
+
+            editForm.classList.add("hidden");
+
+        } catch (error) {
+
+            message.textContent = error.message;
+            message.style.color = "#ef4444";
+
+        } finally {
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save Changes";
+
+        }
+
+    });
+
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const copyBtn = document.getElementById("copyProfileId");
+
+    if (copyBtn) {
+        copyBtn.addEventListener("click", async () => {
+
+            const userId = document.getElementById("profileUserId").textContent;
+
+            try {
+                await navigator.clipboard.writeText(userId);
+
+                copyBtn.textContent = "Copied!";
+
+                setTimeout(() => {
+                    copyBtn.textContent = "Copy ID";
+                }, 1500);
+
+            } catch (error) {
+                alert("Unable to copy User ID.");
+            }
+
+        });
+    }
 
 });

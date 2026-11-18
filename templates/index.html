@@ -135,7 +135,10 @@
     <span class="side-icon">✧</span>
     <span>AI Security Lab History</span>
 </a>
-
+<a href="#profile" class="side-link">
+    <span class="side-icon">👤</span>
+    <span>My Profile</span>
+</a>
 
 
 
@@ -312,7 +315,7 @@
 
         <!-- PAGE CONTENT -->
         <main class="container">
-
+ 
             <!-- HERO SECTION -->
             <section class="hero panel">
 
@@ -1365,7 +1368,118 @@
                 </span>
 
             </footer>
+            </main>
 
+<main class="container profile-page" id="profilePage" style="display: none;">
+        
+        <!-- USER PROFILE SECTION -->
+<section class="panel" id="profile">
+
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">ACCOUNT SETTINGS</p>
+            <h2>My Profile</h2>
+            <p>View your CyberVerse account information.</p>
+        </div>
+    </div>
+
+    
+<div class="profile-details">
+    <button
+    type="button"
+    class="button secondary"
+    id="editProfileBtn"
+>
+    ✏️ Edit Profile
+</button>
+
+    <div class="profile-avatar" id="profileAvatar">P</div>
+
+    <div class="profile-identity">
+        <span class="profile-status">
+            <span class="online-dot"></span>
+            ACTIVE ACCOUNT
+        </span>
+
+        <h3 id="profileUsername">Username</h3>
+        <p id="profileEmail">Email address</p>
+    </div>
+
+</div>
+
+<!-- EDIT PROFILE FORM -->
+<div class="edit-profile-form hidden" id="editProfileForm">
+
+    <h3>Edit Account Information</h3>
+
+    <label for="editUsername">Username</label>
+    <input
+        type="text"
+        id="editUsername"
+        placeholder="Enter new username"
+        maxlength="30"
+    >
+
+    <label for="editEmail">Email Address</label>
+    <input
+        type="email"
+        id="editEmail"
+        placeholder="Enter new email"
+    >
+
+    <div class="profile-edit-actions">
+        <button type="button" class="button primary" id="saveProfileBtn">
+            Save Changes
+        </button>
+
+        <button type="button" class="button secondary" id="cancelProfileBtn">
+            Cancel
+        </button>
+    </div>
+
+    <p id="profileEditMessage" aria-live="polite"></p>
+
+</div>
+
+
+    <div class="profile-info-grid">
+
+        
+<div class="profile-info-card">
+    <small>USER ID</small>
+
+    <div class="profile-id-row">
+        <strong id="profileUserId">—</strong>
+
+        <button
+            type="button"
+            class="copy-profile-id"
+            id="copyProfileId"
+        >
+            Copy ID
+        </button>
+    </div>
+</div>
+
+
+        <div class="profile-info-card">
+            <small>USERNAME</small>
+            <strong id="profileUsernameInfo">—</strong>
+        </div>
+
+        <div class="profile-info-card">
+            <small>EMAIL ADDRESS</small>
+            <strong id="profileEmailInfo">—</strong>
+        </div>
+
+        <div class="profile-info-card">
+            <small>ACCOUNT CREATED</small>
+            <strong id="profileCreatedAt">—</strong>
+        </div>
+
+    </div>
+
+</section>
         </main>
 
     </div>

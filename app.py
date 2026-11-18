@@ -778,6 +778,7 @@ def home():
     return render_template("index.html")
 
 
+
 @app.route("/api/me", methods=["GET"])
 def current_user():
     if "user_id" not in session:
@@ -786,12 +787,132 @@ def current_user():
             "authenticated": False
         })
 
-    return jsonify({
-        "success": True,
-        "authenticated": True,
-        "user_id": session["user_id"],
-        "username": session["username"]
-    })
+    conn = get_db()
+
+    try:
+        user = conn.execute("""
+            SELECT id, username, email, created_at
+            FROM users
+            WHERE id = ?
+        """, (session["user_id"],)).fetchone()
+
+        if not user:
+            session.clear()
+            return jsonify({
+                "success": True,
+                "authenticated": False
+            })
+
+        return jsonify({
+            "success": True,
+            "authenticated": True,
+            "user": {
+                "user_id": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "created_at": user["created_at"]
+            }
+        })
+
+    finally:
+        conn.close()
+# ==========================================
+# UPDATE USER PROFILE API
+# ==========================================
+
+@app.route("/api/update-profile", methods=["POST"])
+@login_required
+def update_profile():
+
+    data = request.get_json(silent=True) or {}
+
+    username = data.get("username", "")
+    email = data.get("email", "")
+
+    if not isinstance(username, str) or not isinstance(email, str):
+        return jsonify({
+            "success": False,
+            "message": "Invalid profile information."
+        }), 400
+
+    username = username.strip()
+    email = email.strip().lower()
+
+    # Username validation
+    if not re.fullmatch(r"[A-Za-z0-9_]{3,30}", username):
+        return jsonify({
+            "success": False,
+            "message": "Username must be 3-30 characters and contain only letters, numbers or underscores."
+        }), 400
+
+    # Email validation
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return jsonify({
+            "success": False,
+            "message": "Please enter a valid email address."
+        }), 400
+
+    conn = get_db()
+
+    try:
+        existing_user = conn.execute("""
+            SELECT id
+            FROM users
+            WHERE (username = ? OR email = ?)
+            AND id != ?
+        """, (
+            username,
+            email,
+            session["user_id"]
+        )).fetchone()
+
+        if existing_user:
+            return jsonify({
+                "success": False,
+                "message": "Username or email is already in use."
+            }), 409
+
+        conn.execute("""
+            UPDATE users
+            SET username = ?, email = ?
+            WHERE id = ?
+        """, (
+            username,
+            email,
+            session["user_id"]
+        ))
+
+        conn.commit()
+
+        session["username"] = username
+
+        user = conn.execute("""
+            SELECT id, username, email, created_at
+            FROM users
+            WHERE id = ?
+        """, (session["user_id"],)).fetchone()
+
+        return jsonify({
+            "success": True,
+            "message": "Profile updated successfully.",
+            "user": {
+                "user_id": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "created_at": user["created_at"]
+            }
+        })
+
+    except sqlite3.IntegrityError:
+        conn.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": "Username or email is already in use."
+        }), 409
+
+    finally:
+        conn.close()
 
 
 @app.route("/logout", methods=["POST"])
