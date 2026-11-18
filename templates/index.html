@@ -26,6 +26,63 @@
 <div class="ambient ambient-one"></div>
 <div class="ambient ambient-two"></div>
 
+<!-- LOGIN / SIGNUP SCREEN -->
+<div id="authScreen" class="auth-screen">
+
+    <div class="auth-card panel">
+
+        <div class="auth-brand">
+            <span class="brand-mark">⬡</span>
+            <h2>Cyber<span>Verse</span></h2>
+        </div>
+
+        <p class="eyebrow">SECURE ACCESS PORTAL</p>
+        <h1 id="authTitle">Welcome Back</h1>
+        <p id="authSubtitle">Login to access your security command center.</p>
+
+        <form id="loginForm">
+            <label for="loginUsername">Username or Email</label>
+            <input type="text" id="loginUsername" required
+                   placeholder="Enter username or email">
+
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" required
+                   placeholder="Enter password">
+
+            <button class="button primary full" type="submit">
+                Login →
+            </button>
+        </form>
+
+        <form id="signupForm" class="hidden">
+            <label for="signupUsername">Username</label>
+            <input type="text" id="signupUsername" required
+                   minlength="3" maxlength="30"
+                   placeholder="Choose a username">
+
+            <label for="signupEmail">Email</label>
+            <input type="email" id="signupEmail" required
+                   placeholder="Enter your email">
+
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" required
+                   minlength="8" placeholder="Minimum 8 characters">
+
+            <button class="button primary full" type="submit">
+                Create Account →
+            </button>
+        </form>
+
+        <p id="authMessage" aria-live="polite"></p>
+
+        <p class="auth-switch">
+            <span id="authSwitchText">Don't have an account?</span>
+            <button type="button" id="authSwitchBtn">Sign Up</button>
+        </p>
+
+    </div>
+</div>
+
 <div class="app-shell">
 
     <!-- SIDEBAR -->

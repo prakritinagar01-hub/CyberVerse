@@ -5976,3 +5976,154 @@ html[data-theme="light"] .notification-setting-item {
     z-index: 10000;
     pointer-events: auto;
 }
+
+/* =====================================
+   CYBERVERSE LOGIN / SIGNUP SCREEN
+===================================== */
+
+.auth-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: var(--bg, #08090d);
+    overflow-y: auto;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 38px;
+    border: 1px solid var(--border, rgba(34, 211, 238, 0.2));
+    border-radius: 22px;
+    background: var(--panel, #101217);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.auth-brand h2 {
+    margin: 0;
+    color: var(--text, #ffffff);
+    font-size: 24px;
+}
+
+.auth-brand h2 span {
+    color: var(--cyan, #22d3ee);
+}
+
+.auth-card > h1 {
+    margin: 10px 0;
+    color: var(--text, #ffffff);
+    font-size: 30px;
+}
+
+.auth-card > p {
+    color: var(--muted, #9ca3af);
+    line-height: 1.6;
+}
+
+.auth-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.auth-card form label {
+    color: var(--text, #ffffff);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.auth-card form input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 15px;
+    border: 1px solid var(--border, #303642);
+    border-radius: 10px;
+    outline: none;
+    background: var(--panel-light, #171a21);
+    color: var(--text, #ffffff);
+    font: inherit;
+}
+
+.auth-card form input:focus {
+    border-color: var(--cyan, #22d3ee);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+}
+
+.auth-card form .button {
+    margin-top: 12px;
+}
+
+.auth-switch {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+}
+
+#authSwitchBtn {
+    border: none;
+    background: transparent;
+    color: var(--cyan, #22d3ee);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#authMessage {
+    min-height: 20px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.auth-screen .hidden {
+    display: none !important;
+}
+
+/* Light theme */
+body.light-theme .auth-screen,
+body.light-mode .auth-screen {
+    background: var(--bg, #f3f6fb);
+}
+
+body.light-theme .auth-card,
+body.light-mode .auth-card {
+    background: var(--panel, #ffffff);
+    border-color: var(--border, #dce3ee);
+}
+
+body.light-theme .auth-card h1,
+body.light-mode .auth-card h1,
+body.light-theme .auth-brand h2,
+body.light-mode .auth-brand h2,
+body.light-theme .auth-card form label,
+body.light-mode .auth-card form label {
+    color: var(--text, #172033);
+}
+
+body.light-theme .auth-card form input,
+body.light-mode .auth-card form input {
+    background: var(--panel-light, #f5f7fb);
+    color: var(--text, #172033);
+    border-color: var(--border, #dce3ee);
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 26px 20px;
+    }
+
+    .auth-card > h1 {
+        font-size: 25px;
+    }
+}

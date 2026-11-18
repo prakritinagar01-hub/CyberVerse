@@ -9,17 +9,24 @@ from datetime import datetime, timedelta
 from io import StringIO
 from urllib.parse import parse_qs, urlparse
 import io
+from functools import wraps
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, make_response, render_template, request
+from flask import (
+    Flask, jsonify, make_response, render_template,
+    request, session, redirect, url_for
+)
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # ==========================================
 # APP CONFIGURATION
 # ==========================================
 
-app = Flask(__name__)
 load_dotenv()
+
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.urandom(32)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -55,7 +62,18 @@ def groq_generate(prompt, temperature=0.2, max_tokens=3000, timeout=120):
 # ==========================================
 # DATABASE
 # ==========================================
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            return jsonify({
+                "success": False,
+                "message": "Please login first."
+            }), 401
 
+        return f(*args, **kwargs)
+
+    return decorated_function
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -64,6 +82,15 @@ def get_db():
 
 def init_db():
     conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -131,6 +158,21 @@ def init_db():
         cursor.execute(
             "ALTER TABLE scan_history ADD COLUMN rule_score INTEGER DEFAULT 0"
         )
+            # Add user_id to existing history tables
+    for table in (
+        "scan_history",
+        "url_scan_history",
+        "ai_security_history"
+    ):
+        columns = [
+            row[1] for row in
+            conn.execute(f"PRAGMA table_info({table})").fetchall()
+        ]
+
+        if "user_id" not in columns:
+            conn.execute(
+                f"ALTER TABLE {table} ADD COLUMN user_id INTEGER"
+            )
 
     conn.commit()
     conn.close()
@@ -143,33 +185,42 @@ init_db()
 
 def save_scan(message, result):
     conn = get_db()
+
+    user_id = session.get("user_id")
+
     conn.execute("""
         INSERT INTO scan_history
-(message, score, risk, warnings, advice,
- confidence, explanation, ai_score, rule_score, scanned_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (message, score, risk, warnings, advice,
+         confidence, explanation, ai_score, rule_score,
+         scanned_at, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         message,
-result["score"],
-result["risk"],
-json.dumps(result["warnings"]),
-result["advice"],
-result.get("confidence", 0),
-result.get("explanation", "Not available"),
-result.get("ai_score", 0),
-result.get("rule_score", result["score"]),
-datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        result["score"],
+        result["risk"],
+        json.dumps(result["warnings"]),
+        result["advice"],
+        result.get("confidence", 0),
+        result.get("explanation", "Not available"),
+        result.get("ai_score", 0),
+        result.get("rule_score", result["score"]),
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        user_id
     ))
+
     conn.commit()
     conn.close()
 
 
 def save_url_scan(url, result):
     conn = get_db()
+
+    user_id = session.get("user_id")
+
     conn.execute("""
         INSERT INTO url_scan_history
-        (url, score, risk, warnings, advice, scanned_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (url, score, risk, warnings, advice, scanned_at, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (
         url,
         result["score"],
@@ -177,7 +228,9 @@ def save_url_scan(url, result):
         json.dumps(result["warnings"]),
         result["advice"],
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        user_id
     ))
+
     conn.commit()
     conn.close()
 
@@ -560,7 +613,6 @@ def generate_quiz():
             raise ValueError("Unable to prepare 10 unique questions.")
 
         questions = questions[:10]
-
         for question in questions:
             if not isinstance(question, dict):
                 raise ValueError("Invalid AI question format.")
@@ -609,17 +661,154 @@ def generate_quiz():
 # ==========================================
 # HOME
 # ==========================================
+@app.route("/signup", methods=["POST"])
+def signup():
+    data = request.get_json(silent=True) or {}
+
+    username = str(data.get("username", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = data.get("password", "")
+
+    if not username or not email or not password:
+        return jsonify({
+            "success": False,
+            "message": "Username, email and password are required."
+        }), 400
+
+    if len(username) < 3 or len(username) > 30:
+        return jsonify({
+            "success": False,
+            "message": "Username must be 3 to 30 characters long."
+        }), 400
+
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", username):
+        return jsonify({
+            "success": False,
+            "message": "Invalid username format."
+        }), 400
+
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return jsonify({
+            "success": False,
+            "message": "Please enter a valid email address."
+        }), 400
+
+    if len(password) < 8:
+        return jsonify({
+            "success": False,
+            "message": "Password must be at least 8 characters long."
+        }), 400
+
+    password_hash = generate_password_hash(password)
+
+    conn = get_db()
+
+    try:
+        conn.execute("""
+            INSERT INTO users (username, email, password_hash)
+            VALUES (?, ?, ?)
+        """, (username, email, password_hash))
+
+        conn.commit()
+
+    except sqlite3.IntegrityError:
+        return jsonify({
+            "success": False,
+            "message": "Username or email already exists."
+        }), 409
+
+    finally:
+        conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": "Account created successfully. Please login."
+    }), 201
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+
+    if not username or not password:
+        return jsonify({
+            "success": False,
+            "message": "Username and password are required."
+        }), 400
+
+    conn = get_db()
+    user = conn.execute(
+        "SELECT * FROM users WHERE username = ? OR email = ?",
+        (username, username)
+    ).fetchone()
+    conn.close()
+
+    if not user or not check_password_hash(user["password_hash"], password):
+        return jsonify({
+            "success": False,
+            "message": "Invalid username/email or password."
+        }), 401
+
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+
+    # Restore old history for the first account
+    conn = get_db()
+    for table in (
+        "scan_history",
+        "url_scan_history",
+        "ai_security_history"
+    ):
+        conn.execute(
+            f"UPDATE {table} SET user_id = ? WHERE user_id IS NULL",
+            (user["id"],)
+        )
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": "Login successful.",
+        "username": user["username"]
+    })
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
+@app.route("/api/me", methods=["GET"])
+def current_user():
+    if "user_id" not in session:
+        return jsonify({
+            "success": True,
+            "authenticated": False
+        })
+
+    return jsonify({
+        "success": True,
+        "authenticated": True,
+        "user_id": session["user_id"],
+        "username": session["username"]
+    })
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+
+    return jsonify({
+        "success": True,
+        "message": "Logged out successfully."
+    })
+
 # ==========================================
 # HYBRID MESSAGE ANALYSIS API
 # ==========================================
 
 @app.route("/api/analyze", methods=["POST"])
+@login_required
 def analyze():
     data = request.get_json(silent=True) or {}
     message = data.get("message", "")
@@ -704,30 +893,39 @@ def analyze():
 # ==========================================
 
 @app.route("/api/history", methods=["GET"])
+@login_required
 def get_history():
     conn = get_db()
-    rows = conn.execute("""
-        SELECT * FROM scan_history ORDER BY id DESC LIMIT 50
-    """).fetchall()
-    conn.close()
 
-    return jsonify([{
-        "id": row["id"],
-        "message": row["message"],
-        "score": row["score"],
-        "risk": row["risk"],
-        "ai_score": row["ai_score"] or 0,
-"rule_score": row["rule_score"] or 0,
-        "warnings": json.loads(row["warnings"] or "[]"),
-        "advice": row["advice"],
-        "confidence": row["confidence"] or 0,
-        "explanation": row["explanation"] or "Not available",
-        "scanned_at": row["scanned_at"],
-    } for row in rows])
+    try:
+        rows = conn.execute("""
+            SELECT * FROM scan_history
+            WHERE user_id = ?
+            ORDER BY id DESC
+            LIMIT 50
+        """, (session["user_id"],)).fetchall()
+
+        return jsonify([{
+            "id": row["id"],
+            "message": row["message"],
+            "score": row["score"],
+            "risk": row["risk"],
+            "ai_score": row["ai_score"] or 0,
+            "rule_score": row["rule_score"] or 0,
+            "warnings": json.loads(row["warnings"] or "[]"),
+            "advice": row["advice"],
+            "confidence": row["confidence"] or 0,
+            "explanation": row["explanation"] or "Not available",
+            "scanned_at": row["scanned_at"],
+        } for row in rows])
+
+    finally:
+        conn.close()
 
 
 
 @app.route("/api/analytics", methods=["GET"])
+@login_required
 def get_analytics():
     conn = get_db()
 
@@ -743,18 +941,19 @@ def get_analytics():
             COUNT(CASE WHEN risk = 'Medium' THEN 1 END),
             COUNT(CASE WHEN risk = 'Low' THEN 1 END)
         FROM scan_history
-    """).fetchone()
-
+WHERE user_id = ?
+""", (session["user_id"],)).fetchone()
     # Daily message scan activity
     daily_rows = conn.execute("""
         SELECT
             DATE(scanned_at) AS scan_date,
             COUNT(*) AS scan_count
         FROM scan_history
-        WHERE DATE(scanned_at) >= DATE('now', 'localtime', '-6 days')
+WHERE user_id = ?
+AND DATE(scanned_at) >= DATE('now', 'localtime', '-6 days')
         GROUP BY DATE(scanned_at)
         ORDER BY scan_date
-    """).fetchall()
+    """, (session["user_id"],)).fetchall()
 
     conn.close()
 
@@ -791,34 +990,69 @@ def get_analytics():
 # ALL-TIME THREAT RADAR ANALYTICS
 # ==========================================
 
+
 @app.route("/api/radar-analytics", methods=["GET"])
+@login_required
 def get_radar_analytics():
     conn = get_db()
 
-    message_stats = conn.execute("""
-        SELECT
-            COUNT(*) AS total,
-            COUNT(CASE WHEN risk = 'High' THEN 1 END) AS high,
-            COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
-            COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
-        FROM scan_history
-    """).fetchone()
+    try:
+        message_stats = conn.execute("""
+            SELECT
+                COUNT(*) AS total,
+                COUNT(CASE WHEN risk = 'High' THEN 1 END) AS high,
+                COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
+                COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
+            FROM scan_history
+            WHERE user_id = ?
+        """, (session["user_id"],)).fetchone()
 
-    url_stats = conn.execute("""
-        SELECT
-            COUNT(*) AS total,
-            COUNT(CASE WHEN risk = 'High' THEN 1 END) AS high,
-            COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
-            COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
-        FROM url_scan_history
-    """).fetchone()
+        url_stats = conn.execute("""
+            SELECT
+                COUNT(*) AS total,
+                COUNT(CASE WHEN risk = 'High' THEN 1 END) AS high,
+                COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
+                COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
+            FROM url_scan_history
+            WHERE user_id = ?
+        """, (session["user_id"],)).fetchone()
 
-    conn.close()
+        ai_stats = conn.execute("""
+            SELECT
+                COUNT(*) AS total,
+                COUNT(CASE WHEN risk_level IN ('High', 'Critical') THEN 1 END) AS high,
+                COUNT(CASE WHEN risk_level = 'Medium' THEN 1 END) AS medium,
+                COUNT(CASE WHEN risk_level = 'Low' THEN 1 END) AS low
+            FROM ai_security_history
+            WHERE user_id = ?
+        """, (session["user_id"],)).fetchone()
 
-    high = message_stats["high"] + url_stats["high"]
-    medium = message_stats["medium"] + url_stats["medium"]
-    low = message_stats["low"] + url_stats["low"]
-    total = message_stats["total"] + url_stats["total"]
+    finally:
+        conn.close()
+
+    high = (
+        message_stats["high"]
+        + url_stats["high"]
+        + ai_stats["high"]
+    )
+
+    medium = (
+        message_stats["medium"]
+        + url_stats["medium"]
+        + ai_stats["medium"]
+    )
+
+    low = (
+        message_stats["low"]
+        + url_stats["low"]
+        + ai_stats["low"]
+    )
+
+    total = (
+        message_stats["total"]
+        + url_stats["total"]
+        + ai_stats["total"]
+    )
 
     threats = high + medium
 
@@ -833,6 +1067,7 @@ def get_radar_analytics():
         "total": total,
         "message_scans": message_stats["total"],
         "url_scans": url_stats["total"],
+        "ai_scans": ai_stats["total"],
         "high": high,
         "medium": medium,
         "low": low,
@@ -842,55 +1077,47 @@ def get_radar_analytics():
 
 
 
+
 @app.route("/api/history", methods=["DELETE"])
+@login_required
 def delete_history():
     conn = get_db()
-    conn.execute("DELETE FROM scan_history")
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Scan history deleted successfully"})
+
+    try:
+        conn.execute(
+            "DELETE FROM scan_history WHERE user_id = ?",
+            (session["user_id"],)
+        )
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Your scan history deleted successfully."
+        })
+
+    finally:
+        conn.close()
 
 
-@app.route("/api/export", methods=["GET"])
-def export_history():
-    conn = get_db()
-    rows = conn.execute("""
-        SELECT id, message, score, risk, warnings, advice,
-       confidence, explanation, ai_score, rule_score, scanned_at
-FROM scan_history ORDER BY id DESC
-    """).fetchall()
-    conn.close()
 
-    output = StringIO()
-    writer = csv.writer(output)
-    writer.writerow([
-    "ID", "Message", "Final Score", "Risk",
-    "Warnings", "Advice", "Scanner Consistency",
-    "Explanation", "AI Score", "Rule-Based Score", "Scanned At",
-])
-    for row in rows:
-        writer.writerow(tuple(row))
 
-    response = make_response(output.getvalue())
-    response.headers["Content-Disposition"] = (
-        "attachment; filename=cyberverse_scan_report.csv"
-    )
-    response.headers["Content-Type"] = "text/csv"
-    return response
 
 # ==========================================
 # URL HISTORY CSV EXPORT
 # ==========================================
 
 @app.route("/api/export-url-history", methods=["GET"])
+@login_required
 def export_url_history():
     conn = get_db()
 
     rows = conn.execute("""
         SELECT id, url, score, risk, warnings, advice, scanned_at
-        FROM url_scan_history
-        ORDER BY id DESC
-    """).fetchall()
+FROM url_scan_history
+WHERE user_id = ?
+ORDER BY id DESC
+    """, (session["user_id"],)).fetchall()
 
     conn.close()
 
@@ -929,30 +1156,35 @@ def export_url_history():
     return response
 
 @app.route("/api/history/<int:scan_id>", methods=["GET"])
+@login_required
 def get_scan_details(scan_id):
     conn = get_db()
-    row = conn.execute(
-        "SELECT * FROM scan_history WHERE id = ?", (scan_id,)
-    ).fetchone()
-    conn.close()
 
-    if row is None:
-        return jsonify({"error": "Scan not found"}), 404
+    try:
+        row = conn.execute("""
+            SELECT * FROM scan_history
+            WHERE id = ? AND user_id = ?
+        """, (scan_id, session["user_id"])).fetchone()
 
-    return jsonify({
-        "id": row["id"],
-        "message": row["message"],
-        "score": row["score"],
-        "risk": row["risk"],
-        "ai_score": row["ai_score"] or 0,
-"rule_score": row["rule_score"] or 0,
-        "warnings": json.loads(row["warnings"] or "[]"),
-        "advice": row["advice"],
-        "confidence": row["confidence"] or 0,
-        "explanation": row["explanation"] or "Not available",
-        "scanned_at": row["scanned_at"],
-    })
+        if row is None:
+            return jsonify({"error": "Scan not found"}), 404
 
+        return jsonify({
+            "id": row["id"],
+            "message": row["message"],
+            "score": row["score"],
+            "risk": row["risk"],
+            "ai_score": row["ai_score"] or 0,
+            "rule_score": row["rule_score"] or 0,
+            "warnings": json.loads(row["warnings"] or "[]"),
+            "advice": row["advice"],
+            "confidence": row["confidence"] or 0,
+            "explanation": row["explanation"] or "Not available",
+            "scanned_at": row["scanned_at"],
+        })
+
+    finally:
+        conn.close()
 
 # ==========================================
 # DOMAIN AGE DETECTION (RDAP)
@@ -995,6 +1227,7 @@ def check_domain_age(hostname):
 # ==========================================
 
 @app.route("/api/scan-url", methods=["POST"])
+@login_required
 def scan_url():
     data = request.get_json(silent=True) or {}
     url = data.get("url", "")
@@ -1222,11 +1455,14 @@ def scan_url():
 # ==========================================
 
 @app.route("/api/url-history", methods=["GET"])
+@login_required
 def get_url_history():
     conn = get_db()
     rows = conn.execute("""
-        SELECT * FROM url_scan_history ORDER BY id DESC LIMIT 50
-    """).fetchall()
+        SELECT * FROM url_scan_history
+WHERE user_id = ?
+ORDER BY id DESC LIMIT 50
+    """, (session["user_id"],)).fetchall()
     conn.close()
 
     return jsonify([{
@@ -1244,6 +1480,7 @@ def get_url_history():
 # ==========================================
 
 @app.route("/api/url-history-analytics", methods=["GET"])
+@login_required
 def get_url_history_analytics():
     conn = get_db()
 
@@ -1254,8 +1491,8 @@ def get_url_history_analytics():
             COUNT(CASE WHEN risk = 'Medium' THEN 1 END) AS medium,
             COUNT(CASE WHEN risk = 'Low' THEN 1 END) AS low
         FROM url_scan_history
-    """).fetchone()
-
+WHERE user_id = ?
+""", (session["user_id"],)).fetchone()
     conn.close()
 
     return jsonify({
@@ -1265,9 +1502,13 @@ def get_url_history_analytics():
         "low": stats["low"]
     })
 @app.route("/api/url-history", methods=["DELETE"])
+@login_required
 def delete_url_history():
     conn = get_db()
-    conn.execute("DELETE FROM url_scan_history")
+    conn.execute(
+    "DELETE FROM url_scan_history WHERE user_id = ?",
+    (session["user_id"],)
+)
     conn.commit()
     conn.close()
     return jsonify({"message": "URL scan history deleted successfully"})
@@ -1278,19 +1519,28 @@ def delete_url_history():
 # ==========================================
 
 @app.route("/api/recent-activity", methods=["GET"])
+@login_required
 def get_recent_activity():
     conn = get_db()
     rows = conn.execute("""
-        SELECT id, 'Message Scan' AS scan_type,
-               message AS target, score, risk, scanned_at
-        FROM scan_history
-        UNION ALL
-        SELECT id, 'URL Scan' AS scan_type,
-               url AS target, score, risk, scanned_at
-        FROM url_scan_history
-        ORDER BY scanned_at DESC
-        LIMIT 10
-    """).fetchall()
+    SELECT id, 'Message Scan' AS scan_type,
+           message AS target, score, risk, scanned_at
+    FROM scan_history
+    WHERE user_id = ?
+
+    UNION ALL
+
+    SELECT id, 'URL Scan' AS scan_type,
+           url AS target, score, risk, scanned_at
+    FROM url_scan_history
+    WHERE user_id = ?
+
+    ORDER BY scanned_at DESC
+    LIMIT 10
+""", (
+    session["user_id"],
+    session["user_id"]
+)).fetchall()
     conn.close()
 
     return jsonify([{
@@ -1305,6 +1555,7 @@ def get_recent_activity():
 
 
 @app.route("/api/ai-security-test", methods=["POST"])
+@login_required
 def ai_security_test():
     data = request.get_json(silent=True) or {}
 
@@ -1440,9 +1691,9 @@ Rules:
 
             cursor.execute("""
                 INSERT INTO ai_security_history
-                (prompt, response, test_type, risk_score, risk_level,
-                 findings, recommendation, tested_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+(prompt, response, test_type, risk_score, risk_level,
+ findings, recommendation, tested_at, user_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
             """, (
                 prompt,
                 ai_response,
@@ -1450,7 +1701,8 @@ Rules:
                 score,
                 risk_level,
                 json.dumps(findings),
-                recommendation
+                recommendation,
+                session["user_id"]
             ))
 
             test_id = cursor.lastrowid
@@ -1481,6 +1733,7 @@ Rules:
 
 
 @app.route("/api/ai-security-history", methods=["GET"])
+@login_required
 def get_ai_security_history():
     conn = get_db()
 
@@ -1488,10 +1741,11 @@ def get_ai_security_history():
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT *
-            FROM ai_security_history
-            ORDER BY id DESC
-        """)
+    SELECT *
+    FROM ai_security_history
+    WHERE user_id = ?
+    ORDER BY id DESC
+""", (session["user_id"],))
 
         rows = cursor.fetchall()
 
@@ -1516,6 +1770,7 @@ def get_ai_security_history():
 # ==========================================
 
 @app.route("/api/export-ai-security-history", methods=["GET"])
+@login_required
 def export_ai_security_history():
     conn = get_db()
 
@@ -1524,9 +1779,10 @@ def export_ai_security_history():
 
         cursor.execute("""
             SELECT *
-            FROM ai_security_history
-            ORDER BY id DESC
-        """)
+FROM ai_security_history
+WHERE user_id = ?
+ORDER BY id DESC
+        """, (session["user_id"],))
 
         rows = cursor.fetchall()
 
@@ -1559,13 +1815,17 @@ def export_ai_security_history():
 # ==========================================
 
 @app.route("/api/ai-security-history", methods=["DELETE"])
+@login_required
 def delete_ai_security_history():
     conn = get_db()
 
     try:
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM ai_security_history")
+        cursor.execute(
+    "DELETE FROM ai_security_history WHERE user_id = ?",
+    (session["user_id"],)
+)
 
         deleted_count = cursor.rowcount
 

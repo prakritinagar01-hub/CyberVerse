@@ -8,6 +8,135 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // ======================================
+    // LOGIN / SIGNUP SYSTEM
+    // ======================================
+
+    const authScreen = document.getElementById("authScreen");
+    const appShell = document.querySelector(".app-shell");
+
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+
+    const authTitle = document.getElementById("authTitle");
+    const authSubtitle = document.getElementById("authSubtitle");
+    const authMessage = document.getElementById("authMessage");
+    const authSwitchText = document.getElementById("authSwitchText");
+    const authSwitchBtn = document.getElementById("authSwitchBtn");
+
+    let authMode = "login";
+    
+    function showAuthMessage(message, success = false) {
+        authMessage.textContent = message;
+        authMessage.style.color = success ? "#22c55e" : "#ef4444";
+    }
+
+    function switchAuthMode() {
+        authMode = authMode === "login" ? "signup" : "login";
+
+        loginForm.classList.toggle("hidden", authMode !== "login");
+        signupForm.classList.toggle("hidden", authMode !== "signup");
+
+        authTitle.textContent =
+            authMode === "login" ? "Welcome Back" : "Create Account";
+
+        authSubtitle.textContent =
+            authMode === "login"
+                ? "Login to access your security command center."
+                : "Create your CyberVerse security account.";
+
+        authSwitchText.textContent =
+            authMode === "login"
+                ? "Don't have an account?"
+                : "Already have an account?";
+
+        authSwitchBtn.textContent =
+            authMode === "login" ? "Sign Up" : "Login";
+
+        showAuthMessage("");
+    }
+
+    authSwitchBtn.addEventListener("click", switchAuthMode);
+
+    async function checkLoginStatus() {
+        try {
+            const response = await fetch("/api/me");
+            const data = await response.json();
+
+            if (data.authenticated) {
+                authScreen.classList.add("hidden");
+                appShell.classList.remove("hidden");
+            } else {
+                authScreen.classList.remove("hidden");
+                appShell.classList.add("hidden");
+            }
+        } catch (error) {
+            showAuthMessage("Unable to connect to CyberVerse server.");
+        }
+    }
+
+    loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value;
+
+        try {
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showAuthMessage(data.message || "Login failed.");
+                return;
+            }
+
+            showAuthMessage("Login successful!", true);
+            await checkLoginStatus();
+            location.reload();
+
+        } catch (error) {
+            showAuthMessage("Server connection failed.");
+        }
+    });
+
+    signupForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const username = document.getElementById("signupUsername").value.trim();
+        const email = document.getElementById("signupEmail").value.trim();
+        const password = document.getElementById("signupPassword").value;
+
+        try {
+            const response = await fetch("/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showAuthMessage(data.message || "Signup failed.");
+                return;
+            }
+
+            signupForm.reset();
+switchAuthMode();
+showAuthMessage("Account created! Please login.", true);
+
+        } catch (error) {
+            showAuthMessage("Server connection failed.");
+        }
+    });
+
+    checkLoginStatus();
+
+
+    // ======================================
     // 1. HELPERS & APP STATE
     // ======================================
 
@@ -794,14 +923,32 @@ async function loadRadarData() {
             ? messageData
             : (messageData.history || messageData.records || []);
 
-        // Load URL history
-        const urlData = await api("/api/url-history");
+        
+// Load URL history
+const urlData = await api("/api/url-history");
 
-        const urls = Array.isArray(urlData)
-            ? urlData
-            : (urlData.history || urlData.records || []);
+const urls = Array.isArray(urlData)
+    ? urlData
+    : (urlData.history || urlData.records || []);
 
-        const records = [...messages, ...urls];
+// Load AI Security History
+const aiData = await api("/api/ai-security-history");
+
+const aiRecords = Array.isArray(aiData)
+    ? aiData
+    : (aiData.history || aiData.records || []);
+
+// Combine all three scan types
+const records = [
+    ...messages,
+    ...urls,
+    ...aiRecords.map(item => ({
+        ...item,
+        risk: item.risk_level,
+        scanned_at: item.tested_at
+    }))
+];
+
         // Load all-time radar statistics
 const stats = await api("/api/radar-analytics");
         // Sort scans: newest first
@@ -830,7 +977,8 @@ const getRisk = (record) => {
         record.risk || record.risk_level || ""
     ).trim().toLowerCase();
 
-    if (value.includes("high")) return "high";
+    
+    if (value.includes("high") || value.includes("critical")) return "high";
     if (value.includes("medium")) return "medium";
     if (value.includes("low")) return "low";
 
@@ -881,13 +1029,14 @@ const threats = Number(stats.threats) || 0;
 const overviewMessageScans = document.getElementById("overviewMessageScans");
 const overviewUrlScans = document.getElementById("overviewUrlScans");
 const overviewSecurityScore = document.getElementById("overviewSecurityScore");
-
 if (overviewMessageScans) {
-    overviewMessageScans.textContent = messages.length;
+    overviewMessageScans.textContent =
+        Number(stats.message_scans) || 0;
 }
 
 if (overviewUrlScans) {
-    overviewUrlScans.textContent = urls.length;
+    overviewUrlScans.textContent =
+        Number(stats.url_scans) || 0;
 }
 
 if (overviewSecurityScore) {
@@ -965,7 +1114,7 @@ if (overviewSecurityScore) {
 
         if (scoreStatus) {
             scoreStatus.textContent =
-                `Based on ${total} all-time message and URL scans.`;
+                `Based on ${total} all-time message, URL and AI security scans.`;
         }
 
         // Update radar message
