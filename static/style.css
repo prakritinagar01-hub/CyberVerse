@@ -102,6 +102,21 @@
 }
 
 :root[data-theme="light"] #ai-security-lab .history-item {
+    /* AI HISTORY PAGE — LIGHT MODE FIX */
+:root[data-theme="light"] .history-item {
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+:root[data-theme="light"] .history-item p,
+:root[data-theme="light"] .history-item strong {
+    color: #334155;
+}
+
+:root[data-theme="light"] .history-item small {
+    color: #64748b;
+}
     color: #334155;
     background: #f8fafc;
     border: 1px solid #e2e8f0;

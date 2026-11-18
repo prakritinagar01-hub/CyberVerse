@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CyberVerse | URL History</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <main class="container">
+
+        <a href="{{ url_for('home') }}" class="button secondary">
+            ← Back to Dashboard
+        </a>
+
+        <!-- URL SCAN HISTORY -->
+            <section class="scan-history-section" id="url-scan-history">
+
+                <div class="dashboard-heading">
+
+                    <div>
+                        <p class="eyebrow">URL SECURITY RECORDS</p>
+                        <h2>URL Scan <span>History</span></h2>
+                        <p>Review previously analyzed website addresses.</p>
+                    </div>
+
+                    <div class="history-actions">
+
+                        <button class="button secondary" id="refreshUrlHistory" type="button">
+                            ↻ Refresh
+                        </button>
+                        <button class="button secondary" id="exportUrlHistory" type="button">
+    ↓ Export CSV
+</button>
+
+                        <button class="button secondary" id="deleteUrlHistory" type="button">
+                            Delete History
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- URL HISTORY STATISTICS -->
+                <div class="history-stats">
+
+                    <div class="threat-card">
+                        <span>Total URL Scans</span>
+                        <strong id="urlHistoryTotal">0</strong>
+                    </div>
+
+                    <div class="threat-card">
+                        <span>High Risk</span>
+                        <strong id="urlHistoryHigh">0</strong>
+                    </div>
+
+                    <div class="threat-card">
+                        <span>Medium Risk</span>
+                        <strong id="urlHistoryMedium">0</strong>
+                    </div>
+
+                    <div class="threat-card">
+                        <span>Low Risk</span>
+                        <strong id="urlHistoryLow">0</strong>
+                    </div>
+
+                </div>
+<!-- URL RISK DISTRIBUTION -->
+<div class="analytics-grid url-analytics-grid">
+
+    <div class="analytics-card">
+        <h3>Risk Distribution</h3>
+        <canvas id="urlRiskChart"></canvas>
+    </div>
+
+</div>
+
+
+    <div class="url-overall-status">
+    <div class="score-details">
+        <span class="score-dot"></span>
+        <span id="urlOverallStatus">No scans yet</span>
+    </div>
+</div>
+
+
+                
+<!-- URL HISTORY SEARCH AND FILTERS -->
+<div class="url-history-controls">
+
+    <input
+        type="search"
+        id="urlHistorySearch"
+        placeholder="Search URL..."
+        autocomplete="off"
+    >
+
+    <select id="urlRiskFilter">
+        <option value="all">All Risk Levels</option>
+        <option value="High">High Risk</option>
+        <option value="Medium">Medium Risk</option>
+        <option value="Low">Low Risk</option>
+    </select>
+
+    <select id="urlSortOrder">
+        <option value="newest">Latest First</option>
+        <option value="oldest">Oldest First</option>
+    </select>
+
+    <button
+        class="button secondary"
+        id="clearUrlFilters"
+        type="button"
+    >
+        Clear Filters
+    </button>
+
+</div>
+
+                <div id="urlHistoryList" class="history-list">
+                    <p>Loading URL history...</p>
+                </div>
+
+            </section>
+
+
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}" defer></script>
+
+</body>
+</html>

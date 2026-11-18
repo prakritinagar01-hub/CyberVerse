@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberVerse | Message History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <main class="container">
+        <h1>Message Scan History</h1>
+        <p>View and manage your previous message security scans.</p>
+
+        <a href="{{ url_for('home') }}" class="button secondary">
+    ← Back to Dashboard
+</a>
+
+        <section class="scan-history-section" id="scan-history">
+            <section class="scan-history-section" id="scan-history">
+
+                <div class="dashboard-heading">
+
+                    <div>
+                        <p class="eyebrow">SECURITY RECORDS</p>
+                        <h2>Message <span>History</span></h2>
+                        <p>Review your previously analyzed messages.</p>
+                    </div>
+
+                    <div class="history-actions">
+
+                        <button class="button secondary" id="refreshHistory" type="button">
+                            ↻ Refresh
+                        </button>
+                        
+                        <button class="button secondary" id="exportHistory" type="button">
+                            ↓ Export
+                        </button>
+
+                        <button class="button secondary" id="deleteHistory" type="button">
+                            Delete
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HISTORY STATISTICS -->
+                <div class="history-stats">
+
+                    <div class="threat-card">
+                        <span>Total Scans</span>
+                        <strong id="historyTotal">0</strong>
+                    </div>
+
+                    <div class="threat-card">
+                        <span>High Risk</span>
+                        <strong id="historyHigh">0</strong>
+                    </div>
+
+                    <div class="threat-card">
+                        <span>Medium Risk</span>
+                        <strong id="historyMedium">0</strong>
+                    </div>
+
+                    <div class="threat-card">
+                        <span>Low Risk</span>
+                        <strong id="historyLow">0</strong>
+                    </div>
+
+                </div>
+
+
+                    <!-- CHARTS -->
+                    <div class="analytics-grid">
+
+                        <div class="analytics-card">
+                            <h3>Risk Distribution</h3>
+                            <canvas id="riskChart"></canvas>
+                        </div>
+
+                        
+
+                    </div>
+
+                </section>
+
+
+                <!-- MESSAGE HISTORY LIST -->
+
+<!-- MESSAGE HISTORY SEARCH AND FILTERS -->
+<div class="url-history-controls message-history-controls">
+
+    <input
+        type="search"
+        id="messageHistorySearch"
+        placeholder="Search messages..."
+        autocomplete="off"
+    >
+
+    <select id="messageRiskFilter">
+        <option value="all">All Risk Levels</option>
+        <option value="High">High Risk</option>
+        <option value="Medium">Medium Risk</option>
+        <option value="Low">Low Risk</option>
+    </select>
+
+    <select id="messageSortOrder">
+        <option value="newest">Latest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="highest">Highest Score</option>
+        <option value="lowest">Lowest Score</option>
+    </select>
+
+    <button
+        class="button secondary"
+        id="clearMessageFilters"
+        type="button"
+    >
+        Clear Filters
+    </button>
+
+</div>
+
+                <div id="historyList" class="history-list">
+                    <p>Loading scan history...</p>
+                </div>
+
+            </section>
+        </section>
+    </main>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+
+</body>
+</html>

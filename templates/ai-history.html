@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CyberVerse | AI Security History</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <main class="container">
+
+        <div class="history-page-actions">
+
+    <a href="{{ url_for('home') }}" class="button secondary">
+        ← Back to Dashboard
+    </a>
+
+    
+
+</div>
+
+                  
+<!-- AI SECURITY TEST HISTORY -->
+<section class="scan-history-section ai-history-section" id="ai-security-lab">
+
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">AI SECURITY RECORDS</p>
+            <h2>AI Security Test <span>History</span></h2>
+            <p>Monitor, review and manage your AI security audits.</p>
+        </div>
+
+        <div class="history-actions">
+
+    <button class="button secondary" id="refreshAiHistory" type="button">
+        ↻ Refresh
+    </button>
+
+    <button class="button secondary" id="exportAiHistory" type="button">
+        ↓ Export CSV
+    </button>
+
+    <button class="button secondary" id="deleteAiHistory" type="button">
+        Delete History
+    </button>
+
+</div>
+    </div>
+
+    <!-- AI HISTORY STATISTICS -->
+    <div class="history-stats">
+
+        <div class="threat-card">
+            <span>Total AI Tests</span>
+            <strong id="aiSecurityTotal">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>High / Critical Risk</span>
+            <strong id="aiSecurityHigh">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>Medium Risk</span>
+            <strong id="aiSecurityMedium">0</strong>
+        </div>
+
+        <div class="threat-card">
+            <span>Low Risk</span>
+            <strong id="aiSecurityLow">0</strong>
+        </div>
+
+    </div>
+    <!-- AI OVERALL SECURITY SCORE -->
+<!-- AI RISK DISTRIBUTION -->
+<div class="analytics-grid ai-analytics-grid">
+
+    <div class="analytics-card">
+        <h3>Risk Distribution</h3>
+        <canvas id="aiRiskChart"></canvas>
+    </div>
+
+</div>
+
+    <!-- HISTORY FILTERS -->
+    <div class="url-history-controls ai-history-controls">
+
+        <input
+            type="search"
+            id="aiHistorySearch"
+            placeholder="Search AI test history..."
+            autocomplete="off"
+        >
+
+        <select id="aiHistoryRiskFilter">
+            <option value="all">All Risk Levels</option>
+            <option value="Critical">Critical Risk</option>
+            <option value="High">High Risk</option>
+            <option value="Medium">Medium Risk</option>
+            <option value="Low">Low Risk</option>
+        </select>
+
+        <select id="aiHistorySort">
+            <option value="newest">Latest First</option>
+            <option value="oldest">Oldest First</option>
+        </select>
+
+    </div>
+
+    <!-- HISTORY RECORDS -->
+    <div class="analytics-card ai-history-container">
+
+        <div class="activity-heading">
+            <div>
+                <h3>Security Audit Records</h3>
+                <p>Your previously analyzed AI responses.</p>
+            </div>
+
+            <span class="activity-label">AI AUDIT LOGS</span>
+        </div>
+
+        <div id="aiSecurityHistory">
+            <p>Loading AI security history...</p>
+        </div>
+
+    </div>
+
+    <p class="notice">
+        AI-based assessment is not a security certification and may miss risks
+        or flag harmless content.
+    </p>
+
+</section>
+<!-- SCAN DETAILS MODAL -->
+<div id="scanModal" class="scan-modal">
+
+    <div class="scan-modal-content">
+
+        <button
+            id="closeScanModal"
+            class="modal-close"
+            type="button"
+            aria-label="Close scan details"
+        >
+            ×
+        </button>
+
+        <p class="eyebrow">SECURITY REPORT</p>
+
+        <h2>Scan <span>Details</span></h2>
+
+        <div id="modalScanDetails"></div>
+
+    </div>
+
+</div>
+
+    </main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
+</html>

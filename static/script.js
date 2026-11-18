@@ -1,15 +1,7 @@
 
 "use strict";
 
-// ==========================================
-// CYBERVERSE - COMPLETE MAIN JAVASCRIPT
-// ==========================================
-
 document.addEventListener("DOMContentLoaded", () => {
-
-    // ======================================
-    // LOGIN / SIGNUP SYSTEM
-    // ======================================
 
     const authScreen = document.getElementById("authScreen");
     const appShell = document.querySelector(".app-shell");
@@ -26,9 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let authMode = "login";
     
     function showAuthMessage(message, success = false) {
-        authMessage.textContent = message;
-        authMessage.style.color = success ? "#22c55e" : "#ef4444";
-    }
+    if (!authMessage) return;
+
+    authMessage.textContent = message;
+    authMessage.style.color = success ? "#22c55e" : "#ef4444";
+}
 
     function switchAuthMode() {
         authMode = authMode === "login" ? "signup" : "login";
@@ -55,50 +49,62 @@ document.addEventListener("DOMContentLoaded", () => {
         showAuthMessage("");
     }
 
+    if (authSwitchBtn) {
     authSwitchBtn.addEventListener("click", switchAuthMode);
+}
 
     async function checkLoginStatus() {
         try {
             const response = await fetch("/api/me");
             const data = await response.json();
 
-            if (data.authenticated) {
+            if (data.authenticated && data.user) {
                 window.currentUser = data.user;
-                if (data.user) {
-    const user = data.user;
 
-    document.getElementById("profileAvatar").textContent =
-        user.username.charAt(0).toUpperCase();
+                const user = data.user;
+                const profileFields = {
+                    profileAvatar: user.username?.charAt(0).toUpperCase() || "U",
+                    profileUsername: user.username || "",
+                    profileEmail: user.email || "",
+                    profileUserId: user.user_id || user.id || "",
+                    profileUsernameInfo: user.username || "",
+                    profileEmailInfo: user.email || "",
+                    profileCreatedAt: user.created_at || ""
+                };
 
-    document.getElementById("profileUsername").textContent =
-        user.username;
+                Object.entries(profileFields).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
 
-    document.getElementById("profileEmail").textContent =
-        user.email;
+                    if (element) {
+                        element.textContent = value;
+                    }
+                });
 
-    document.getElementById("profileUserId").textContent =
-        user.user_id;
-
-    document.getElementById("profileUsernameInfo").textContent =
-        user.username;
-
-    document.getElementById("profileEmailInfo").textContent =
-        user.email;
-
-    document.getElementById("profileCreatedAt").textContent =
-        user.created_at;
+                if (authScreen && appShell) {
+    authScreen.classList.add("hidden");
+    appShell.classList.remove("hidden");
 }
-                authScreen.classList.add("hidden");
-                appShell.classList.remove("hidden");
             } else {
+                window.currentUser = null;
                 authScreen.classList.remove("hidden");
                 appShell.classList.add("hidden");
             }
         } catch (error) {
-            showAuthMessage("Unable to connect to CyberVerse server.");
-        }
+    window.currentUser = null;
+
+    if (authScreen && appShell) {
+        authScreen.classList.remove("hidden");
+        appShell.classList.add("hidden");
     }
 
+    if (authMessage) {
+        showAuthMessage("Unable to connect to CyberVerse server.");
+    }
+}
+    }
+   
+
+    if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -127,7 +133,8 @@ document.addEventListener("DOMContentLoaded", () => {
             showAuthMessage("Server connection failed.");
         }
     });
-
+    }
+    if (signupForm) {
     signupForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -157,8 +164,9 @@ showAuthMessage("Account created! Please login.", true);
             showAuthMessage("Server connection failed.");
         }
     });
+}
 
-    checkLoginStatus();
+    window.authStatusReady = checkLoginStatus();
 
 
     // ======================================
@@ -208,7 +216,7 @@ showAuthMessage("Account created! Please login.", true);
     }
 
     const state = {
-    messages: Number(localStorage.getItem("cyberverseMessages")) || 0,
+    messages: 0,
     activity: []
 };
 
@@ -218,9 +226,9 @@ showAuthMessage("Account created! Please login.", true);
     let currentHistory = [];
 
     function saveState() {
-        localStorage.setItem("cyberverseMessages", state.messages);
-        
-    }
+    localStorage.setItem("cyberverseMessages", state.messages);
+}   
+      
 
     async function api(url, options = {}) {
         const response = await fetch(url, {
@@ -403,6 +411,7 @@ showAuthMessage("Account created! Please login.", true);
             renderMessageResult(data);
 
             state.messages++;
+            saveState();
             
             addActivity(
                 `Message scan completed — ${data.risk || "Unknown"} risk`,
@@ -730,7 +739,7 @@ async function generateAIQuiz() {
 
         renderQuiz();
 
-        showToast("AI Quiz generated successfully!");
+        
 
     } catch (error) {
 
@@ -938,6 +947,10 @@ let radarRecords = [];
 // ======================================
 
 async function loadRadarData() {
+    if (window.authStatusReady) {
+    await window.authStatusReady;
+}
+    
 
     try {
 
@@ -1301,6 +1314,10 @@ historyList.innerHTML = filteredRecords.map(record => {
 
 
     async function loadHistory() {
+        if (window.authStatusReady) {
+    await window.authStatusReady;
+}
+        
         try {
             const data = await api("/api/history");
             renderHistory(data.history || data.records || data);
@@ -1752,7 +1769,11 @@ function renderURLRiskChart(records) {
 }
 
 async function loadURLHistory() {
+if (window.authStatusReady) {
+    await window.authStatusReady;
+}
     if (!urlHistoryList) return;
+    
 
     try {
         const data = await api("/api/url-history");
@@ -2048,6 +2069,10 @@ deleteUrlHistory?.addEventListener("click", async () => {
 // ======================================
 
 async function loadOverviewRecentActivity() {
+if (window.authStatusReady) {
+    await window.authStatusReady;
+}
+
     console.log("Overview Recent Activity function started");
     const container = document.getElementById("overviewRecentActivity");
     if (!container) return;
@@ -2163,7 +2188,7 @@ window.showCyberToast = showToast;
     // 15. DASHBOARD REFRESH
     // ======================================
 
-    async function refreshDashboard() {
+   async function refreshDashboard() {
     await Promise.allSettled([
         loadHistory(),
         loadURLHistory(),
@@ -2210,10 +2235,9 @@ const aiHistorySort = document.getElementById("aiHistorySort");
 
 let allAISecurityHistory = [];
 
-    if (!responseInput || !testButton || !resultBox || !historyBox) {
-        return;
-    }
-
+    if (!historyBox) {
+    return;
+}
     const escapeHTML = (value) => {
         return String(value ?? "").replace(/[&<>"']/g, (char) => ({
             "&": "&amp;",
@@ -2566,7 +2590,13 @@ function renderAIRiskChart(history) {
 // ======================================
 
 async function loadAISecurityHistory() {
+if (window.authStatusReady) {
+    await window.authStatusReady;
+}
+
+
     if (!historyBox) return;
+    
 
     try {
         historyBox.innerHTML = "<p>Loading AI security history...</p>";
@@ -2775,7 +2805,8 @@ if (overviewAiTests) {
             renderAISecurityResult(data);
 
             await loadAISecurityHistory();
-            if (typeof window.loadOverviewRecentActivity === "function") {
+
+if (typeof window.loadOverviewRecentActivity === "function") {
     await window.loadOverviewRecentActivity();
 }
 
@@ -2812,8 +2843,11 @@ if (typeof window.addCyberNotification === "function") {
     // EVENT LISTENERS
     // ======================================
 
+    if (testButton) {
     testButton.addEventListener("click", runAISecurityTest);
+}
     // EXPORT AI SECURITY HISTORY
+    
 if (exportButton) {
     exportButton.addEventListener("click", () => {
         window.location.href = "/api/export-ai-security-history";
@@ -2822,6 +2856,7 @@ if (exportButton) {
 
 
 // DELETE AI SECURITY HISTORY
+
 if (deleteButton) {
     deleteButton.addEventListener("click", async () => {
 

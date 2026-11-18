@@ -63,6 +63,7 @@ def groq_generate(prompt, temperature=0.2, max_tokens=3000, timeout=120):
 # DATABASE
 # ==========================================
 def login_required(f):
+    
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
@@ -74,6 +75,12 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+# ==========================================
+# START  SESSION
+# ==========================================
+
+
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -182,11 +189,13 @@ def init_db():
 
 init_db()
 
-
 def save_scan(message, result):
-    conn = get_db()
-
     user_id = session.get("user_id")
+
+    if not user_id:
+        return
+
+    conn = get_db()
 
     conn.execute("""
         INSERT INTO scan_history
@@ -213,9 +222,12 @@ def save_scan(message, result):
 
 
 def save_url_scan(url, result):
-    conn = get_db()
-
     user_id = session.get("user_id")
+
+    if not user_id:
+        return
+
+    conn = get_db()
 
     conn.execute("""
         INSERT INTO url_scan_history
@@ -778,13 +790,27 @@ def home():
     return render_template("index.html")
 
 
+@app.route("/message-history")
+@login_required
+def message_history_page():
+    return render_template("message-history.html")
+@app.route("/url-history")
+@login_required
+def url_history_page():
+    return render_template("url-history.html")
+@app.route("/ai-history")
+@login_required
+def ai_history_page():
+    return render_template("ai-history.html")
+
+
 
 @app.route("/api/me", methods=["GET"])
 def current_user():
     if "user_id" not in session:
         return jsonify({
             "success": True,
-            "authenticated": False
+            "authenticated": False,
         })
 
     conn = get_db()
@@ -1348,6 +1374,7 @@ def check_domain_age(hostname):
 # ==========================================
 
 @app.route("/api/scan-url", methods=["POST"])
+
 @login_required
 def scan_url():
     data = request.get_json(silent=True) or {}
@@ -1805,32 +1832,35 @@ Rules:
             )
         )
 
-        conn = get_db()
+        test_id = None
 
-        try:
-            cursor = conn.cursor()
+        if session.get("user_id"):
+            conn = get_db()
 
-            cursor.execute("""
-                INSERT INTO ai_security_history
-(prompt, response, test_type, risk_score, risk_level,
- findings, recommendation, tested_at, user_id)
-VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
-            """, (
-                prompt,
-                ai_response,
-                test_type,
-                score,
-                risk_level,
-                json.dumps(findings),
-                recommendation,
-                session["user_id"]
-            ))
+            try:
+                cursor = conn.cursor()
 
-            test_id = cursor.lastrowid
-            conn.commit()
+                cursor.execute("""
+                    INSERT INTO ai_security_history
+                    (prompt, response, test_type, risk_score, risk_level,
+                     findings, recommendation, tested_at, user_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+                """, (
+                    prompt,
+                    ai_response,
+                    test_type,
+                    score,
+                    risk_level,
+                    json.dumps(findings),
+                    recommendation,
+                    session["user_id"]
+                ))
 
-        finally:
-            conn.close()
+                test_id = cursor.lastrowid
+                conn.commit()
+
+            finally:
+                conn.close()
 
         return jsonify({
             "success": True,
@@ -1941,30 +1971,16 @@ def delete_ai_security_history():
     conn = get_db()
 
     try:
-        cursor = conn.cursor()
-
-        cursor.execute(
-    "DELETE FROM ai_security_history WHERE user_id = ?",
-    (session["user_id"],)
-)
-
-        deleted_count = cursor.rowcount
-
+        conn.execute(
+            "DELETE FROM ai_security_history WHERE user_id = ?",
+            (session["user_id"],)
+        )
         conn.commit()
 
         return jsonify({
             "success": True,
-            "message": "AI Security history deleted successfully.",
-            "deleted": deleted_count
+            "message": "AI security history deleted successfully"
         })
-
-    except Exception as e:
-        conn.rollback()
-
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
 
     finally:
         conn.close()
