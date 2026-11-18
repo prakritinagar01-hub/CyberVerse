@@ -7,6 +7,20 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 from io import StringIO
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+    PageBreak
+)
+from reportlab.lib.units import inch
+from io import BytesIO
 from urllib.parse import parse_qs, urlparse
 import io
 from functools import wraps
@@ -1256,6 +1270,278 @@ def delete_history():
 
     finally:
         conn.close()
+
+# ==========================================
+# CYBERVERSE PDF SECURITY REPORT
+# ==========================================
+
+@app.route("/api/export-security-report", methods=["GET"])
+@login_required
+def export_security_report():
+
+    conn = get_db()
+
+    try:
+        message_rows = conn.execute("""
+            SELECT id, score, risk, scanned_at
+            FROM scan_history
+            WHERE user_id = ?
+            ORDER BY id DESC
+        """, (session["user_id"],)).fetchall()
+
+        url_rows = conn.execute("""
+            SELECT id, score, risk, scanned_at
+            FROM url_scan_history
+            WHERE user_id = ?
+            ORDER BY id DESC
+        """, (session["user_id"],)).fetchall()
+
+        ai_rows = conn.execute("""
+            SELECT id, risk_level, tested_at
+            FROM ai_security_history
+            WHERE user_id = ?
+            ORDER BY id DESC
+        """, (session["user_id"],)).fetchall()
+
+    finally:
+        conn.close()
+
+    # Calculate statistics
+    high = sum(
+        1 for r in message_rows if r["risk"] == "High"
+    ) + sum(
+        1 for r in url_rows if r["risk"] == "High"
+    ) + sum(
+        1 for r in ai_rows if r["risk_level"] in ("High", "Critical")
+    )
+
+    medium = sum(
+        1 for r in message_rows if r["risk"] == "Medium"
+    ) + sum(
+        1 for r in url_rows if r["risk"] == "Medium"
+    ) + sum(
+        1 for r in ai_rows if r["risk_level"] == "Medium"
+    )
+
+    low = sum(
+        1 for r in message_rows if r["risk"] == "Low"
+    ) + sum(
+        1 for r in url_rows if r["risk"] == "Low"
+    ) + sum(
+        1 for r in ai_rows if r["risk_level"] == "Low"
+    )
+
+    total = len(message_rows) + len(url_rows) + len(ai_rows)
+
+    threats = high + medium
+
+    security_score = (
+        round(100 - ((high * 100 + medium * 50) / total))
+        if total else 100
+    )
+
+    # Create PDF
+    pdf_buffer = BytesIO()
+
+    document = SimpleDocTemplate(
+        pdf_buffer,
+        pagesize=A4,
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        "CyberVerseTitle",
+        parent=styles["Title"],
+        textColor=colors.HexColor("#2563eb"),
+        alignment=TA_CENTER,
+        fontSize=22,
+        spaceAfter=10
+    )
+
+    subtitle_style = ParagraphStyle(
+        "CyberVerseSubtitle",
+        parent=styles["Normal"],
+        alignment=TA_CENTER,
+        textColor=colors.grey,
+        spaceAfter=20
+    )
+
+    elements = []
+
+    elements.append(
+        Paragraph("CYBERVERSE", title_style)
+    )
+
+    elements.append(
+        Paragraph("PERSONAL SECURITY AUDIT REPORT", subtitle_style)
+    )
+
+    elements.append(Spacer(1, 15))
+
+    elements.append(
+        Paragraph("Security Overview", styles["Heading2"])
+    )
+
+    summary_data = [
+        ["Metric", "Result"],
+        ["Total Security Scans", str(total)],
+        ["Threats Detected", str(threats)],
+        ["High Risk Scans", str(high)],
+        ["Medium Risk Scans", str(medium)],
+        ["Low Risk Scans", str(low)],
+        ["Security Score", f"{security_score}%"]
+    ]
+
+    summary_table = Table(
+        summary_data,
+        colWidths=[260, 220]
+    )
+
+    summary_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a8a")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ("PADDING", (0, 0), (-1, -1), 9),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+    ]))
+
+    elements.append(summary_table)
+    elements.append(Spacer(1, 25))
+
+    # Message scan history
+    elements.append(
+        Paragraph("Message Scan History", styles["Heading2"])
+    )
+
+    message_data = [
+        ["Scan ID", "Score", "Risk", "Date"]
+    ]
+
+    for row in message_rows[:20]:
+        message_data.append([
+            str(row["id"]),
+            str(row["score"]),
+            str(row["risk"]),
+            str(row["scanned_at"] or "N/A")
+        ])
+
+    if len(message_data) == 1:
+        message_data.append(["-", "-", "No records", "-"])
+
+    message_table = Table(
+        message_data,
+        repeatRows=1,
+        colWidths=[65, 65, 90, 260]
+    )
+
+    message_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a8a")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ("PADDING", (0, 0), (-1, -1), 7),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+    ]))
+
+    elements.append(message_table)
+    elements.append(Spacer(1, 20))
+
+    # URL scan history
+    elements.append(
+        Paragraph("URL Scan History", styles["Heading2"])
+    )
+
+    url_data = [
+        ["Scan ID", "Score", "Risk", "Date"]
+    ]
+
+    for row in url_rows[:20]:
+        url_data.append([
+            str(row["id"]),
+            str(row["score"]),
+            str(row["risk"]),
+            str(row["scanned_at"] or "N/A")
+        ])
+
+    if len(url_data) == 1:
+        url_data.append(["-", "-", "No records", "-"])
+
+    url_table = Table(
+        url_data,
+        repeatRows=1,
+        colWidths=[65, 65, 90, 260]
+    )
+
+    url_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a8a")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ("PADDING", (0, 0), (-1, -1), 7),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+    ]))
+
+    elements.append(url_table)
+    elements.append(Spacer(1, 20))
+
+    # AI Security history
+    elements.append(
+        Paragraph("AI Security Test History", styles["Heading2"])
+    )
+
+    ai_data = [
+        ["Test ID", "Risk Level", "Test Date"]
+    ]
+
+    for row in ai_rows[:20]:
+        ai_data.append([
+            str(row["id"]),
+            str(row["risk_level"]),
+            str(row["tested_at"] or "N/A")
+        ])
+
+    if len(ai_data) == 1:
+        ai_data.append(["-", "No records", "-"])
+
+    ai_table = Table(
+        ai_data,
+        repeatRows=1,
+        colWidths=[100, 150, 230]
+    )
+
+    ai_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a8a")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ("PADDING", (0, 0), (-1, -1), 7),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+    ]))
+
+    elements.append(ai_table)
+    elements.append(Spacer(1, 25))
+
+    elements.append(
+        Paragraph(
+            "Generated by CyberVerse Security Platform",
+            subtitle_style
+        )
+    )
+
+    document.build(elements)
+
+    pdf_buffer.seek(0)
+
+    response = make_response(pdf_buffer.getvalue())
+
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=CyberVerse_Security_Report.pdf"
+    )
+
+    return response
 
 
 
