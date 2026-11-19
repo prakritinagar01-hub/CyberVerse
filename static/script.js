@@ -559,10 +559,13 @@ showAuthMessage("Account created! Please login.", true);
     );
 }
 
-        } catch (error) {
-            urlResult.textContent = error.message;
-            showToast("URL scan failed.");
-        } finally {
+                } catch (error) {
+            const errorMessage =
+                error.message || "Unable to scan this URL.";
+
+            urlResult.textContent = errorMessage;
+            showToast(errorMessage);
+        }finally {
             urlButton.disabled = false;
             urlButton.textContent = "Scan URL";
         }

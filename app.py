@@ -7,6 +7,17 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 from io import StringIO
+def sanitize_csv_value(value):
+    if value is None:
+        return ""
+
+    value = str(value)
+
+    # Prevent spreadsheet formula injection
+    if value.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")):
+        return "'" + value
+
+    return value
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -24,9 +35,12 @@ from io import BytesIO
 from urllib.parse import parse_qs, urlparse
 import io
 from functools import wraps
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 import requests
 from dotenv import load_dotenv
+load_dotenv()
 from flask import (
     Flask, jsonify, make_response, render_template,
     request, session, redirect, url_for
@@ -40,7 +54,28 @@ from werkzeug.security import generate_password_hash, check_password_hash
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.urandom(32)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[]
+)
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError(
+        "FLASK_SECRET_KEY is missing. Please configure it in your .env file."
+    )
+# ==========================================
+# SESSION SECURITY CONFIGURATION
+# ==========================================
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=(
+        os.getenv("COOKIE_SECURE", "false").lower() == "true"
+    )
+)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -69,8 +104,6 @@ def groq_generate(prompt, temperature=0.2, max_tokens=3000, timeout=120):
         },
         timeout=timeout,
     )
-    print("GROQ STATUS:", response.status_code)
-    print("GROQ RESPONSE:", response.text)
     response.raise_for_status()
     result = response.json()
     return result["choices"][0]["message"]["content"]
@@ -550,6 +583,7 @@ QUESTION_BANK = {
 
 
 @app.route("/api/generate-quiz", methods=["POST"])
+@limiter.limit("10 per hour")
 def generate_quiz():
     data = request.get_json(silent=True) or {}
     difficulty = data.get("difficulty", "Medium")
@@ -691,6 +725,7 @@ def generate_quiz():
 # HOME
 # ==========================================
 @app.route("/signup", methods=["POST"])
+@limiter.limit("5 per hour")
 def signup():
     data = request.get_json(silent=True) or {}
 
@@ -754,6 +789,7 @@ def signup():
         "message": "Account created successfully. Please login."
     }), 201
 @app.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json(silent=True) or {}
 
@@ -778,6 +814,9 @@ def login():
             "success": False,
             "message": "Invalid username/email or password."
         }), 401
+
+    # Reset old session data before creating authenticated session
+    session.clear()
 
     session["user_id"] = user["id"]
     session["username"] = user["username"]
@@ -981,6 +1020,7 @@ def logout():
 
 @app.route("/api/analyze", methods=["POST"])
 @login_required
+@limiter.limit("20 per hour")
 def analyze():
     data = request.get_json(silent=True) or {}
     message = data.get("message", "")
@@ -1582,14 +1622,16 @@ ORDER BY id DESC
         warnings_list = json.loads(row["warnings"] or "[]")
         warnings_text = " | ".join(str(item) for item in warnings_list)
         writer.writerow([
-    row["id"],
-    row["url"],
-    row["score"],
-    row["risk"],
-    warnings_text if warnings_text else "No warnings",
-    row["advice"],
-    row["scanned_at"]
-])
+            row["id"],
+            sanitize_csv_value(row["url"]),
+            row["score"],
+            sanitize_csv_value(row["risk"]),
+            sanitize_csv_value(
+                warnings_text if warnings_text else "No warnings"
+            ),
+            sanitize_csv_value(row["advice"]),
+            sanitize_csv_value(row["scanned_at"])
+        ])
 
     response = make_response(output.getvalue())
     response.headers["Content-Disposition"] = (
@@ -1673,6 +1715,7 @@ def check_domain_age(hostname):
 @app.route("/api/scan-url", methods=["POST"])
 
 @login_required
+@limiter.limit("20 per hour")
 def scan_url():
     data = request.get_json(silent=True) or {}
     url = data.get("url", "")
@@ -1697,6 +1740,28 @@ def scan_url():
 
     if not hostname:
         return jsonify({"error": "Invalid URL."}), 400
+        # Block localhost and internal hostnames
+    normalized_hostname = hostname.lower().rstrip(".")
+
+    if (
+        normalized_hostname == "localhost"
+        or normalized_hostname.endswith((".localhost", ".local"))
+    ):
+        return jsonify({
+            "error": "Localhost and internal network addresses are not allowed."
+        }), 400
+
+    # Block non-public IP addresses
+    try:
+        ip_address = ipaddress.ip_address(normalized_hostname)
+
+        if not ip_address.is_global:
+            return jsonify({
+                "error": "Private or non-public IP addresses are not allowed."
+            }), 400
+
+    except ValueError:
+        pass
 
     score = 0
     warnings = []
@@ -2001,6 +2066,7 @@ def get_recent_activity():
 
 @app.route("/api/ai-security-test", methods=["POST"])
 @login_required
+@limiter.limit("20 per hour")
 def ai_security_test():
     data = request.get_json(silent=True) or {}
 
@@ -2243,7 +2309,10 @@ ORDER BY id DESC
             writer.writeheader()
 
             for row in rows:
-                writer.writerow(dict(row))
+                writer.writerow({
+    key: sanitize_csv_value(value)
+    for key, value in dict(row).items()
+})
 
         return app.response_class(
             output.getvalue(),
@@ -2287,4 +2356,4 @@ def delete_ai_security_history():
 # ==========================================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

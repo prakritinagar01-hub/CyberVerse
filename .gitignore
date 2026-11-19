@@ -1,9 +1,17 @@
+# Python virtual environment
 .venv/
 venv/
+
+# Python cache
 __pycache__/
 *.pyc
+
+# Environment variables and secrets
 .env
-.env
-.venv/
+.env.*
+
+# Database
 cyberverse.db
+
+# Editor settings
 .vscode/
