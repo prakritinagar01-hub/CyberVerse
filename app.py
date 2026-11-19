@@ -2461,14 +2461,14 @@ def get_recent_activity():
 @app.route("/api/ai-security-test", methods=["POST"])
 @login_required
 @limiter.limit("20 per hour")
+
 def ai_security_test():
     data = get_json_object()
 
-    ai_response = data.get("ai_response")
+    ai_response = data.get("response") or data.get("ai_response")
     prompt = data.get("prompt", "")
     test_type = data.get("test_type", "AI response analysis")
 
-    # Validate all supplied fields before processing or storing them.
     if not all(isinstance(value, str) for value in (ai_response, prompt, test_type)):
         return jsonify({
             "success": False,

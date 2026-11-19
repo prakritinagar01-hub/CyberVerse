@@ -2253,9 +2253,7 @@ const aiHistorySort = document.getElementById("aiHistorySort");
 
 let allAISecurityHistory = [];
 
-    if (!historyBox) {
-    return;
-}
+    
     const escapeHTML = (value) => {
         return String(value ?? "").replace(/[&<>"']/g, (char) => ({
             "&": "&amp;",
