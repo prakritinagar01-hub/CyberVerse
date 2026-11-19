@@ -3481,308 +3481,38 @@ document.addEventListener("DOMContentLoaded", () => {
     aiToggle.addEventListener("change", saveNotificationSettings);
 
 });
-// =====================================
-// CYBERVERSE PAGE NAVIGATION
-// =====================================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const dashboardPage = document.querySelector(
-        ".app-main main.container"
-    );
-
-    const profilePage = document.getElementById("profilePage");
-
-    const sidebarLinks = document.querySelectorAll(
-        ".sidebar-nav a.side-link"
-    );
-
-    if (!dashboardPage || !profilePage) return;
-
-    sidebarLinks.forEach(link => {
-
-        link.addEventListener("click", () => {
-
-            if (link.getAttribute("href") === "#profile") {
-
-                dashboardPage.style.display = "none";
-                profilePage.style.display = "block";
-
-            } else {
-
-                profilePage.style.display = "none";
-                dashboardPage.style.display = "block";
-
-            }
-
-        });
-
-    });
-
-});
-// =====================================
-// COPY PROFILE USER ID
-// =====================================
 // ==========================================
-// EDIT PROFILE FUNCTIONALITY
+// EDIT PROFILE BUTTON FIX
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
 
     const editBtn = document.getElementById("editProfileBtn");
-    console.log("EDIT BUTTON:", editBtn);
-    const editForm = document.getElementById("editProfileForm");
-    const saveBtn = document.getElementById("saveProfileBtn");
-    const cancelBtn = document.getElementById("cancelProfileBtn");
+    const editForm = document.getElementById("profileEditForm");
+    const cancelBtn = document.getElementById("cancelEditBtn");
 
-    const usernameInput = document.getElementById("editUsername");
-    const emailInput = document.getElementById("editEmail");
-    const message = document.getElementById("profileEditMessage");
-
-    if (!editBtn || !editForm || !saveBtn || !cancelBtn) return;
+    if (!editBtn || !editForm) {
+        console.error("Edit Profile elements not found!");
+        return;
+    }
 
     editBtn.addEventListener("click", () => {
-
-        if (window.currentUser) {
-            usernameInput.value = window.currentUser.username;
-            emailInput.value = window.currentUser.email;
-        }
-
-        message.textContent = "";
+        editForm.style.display = "block";
         editForm.classList.remove("hidden");
+
+        console.log("Edit Profile form opened!");
     });
 
-    cancelBtn.addEventListener("click", () => {
-        editForm.classList.add("hidden");
-        message.textContent = "";
-    });
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+            editForm.style.display = "none";
 
-    saveBtn.addEventListener("click", async () => {
+            const message = document.getElementById("profileEditMessage");
 
-        const username = usernameInput.value.trim();
-        const email = emailInput.value.trim();
-
-        saveBtn.disabled = true;
-        saveBtn.textContent = "Saving...";
-
-        try {
-
-            const response = await fetch("/api/update-profile", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username: username,
-                    email: email
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || "Profile update failed.");
+            if (message) {
+                message.textContent = "";
             }
-
-            window.currentUser = data.user;
-
-            document.getElementById("profileAvatar").textContent =
-                data.user.username.charAt(0).toUpperCase();
-
-            document.getElementById("profileUsername").textContent =
-                data.user.username;
-
-            document.getElementById("profileEmail").textContent =
-                data.user.email;
-
-            document.getElementById("profileUsernameInfo").textContent =
-                data.user.username;
-
-            document.getElementById("profileEmailInfo").textContent =
-                data.user.email;
-
-            document.getElementById("profileUserId").textContent =
-                data.user.user_id;
-
-            document.getElementById("profileCreatedAt").textContent =
-                data.user.created_at;
-
-            message.textContent = "Profile updated successfully!";
-            message.style.color = "#22c55e";
-
-            editForm.classList.add("hidden");
-
-        } catch (error) {
-
-            message.textContent = error.message;
-            message.style.color = "#ef4444";
-
-        } finally {
-
-            saveBtn.disabled = false;
-            saveBtn.textContent = "Save Changes";
-
-        }
-
-    });
-
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const copyBtn = document.getElementById("copyProfileId");
-
-    if (copyBtn) {
-        copyBtn.addEventListener("click", async () => {
-
-            const userId = document.getElementById("profileUserId").textContent;
-
-            try {
-                await navigator.clipboard.writeText(userId);
-
-                copyBtn.textContent = "Copied!";
-
-                setTimeout(() => {
-                    copyBtn.textContent = "Copy ID";
-                }, 1500);
-
-            } catch (error) {
-                alert("Unable to copy User ID.");
-            }
-
         });
     }
-// Open edit profile form
-const editBtn = document.getElementById("editProfileBtn");
-const editForm = document.getElementById("profileEditForm");
-const cancelBtn = document.getElementById("cancelEditBtn");
 
-if (editBtn && editForm) {
-    editBtn.addEventListener("click", () => {
-        editForm.classList.remove("hidden");
-    });
-}
-
-if (cancelBtn && editForm) {
-    cancelBtn.addEventListener("click", () => {
-        editForm.classList.add("hidden");
-
-        const message = document.getElementById("profileEditMessage");
-
-        if (message) {
-            message.textContent = "";
-        }
-    });
-}
-// =====================================
-// LOAD PROFILE SECURITY STATISTICS
-// =====================================
-
-async function loadProfileStatistics() {
-    try {
-        if (window.authStatusReady) {
-    await window.authStatusReady;
-}
-
-const response = await fetch("/api/radar-analytics");
-        const data = await response.json();
-
-        console.log("PROFILE ANALYTICS:", data);
-
-        if (!response.ok) {
-            throw new Error("Unable to load statistics");
-        }
-
-        document.getElementById("profileTotalScans").textContent =
-            data.total;
-
-        document.getElementById("profileThreats").textContent =
-            data.threats;
-
-        document.getElementById("profileSecurityScore").textContent =
-            data.security_score + "%";
-
-    } catch (error) {
-        console.error("Profile statistics error:", error);
-    }
-}
-
-if (document.getElementById("profileTotalScans")) {
-    loadProfileStatistics();
-}
-
-
-// Save updated profile
-const editProfileForm = document.getElementById("editProfileForm");
-if (editProfileForm) {
-
-editProfileForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const username = document.getElementById("editUsername").value.trim();
-    const email = document.getElementById("editEmail").value.trim();
-
-    const message = document.getElementById("profileEditMessage");
-    const saveBtn = editProfileForm.querySelector('button[type="submit"]');
-
-    saveBtn.disabled = true;
-    saveBtn.textContent = "Saving...";
-
-    try {
-        const response = await fetch("/api/update-profile", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username: username,
-                email: email
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || "Profile update failed.");
-        }
-
-        const user = data.user;
-
-        document.getElementById("profileAvatar").textContent =
-            user.username.charAt(0).toUpperCase();
-
-        document.getElementById("profileUsername").textContent =
-            user.username;
-
-        document.getElementById("profileEmail").textContent =
-            user.email;
-
-        document.getElementById("profileUserId").textContent =
-            user.user_id;
-
-        document.getElementById("editUsername").value = user.username;
-        document.getElementById("editEmail").value = user.email;
-
-        message.style.color = "#22c55e";
-        message.textContent = "Profile updated successfully!";
-
-        editProfileForm.reset();
-        document.getElementById("editUsername").value = user.username;
-        document.getElementById("editEmail").value = user.email;
-
-        setTimeout(() => {
-            editForm.classList.add("hidden");
-            message.textContent = "";
-        }, 1500);
-
-    } catch (error) {
-        message.style.color = "#ef4444";
-        message.textContent = error.message;
-
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = "Save Changes";
-    }
-});
-}
 });

@@ -307,6 +307,14 @@
 
 </div>
 
+<button
+    class="button secondary"
+    id="logoutBtn"
+    type="button"
+>
+    Logout ↗
+</button>
+
 <div class="avatar">P</div>
 
             </div>
@@ -454,31 +462,11 @@
         <div class="overview-actions">
             <a href="#labs" class="button primary">Security Labs →</a>
             <a href="#threat-dashboard" class="button secondary">Threat Radar →</a>
-            <a href="#scan-history" class="button secondary">Scan History →</a>
+           
         </div>
 
     </div>
-    <!-- RECENT SECURITY ACTIVITY -->
-<div class="overview-recent-activity panel">
-    <div class="activity-heading">
-        <div>
-            <p class="eyebrow">LATEST UPDATES</p>
-            <h3>Recent Security Activity</h3>
-            <p>Your latest security actions in one place.</p>
-        </div>
-        <span class="tag">LIVE ACTIVITY</span>
-    </div>
-
-    <div id="overviewRecentActivity">
-        <p>Loading recent activity...</p>
-    </div>
-</div>
-
-</section>
-
-            
-
-                
+        
 
 
             <!-- SECURITY LABS -->
@@ -984,180 +972,6 @@
 
             </section>
                       
-<!-- AI SECURITY TEST HISTORY -->
-<section class="scan-history-section ai-history-section" id="ai-security-lab">
-
-    <div class="dashboard-heading">
-        <div>
-            <p class="eyebrow">AI SECURITY RECORDS</p>
-            <h2>AI Security Test <span>History</span></h2>
-            <p>Monitor, review and manage your AI security audits.</p>
-        </div>
-
-        <div class="history-actions">
-
-    <button class="button secondary" id="refreshAiHistory" type="button">
-        ↻ Refresh
-    </button>
-
-    <button class="button secondary" id="exportAiHistory" type="button">
-        ↓ Export CSV
-    </button>
-
-    <button class="button secondary" id="deleteAiHistory" type="button">
-        Delete History
-    </button>
-
-</div>
-    </div>
-
-    <!-- AI HISTORY STATISTICS -->
-    <div class="history-stats">
-
-        <div class="threat-card">
-            <span>Total AI Tests</span>
-            <strong id="aiSecurityTotal">0</strong>
-        </div>
-
-        <div class="threat-card">
-            <span>High / Critical Risk</span>
-            <strong id="aiSecurityHigh">0</strong>
-        </div>
-
-        <div class="threat-card">
-            <span>Medium Risk</span>
-            <strong id="aiSecurityMedium">0</strong>
-        </div>
-
-        <div class="threat-card">
-            <span>Low Risk</span>
-            <strong id="aiSecurityLow">0</strong>
-        </div>
-
-    </div>
-    <!-- AI OVERALL SECURITY SCORE -->
-<!-- AI RISK DISTRIBUTION -->
-<div class="analytics-grid ai-analytics-grid">
-
-    <div class="analytics-card">
-        <h3>Risk Distribution</h3>
-        <canvas id="aiRiskChart"></canvas>
-    </div>
-
-</div>
-
-    <!-- HISTORY FILTERS -->
-    <div class="url-history-controls ai-history-controls">
-
-        <input
-            type="search"
-            id="aiHistorySearch"
-            placeholder="Search AI test history..."
-            autocomplete="off"
-        >
-
-        <select id="aiHistoryRiskFilter">
-            <option value="all">All Risk Levels</option>
-            <option value="Critical">Critical Risk</option>
-            <option value="High">High Risk</option>
-            <option value="Medium">Medium Risk</option>
-            <option value="Low">Low Risk</option>
-        </select>
-
-        <select id="aiHistorySort">
-            <option value="newest">Latest First</option>
-            <option value="oldest">Oldest First</option>
-        </select>
-
-    </div>
-
-    <!-- HISTORY RECORDS -->
-    <div class="analytics-card ai-history-container">
-
-        <div class="activity-heading">
-            <div>
-                <h3>Security Audit Records</h3>
-                <p>Your previously analyzed AI responses.</p>
-            </div>
-
-            <span class="activity-label">AI AUDIT LOGS</span>
-        </div>
-
-        <div id="aiSecurityHistory">
-            <p>Loading AI security history...</p>
-        </div>
-
-    </div>
-
-    <p class="notice">
-        AI-based assessment is not a security certification and may miss risks
-        or flag harmless content.
-    </p>
-
-</section>
-<!-- MY PROFILE SECTION -->
-<section class="scan-history-section" id="profile">
-
-    <div class="dashboard-heading">
-        <div>
-            <p class="eyebrow">ACCOUNT MANAGEMENT</p>
-            <h2>My <span>Profile</span></h2>
-            <p>View your CyberVerse account information.</p>
-        </div>
-        <span class="tag">PERSONAL ACCOUNT</span>
-    </div>
-
-    <div class="analytics-card profile-card">
-
-        <div class="profile-header">
-            <div class="profile-avatar" id="profileAvatar">P</div>
-            <div>
-                <h3 id="profileUsername">Loading...</h3>
-                <p id="profileEmail">Loading account details...</p>
-            </div>
-        </div>
-
-        <div class="profile-details">
-
-            <div class="profile-detail-item">
-                <span>User ID</span>
-                <strong id="profileUserId">—</strong>
-            </div>
-
-            <div class="profile-detail-item">
-                <span>Account Created</span>
-                <strong id="profileCreatedAt">—</strong>
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-            <!-- SCAN DETAILS MODAL -->
-            <div id="scanModal" class="scan-modal">
-
-                <div class="scan-modal-content">
-
-                    <button
-                        id="closeScanModal"
-                        class="modal-close"
-                        type="button"
-                        aria-label="Close scan details"
-                    >
-                        ×
-                    </button>
-
-                    <p class="eyebrow">SECURITY REPORT</p>
-
-                    <h2>Scan <span>Details</span></h2>
-
-                    <div id="modalScanDetails"></div>
-
-                </div>
-
-            </div>
 
 
             <!-- FOOTER -->

@@ -54,6 +54,42 @@
         ✏️ Edit Profile
     </button>
 </div>
+<div class="profile-edit-form hidden" id="profileEditForm">
+
+    <h3>Edit Account Information</h3>
+
+    <form id="editProfileForm">
+
+        <label for="editUsername">Username</label>
+        <input
+            type="text"
+            id="editUsername"
+            required
+            minlength="3"
+            maxlength="30"
+        >
+
+        <label for="editEmail">Email Address</label>
+        <input
+            type="email"
+            id="editEmail"
+            required
+        >
+
+        <div class="profile-edit-buttons">
+            <button type="submit" class="button">
+                Save Changes
+            </button>
+
+            <button type="button" class="button secondary" id="cancelEditBtn">
+                Cancel
+            </button>
+        </div>
+
+        <p id="profileEditMessage"></p>
+
+    </form>
+</div>
 
                 <div class="profile-details">
 
@@ -118,42 +154,6 @@
 </section>
 
 
-            <div class="profile-edit-form hidden" id="profileEditForm">
-
-    <h3>Edit Account Information</h3>
-
-    <form id="editProfileForm">
-
-        <label for="editUsername">Username</label>
-        <input
-            type="text"
-            id="editUsername"
-            required
-            minlength="3"
-            maxlength="30"
-        >
-
-        <label for="editEmail">Email Address</label>
-        <input
-            type="email"
-            id="editEmail"
-            required
-        >
-
-        <div class="profile-edit-buttons">
-            <button type="submit" class="button">
-                Save Changes
-            </button>
-
-            <button type="button" class="button secondary" id="cancelEditBtn">
-                Cancel
-            </button>
-        </div>
-
-        <p id="profileEditMessage"></p>
-
-    </form>
-</div>
 
         </section>
 
@@ -187,6 +187,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         editForm.classList.remove("hidden");
         message.textContent = "";
+        editForm.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+});
     });
 
     // Cancel editing
