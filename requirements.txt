@@ -4,4 +4,4 @@ requests
 gunicorn
 python-dotenv
 reportlab
-Flask-Limitergit 
+Flask-Limiter
